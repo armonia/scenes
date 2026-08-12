@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.DS_Store
+.env
+
+# Render output. Rebuildable from source, and big.
+out/
+video/out/
+
+# Reference commercials downloaded with yt-dlp, plus the contact sheets made
+# from them. Someone else's copyrighted work: it is study material, not ours to
+# redistribute. README says how to fetch it again.
+ref/
