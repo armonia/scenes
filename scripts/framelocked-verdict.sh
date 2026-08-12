@@ -31,6 +31,8 @@ probe() {
   echo ""
   echo "### $label  ($comp)"
 
+  local hashes=""
+
   for f in "${FRAMES[@]}"; do
     for pass in a b; do
       npx remotion still "$comp" "$TMP/$comp-$f-$pass.png" \
@@ -45,12 +47,33 @@ probe() {
       echo "  frame $f: RENDER FALLITO"
       FAIL=1
     elif [ "$ha" = "$hb" ]; then
-      echo "  frame $f: uguale     $ha"
+      echo "  frame $f: ripetibile   $ha"
     else
-      echo "  frame $f: DIVERSO    $ha vs $hb"
+      echo "  frame $f: DIVERGE      $ha vs $hb"
       FAIL=1
     fi
+
+    hashes="$hashes $ha"
   done
+
+  # LA META' DEL TEST CHE MANCAVA, e senza la quale il verdetto mente.
+  #
+  # Confrontare due passate dello stesso frame dice solo che il render e'
+  # ripetibile. Una timeline ferma e' ripetibilissima: al primo giro il §8
+  # passava con tre hash uguali su tre, e passava perche' non si muoveva
+  # niente. Un test che una scena rotta supera non e' un test.
+  #
+  # Quindi si controlla anche il contrario: frame diversi devono dare immagini
+  # diverse. Se coincidono, la timeline non sta seguendo il clock.
+  local distinti
+  distinti=$(echo "$hashes" | tr ' ' '\n' | sed '/^$/d' | sort -u | wc -l | tr -d ' ')
+
+  if [ "$distinti" -eq "${#FRAMES[@]}" ]; then
+    echo "  la timeline avanza: ${#FRAMES[@]} frame, $distinti immagini distinte"
+  else
+    echo "  TIMELINE FERMA: ${#FRAMES[@]} frame ma solo $distinti immagini distinte"
+    FAIL=1
+  fi
 }
 
 echo "FrameLocked: lo stesso frame renderizzato due volte, in due invocazioni."

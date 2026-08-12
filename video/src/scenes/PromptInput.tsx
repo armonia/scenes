@@ -495,12 +495,24 @@ const Thread: React.FC<ThreadProps> = ({
           overflow: "hidden",
         }}
       >
+        {/* La conversazione precedente riempie il pannello dall'alto.
+            Non e' riempitivo: un thread ancorato in basso con tre righe che
+            galleggiano sopra il vuoto legge come una scatola, non come un'app
+            in uso, ed e' lo stesso difetto misurato sulle scene della landing.
+            Quello che esce dal bordo alto e' tagliato dall'overflow, che e'
+            esattamente come si legge una conversazione gia' scorsa. */}
+        <Msg who="user" text="Prendi i quattro commercial e dimmi cosa fanno davvero." />
+        <Msg
+          who="assistant"
+          text="Su quattro, solo i due Linear sono motion graphics. Cursor e Raycast sono girati con una camera: attore, luce calda, mani vere. Quelli non si replicano in codice."
+        />
+        <ToolRow file="ref/sheet_ovxL42LkKNg.jpg" />
         <Msg who="user" text="Guarda il render di OrbitLoop accanto al riferimento." />
         <Msg
           who="assistant"
           text="Il meccanismo copre il terzo centrale, il riferimento riempie il quadro. Le etichette a quella scala non si leggono."
         />
-        <ToolRow />
+        <ToolRow file="ref/sheet_7gZBxBTapDQ.jpg" />
 
         {/* Il messaggio spedito. Compare solo dopo il click su invia. */}
         {sent ? (
@@ -572,7 +584,7 @@ const Msg: React.FC<{
   );
 };
 
-const ToolRow: React.FC = () => (
+const ToolRow: React.FC<{ file: string }> = ({ file }) => (
   <div
     style={{
       display: "flex",
@@ -592,7 +604,7 @@ const ToolRow: React.FC = () => (
     <div style={{ fontFamily: monoStack, fontSize: 19, color: app.primary }}>
       Read
     </div>
-    <div style={{ fontSize: 19, color: app.textMuted }}>ref/sheet_7gZBxBTapDQ.jpg</div>
+    <div style={{ fontSize: 19, color: app.textMuted }}>{file}</div>
   </div>
 );
 

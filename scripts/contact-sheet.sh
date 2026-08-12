@@ -47,10 +47,12 @@ strip() {
       -vf "scale=${TILE_W}:-2" -y "$TMP/$tag-$(printf '%02d' "$i").png"
   done
 
-  montage "$TMP/$tag-"*.png -tile 4x2 -geometry +3+3 -background "#15171c" \
-    "$TMP/$tag-grid.png"
+  # -label "" perche' altrimenti montage prova a scrivere il nome del file e
+  # cerca un font che non gli e' stato dato.
+  magick montage "$TMP/$tag-"*.png -label "" -font "$FONT" \
+    -tile 4x2 -geometry +3+3 -background "#15171c" "$TMP/$tag-grid.png"
 
-  convert "$TMP/$tag-grid.png" \
+  magick "$TMP/$tag-grid.png" \
     -background "#15171c" -fill "#e6e8ec" -font "$FONT" -pointsize 30 \
     label:"  $label" +swap -gravity west -append "$TMP/$tag-strip.png"
 }
@@ -58,9 +60,9 @@ strip() {
 strip "$MINE" mine "NOSTRO   prompt-input   1920x1080   30fps   13s"
 strip "$REF" ref "RIFERIMENTO   Linear, Introducing Linear Diffs   52s"
 
-convert "$TMP/mine-strip.png" "$TMP/ref-strip.png" \
+magick "$TMP/mine-strip.png" "$TMP/ref-strip.png" \
   -background "#0b0d11" -gravity west -append \
   -bordercolor "#0b0d11" -border 16 "$OUT"
 
 echo "$OUT"
-identify -format '%wx%h\n' "$OUT"
+magick identify -format '%wx%h\n' "$OUT"
