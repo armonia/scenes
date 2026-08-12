@@ -317,15 +317,23 @@ export const OrbitLoop: React.FC<OrbitLoopProps> = ({
         </div>
       </AbsoluteFill>
 
-      {/* Grain: what stops a black frame reading as dead pixels. */}
-      <AbsoluteFill
-        style={{
-          opacity: 0.05,
-          mixBlendMode: "overlay",
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E\")",
-        }}
-      />
+      {/* Grain: what stops a black frame reading as dead pixels.
+          Drawn as an inline <svg> rather than a background-image on purpose. A
+          background-image is fetched, and a frame can be captured before the
+          fetch lands, which shows up as one grainless frame in the middle of a
+          render. An element in the tree is painted with the frame. */}
+      <AbsoluteFill style={{ opacity: 0.05, mixBlendMode: "overlay" }}>
+        <svg width="100%" height="100%">
+          <filter id="orbit-grain">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.85"
+              numOctaves={3}
+            />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#orbit-grain)" />
+        </svg>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };

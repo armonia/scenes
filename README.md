@@ -36,8 +36,21 @@ that is 3px off reads as a mockup.
 | | |
 |---|---|
 | `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/` |
+| `scripts/` | Two measurements, both run by hand. `contact-sheet.sh` builds our strip next to the reference's. `framelocked-verdict.sh` renders the same frame twice and compares hashes |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
 | `ref/` | Reference commercials and their contact sheets. **Not in git**, see below |
+
+## Verification happens on the render
+
+A scene looked at on its own always seems fine. What shows the gap is the
+comparison, so the check is a contact sheet of our render set directly beside
+one of the reference, both built by the same script with the same treatment.
+
+```bash
+npx remotion render PromptInput out/prompt-input.mp4   # from video/
+./scripts/contact-sheet.sh out/prompt-input-vs-ref.png
+./scripts/framelocked-verdict.sh
+```
 
 ```bash
 cd video
