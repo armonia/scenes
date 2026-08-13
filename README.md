@@ -36,7 +36,7 @@ that is 3px off reads as a mockup.
 | | |
 |---|---|
 | `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/` |
-| `scripts/` | Four things, all run by hand. Three measurements and one page. See below |
+| `scripts/` | Five things, all run by hand. Four measurements and one page. See below |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
 | `ref/` | Reference commercials and their contact sheets. **Not in git**, see below |
 
@@ -52,10 +52,21 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 
 ./scripts/contact-sheet.sh out/prompt-input-vs-ref.png  # composition, frozen
 ./scripts/review-page.sh                                # composition + rhythm, moving
+./scripts/beats.sh                                      # are all four beats on screen
 ./scripts/fill-measure.sh video/out/prompt-input.mp4    # does it fill the frame
 ./scripts/legibility.sh                                 # down to what size it reads
 ./scripts/framelocked-verdict.sh                        # is it really frame-locked
 ```
+
+`beats.sh` is the one that earns its keep. `prompt-input` promises four beats:
+the cursor arrives, types, sends, and the answer streams in. For a full day the
+render delivered three. The thread is anchored to the bottom and ran to y=922,
+the composer is opaque and starts at y=838, so the newest message sat
+underneath it: the response was assembling itself word by word where nobody
+could see it. Every type check passed the whole time. Nothing catches that
+except reading the finished frame, which is what this script does, and it
+requires the word count to *grow* across the streaming window rather than
+merely be non-zero.
 
 `contact-sheet.sh` and `review-page.sh` are the same judgement on two clocks.
 The contact sheet compares composition, which is a property of a still. The

@@ -60,6 +60,26 @@ const SLAB_H = 1080;
 const COMPOSER = { x: 372, y: 838, w: 1700, h: 84 };
 const SEND = { x: 1988, y: 856, r: 24 };
 
+// Quanto la pane sta sopra il fondo della lastra. Il thread arriva fin qui.
+const PANE_BOTTOM = 158;
+
+/**
+ * Il margine che tiene il thread SOPRA il composer, ed e' il difetto che ha
+ * fatto sembrare finita una scena che non lo era.
+ *
+ * Il thread finisce a 922 (1080 meno 158) e il composer, disegnato dopo e
+ * opaco, comincia a 838. I messaggi sono ancorati in basso, quindi l'ULTIMO
+ * finiva nei quattro quinti coperti: il prompt partiva, la risposta si
+ * componeva parola per parola e nessuno la vedeva mai. La scena mostrava tre
+ * dei quattro tempi chiesti, e la contro-prova e' che la fascia fra la bolla e
+ * il composer restava alla stessa luminanza dal frame 260 alla fine.
+ *
+ * Il numero e' derivato e non scritto a mano di proposito: se il composer si
+ * sposta, questo lo segue. Un 108 costante sarebbe tornato sbagliato al primo
+ * ritocco del layout.
+ */
+const THREAD_PAD_BOTTOM = SLAB_H - PANE_BOTTOM - COMPOSER.y + 24;
+
 // I frame della recita. La pausa prima dell'invio e' la parte che la rende
 // credibile: senza, l'invio parte insieme all'ultimo tasto e legge come uno
 // script che esegue, non come qualcuno che rilegge.
@@ -443,7 +463,7 @@ const Thread: React.FC<ThreadProps> = ({
         left: SIDEBAR_W,
         right: 0,
         top: 66,
-        bottom: 158,
+        bottom: PANE_BOTTOM,
         display: "flex",
         flexDirection: "column",
       }}
@@ -487,7 +507,7 @@ const Thread: React.FC<ThreadProps> = ({
       <div
         style={{
           flex: 1,
-          padding: "26px 34px 0",
+          padding: `26px 34px ${THREAD_PAD_BOTTOM}px`,
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
