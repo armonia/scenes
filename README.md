@@ -36,21 +36,38 @@ that is 3px off reads as a mockup.
 | | |
 |---|---|
 | `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/` |
-| `scripts/` | Two measurements, both run by hand. `contact-sheet.sh` builds our strip next to the reference's. `framelocked-verdict.sh` renders the same frame twice and compares hashes |
+| `scripts/` | Four things, all run by hand. Three measurements and one page. See below |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
 | `ref/` | Reference commercials and their contact sheets. **Not in git**, see below |
 
 ## Verification happens on the render
 
 A scene looked at on its own always seems fine. What shows the gap is the
-comparison, so the check is a contact sheet of our render set directly beside
-one of the reference, both built by the same script with the same treatment.
+comparison, so every check here puts our render and the reference through the
+same treatment and prints both columns. A number with nothing beside it is
+decoration.
 
 ```bash
 npx remotion render PromptInput out/prompt-input.mp4   # from video/
-./scripts/contact-sheet.sh out/prompt-input-vs-ref.png
-./scripts/framelocked-verdict.sh
+
+./scripts/contact-sheet.sh out/prompt-input-vs-ref.png  # composition, frozen
+./scripts/review-page.sh                                # composition + rhythm, moving
+./scripts/fill-measure.sh video/out/prompt-input.mp4    # does it fill the frame
+./scripts/legibility.sh                                 # down to what size it reads
+./scripts/framelocked-verdict.sh                        # is it really frame-locked
 ```
+
+`contact-sheet.sh` and `review-page.sh` are the same judgement on two clocks.
+The contact sheet compares composition, which is a property of a still. The
+page compares rhythm, which only exists in motion: the uneven typing, the pause
+before send, the pace of the streaming response. A strip of frames cannot show
+any of that.
+
+`fill-measure.sh` and `legibility.sh` are the two defects that sank the first
+scene, turned into numbers. Measured on this render: the frame is full on all
+four edges at every instant sampled, where the reference keeps two of four
+alive and `OrbitLoop` none. Text survives downscaling at least as well as the
+reference, and better below 640px wide.
 
 ```bash
 cd video
