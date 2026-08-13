@@ -97,9 +97,9 @@ cat > "$OUT" <<HTML
 <button id="both">Fai partire tutti e due</button>
 
 <h2>Cosa guardare</h2>
-<p>Tre cose, che sono le tre per cui <code>OrbitLoop</code> non reggeva.</p>
+<p><b>I quattro tempi ci sono tutti?</b> Il cursore entra, digita, invia, e la risposta arriva parola per parola. Il quarto e' quello che fino a ieri mancava: il thread era ancorato in basso e finiva sotto il composer, quindi la risposta si componeva dove non la vedeva nessuno. Adesso arriva verso il secondo nove.</p>
 <p><b>Il quadro e' pieno?</b> La lastra borda fuori dall'inquadratura da entrambi i lati, come una finestra che continua oltre lo schermo. <code>OrbitLoop</code> stava nel terzo centrale e leggeva come un rettangolo appoggiato al centro.</p>
-<p><b>Si legge?</b> A questa scala il testo del prompt e della risposta deve stare leggibile, altrimenti la scena non racconta niente.</p>
+<p><b>Si legge?</b> A questa scala il testo del prompt e della risposta deve stare leggibile, altrimenti la scena non racconta niente. Misurato: rimpicciolendo i due video allo stesso modo, sotto i 640px di larghezza il nostro testo sopravvive meglio del riferimento.</p>
 <p><b>Il ritmo e' una mano o uno script?</b> La battitura e' irregolare e c'e' una pausa prima dell'invio. Senza quella pausa l'invio parte insieme all'ultimo tasto e si vede che e' una macchina.</p>
 
 <h2>La differenza onesta</h2>
