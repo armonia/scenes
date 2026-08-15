@@ -6,6 +6,7 @@ dist/
 # Render output. Rebuildable from source, and big.
 out/
 video/out/
+showcase/dist/
 
 # Reference commercials downloaded with yt-dlp, plus the contact sheets made
 # from them. Someone else's copyrighted work: it is study material, not ours to

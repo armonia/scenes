@@ -322,7 +322,7 @@ const Chrome: React.FC = () => (
     {[
       { name: "Scene motion", active: true },
       { name: "landing", active: false },
-      { name: "finance", active: false },
+      { name: "billing", active: false },
     ].map((t) => (
       <div
         key={t.name}
@@ -389,13 +389,13 @@ const Sidebar: React.FC = () => (
       PROGETTI
     </div>
     {[
-      { n: "topics-app", d: 0, on: true },
+      { n: "acme-app", d: 0, on: true },
       { n: "client", d: 1, on: false },
       { n: "server", d: 1, on: false },
       { n: "landing", d: 0, on: false },
-      { n: "finance", d: 0, on: false },
-      { n: "gtm-board", d: 0, on: false },
-      { n: "match-compass", d: 0, on: false },
+      { n: "billing", d: 0, on: false },
+      { n: "growth-board", d: 0, on: false },
+      { n: "atlas", d: 0, on: false },
     ].map((r) => (
       <div
         key={r.n + r.d}
