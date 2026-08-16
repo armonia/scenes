@@ -36,7 +36,8 @@ that is 3px off reads as a mockup.
 | | |
 |---|---|
 | `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/` |
-| `scripts/` | Five things, all run by hand. Four measurements and one page. See below |
+| `scripts/` | Six things, all run by hand. Four measurements, one review page, one showcase build. See below |
+| `showcase/` | The public page. `index.html` is committed, the renders beside it are not: `showcase-build.sh` puts them there |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
 | `ref/` | Reference commercials and their contact sheets. **Not in git**, see below |
 
@@ -56,6 +57,7 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/fill-measure.sh video/out/prompt-input.mp4    # does it fill the frame
 ./scripts/legibility.sh                                 # down to what size it reads
 ./scripts/framelocked-verdict.sh                        # is it really frame-locked
+./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 ```
 
 `beats.sh` is the one that earns its keep. `prompt-input` promises four beats:
@@ -86,6 +88,25 @@ npm install
 npm run dev          # Remotion studio
 npx remotion render <CompositionId> out/<name>.mp4
 ```
+
+## The showcase page
+
+`showcase/index.html` is the public page: the two scenes playing, the four
+rules, the license note. It carries no build step and no dependency, so what
+you open locally is what ships.
+
+The renders are not committed, which is the only thing to know about deploying
+it. `showcase-build.sh` copies them next to the page into `showcase/dist/`, and
+that directory is what goes up:
+
+```bash
+./scripts/showcase-build.sh
+npx wrangler pages deploy showcase/dist --project-name remotion-scenes
+```
+
+Re-render before building whenever a scene changes. The script refuses to
+assemble a page whose videos are missing, but it cannot tell a stale render
+from a fresh one.
 
 ## Licensing, which has two halves
 

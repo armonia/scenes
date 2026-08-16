@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>remotion-scenes — frame-locked scenes for product commercials</title>
+    <meta
+      name="description"
+      content="Scenes for software product commercials, written in Remotion and locked to the frame clock. A prompt being typed, a cursor that acts, real app UI on a tilted plane, a response streaming in."
+    />
+    <meta property="og:title" content="remotion-scenes" />
+    <meta
+      property="og:description"
+      content="Frame-locked scenes for software product commercials. Real UI, not a drawing of UI."
+    />
+    <style>
+      :root {
+        --bg: hsl(222 16% 8.5%);
+        --surface: hsl(222 14% 11%);
+        --elevated: hsl(220 13% 14%);
+        --border: hsl(220 11% 18%);
+        --text: hsl(210 20% 92%);
+        --muted: hsl(215 12% 62%);
+        --faint: hsl(215 10% 44%);
+        --accent: hsl(18 74% 60%);
+        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.55;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 28px;
+      }
+      header {
+        padding: 92px 0 56px;
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 13px;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin: 0 0 20px;
+      }
+      h1 {
+        font-size: clamp(38px, 6vw, 66px);
+        line-height: 1.05;
+        letter-spacing: -0.025em;
+        margin: 0 0 22px;
+        font-weight: 600;
+      }
+      .lede {
+        font-size: clamp(17px, 2vw, 21px);
+        color: var(--muted);
+        max-width: 62ch;
+        margin: 0;
+      }
+      .lede strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 34px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        height: 44px;
+        padding: 0 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--elevated);
+        color: var(--text);
+        text-decoration: none;
+        font-size: 15px;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+      .btn:hover {
+        background: hsl(220 12% 17%);
+        border-color: hsl(220 11% 26%);
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: hsl(222 30% 8%);
+        font-weight: 600;
+      }
+      .btn.primary:hover {
+        background: hsl(18 74% 65%);
+        border-color: hsl(18 74% 65%);
+      }
+      section {
+        padding: 40px 0;
+      }
+      .scene {
+        margin-bottom: 72px;
+      }
+      .scene h2 {
+        font-size: 24px;
+        letter-spacing: -0.01em;
+        margin: 0 0 6px;
+        font-weight: 600;
+      }
+      .scene h2 span {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--faint);
+        margin-left: 12px;
+        letter-spacing: 0;
+      }
+      .scene p {
+        color: var(--muted);
+        max-width: 68ch;
+        margin: 0 0 20px;
+        font-size: 16px;
+      }
+      .frame {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #000;
+        line-height: 0;
+      }
+      video {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .rules {
+        border-top: 1px solid var(--border);
+        padding-top: 48px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 28px;
+      }
+      .rule h3 {
+        font-size: 16px;
+        margin: 0 0 8px;
+        font-weight: 600;
+      }
+      .rule p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+      .section-title {
+        font-family: var(--mono);
+        font-size: 13px;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin: 0 0 28px;
+      }
+      footer {
+        border-top: 1px solid var(--border);
+        margin-top: 64px;
+        padding: 30px 0 64px;
+        color: var(--faint);
+        font-size: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 22px;
+        justify-content: space-between;
+      }
+      footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+      footer a:hover {
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <p class="eyebrow">Open source · MIT</p>
+        <h1>Scenes for software<br />product commercials.</h1>
+        <p class="lede">
+          Written in Remotion and locked to the frame clock. The ecosystem ships
+          81 templates and nine of them are ways to reveal a logo. None of them
+          do <strong>a prompt being typed</strong>, a cursor that acts, real app
+          UI on a tilted plane, or <strong>a response streaming in</strong>. That
+          gap is what this is for.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="https://github.com/armonia/remotion-scenes"
+            >Source on GitHub</a
+          >
+          <a class="btn" href="#scenes">Watch the scenes</a>
+        </div>
+      </header>
+
+      <section id="scenes">
+        <p class="section-title">The scenes</p>
+
+        <div class="scene">
+          <h2>Prompt input <span>PromptInput · 1920×1080 · 30fps</span></h2>
+          <p>
+            Four beats in one unbroken shot: the cursor arrives, the prompt is
+            typed with uneven human rhythm, it is sent, and the answer streams
+            back word by word. The app behind it is real product UI — its own
+            tokens, its own radii, the system font stack — not a drawing of it.
+          </p>
+          <div class="frame">
+            <video
+              src="prompt-input.mp4"
+              autoplay
+              loop
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+          </div>
+        </div>
+
+        <div class="scene">
+          <h2>Orbit loop <span>OrbitLoop · 1920×1080 · 30fps</span></h2>
+          <p>
+            A continuous orbit that never cuts, built so a parent timeline can
+            drive it or leave it to run on its own frame. It exists to be chained
+            into: a scene has to be able to enter from the previous one's final
+            state.
+          </p>
+          <div class="frame">
+            <video
+              src="orbit-loop.mp4"
+              autoplay
+              loop
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="section-title">Four rules</p>
+        <div class="rules">
+          <div class="rule">
+            <h3>Frame-locked</h3>
+            <p>
+              <code>useCurrentFrame()</code> and nothing else. No CSS keyframes,
+              no rAF, no wall clock. A frame renders the same in the studio and
+              in headless CI.
+            </p>
+          </div>
+          <div class="rule">
+            <h3>A progress escape hatch</h3>
+            <p>
+              Every scene takes a normalized 0→1 progress so a parent timeline
+              can drive it. Left unset, it derives one from its own frame.
+            </p>
+          </div>
+          <div class="rule">
+            <h3>No cuts</h3>
+            <p>
+              The reference commercials run 52 and 41 seconds in one shot. Scenes
+              chain by continuous transformation, not by cut. Architecture, not
+              taste.
+            </p>
+          </div>
+          <div class="rule">
+            <h3>Real UI</h3>
+            <p>
+              Slabs of the actual product on inclined planes, with the product's
+              own tokens. A mockup that is 3px off reads as a mockup.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <span>Code MIT. Remotion carries its own license — check it before you render commercially.</span>
+        <span
+          ><a href="https://github.com/armonia/remotion-scenes">GitHub</a> ·
+          <a href="https://armonia.io">Armonia</a></span
+        >
+      </footer>
+    </div>
+  </body>
+</html>
