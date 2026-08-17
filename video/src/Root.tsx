@@ -1,8 +1,8 @@
 import "./index.css";
 import { Composition } from "remotion";
-import { OrbitLoop } from "./scenes/OrbitLoop";
 import { PromptInput } from "./scenes/PromptInput";
 import { FrameLockedProbe } from "./scenes/FrameLockedProbe";
+import { UIMockup } from "./scenes/UIMockup";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -39,27 +39,13 @@ export const RemotionRoot: React.FC = () => {
       />
 
       <Composition
-        id="OrbitLoop"
-        component={OrbitLoop}
-        durationInFrames={240}
+        id="UIMockup"
+        component={UIMockup}
+        durationInFrames={300}
         fps={30}
         width={1920}
         height={1080}
-        defaultProps={{
-          steps: [
-            "issue enters triage",
-            "find bug labels",
-            "search context",
-            "start coding session",
-            "draft root cause analysis",
-            "review issues",
-            "create follow-up issues",
-            "issue moved to done",
-          ],
-          wordmark: "Armonia",
-          tagline: "Every loop, closed.",
-          accent: "#ffffff",
-        }}
+        defaultProps={{}}
       />
     </>
   );
