@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" style="font-family: system-ui, sans-serif;">
+  <rect width="900" height="560" fill="#141820"/>
+
+  <!-- Title -->
+  <text x="450" y="40" text-anchor="middle" font-size="20" fill="#e6e8ec" font-weight="600">UIMockup — piano 3D inclinato · rimpiazzo OrbitLoop</text>
+
+  <!-- Scene frame (inclined window representation) -->
+  <!-- Background blur layer -->
+  <g transform="translate(70, 80)">
+    <!-- Background slab (tilted) -->
+    <rect x="20" y="30" width="540" height="300" rx="10"
+          fill="#141820" stroke="#2a3040" stroke-width="1.5" opacity="0.5"
+          transform="skewY(-4) skewX(-8)"/>
+    <text x="30" y="55" font-size="12" fill="#7d838d" transform="skewY(-4) skewX(-8)">blur 14px · opacity 0.45</text>
+    <text x="30" y="72" font-size="11" fill="#555d70" transform="skewY(-4) skewX(-8)">layer profondita di campo</text>
+
+    <!-- Main slab (tilted, sharper) -->
+    <rect x="60" y="60" width="560" height="340" rx="10"
+          fill="#1b1f2b" stroke="#2f3a50" stroke-width="2"
+          transform="skewY(-3) skewX(-6)"/>
+
+    <!-- Chrome bar -->
+    <rect x="60" y="60" width="560" height="40" rx="10"
+          fill="#111520" stroke="#2f3a50" stroke-width="1"
+          transform="skewY(-3) skewX(-6)"/>
+    <circle cx="80" cy="80" r="6" fill="#ff5f57" transform="skewY(-3) skewX(-6)"/>
+    <circle cx="98" cy="80" r="6" fill="#febc2e" transform="skewY(-3) skewX(-6)"/>
+    <circle cx="116" cy="80" r="6" fill="#28c840" transform="skewY(-3) skewX(-6)"/>
+
+    <!-- Sidebar -->
+    <rect x="60" y="100" width="100" height="300" fill="#171c28" stroke="#2f3a50" stroke-width="1"
+          transform="skewY(-3) skewX(-6)"/>
+
+    <!-- Kanban columns (3) -->
+    <rect x="165" y="110" width="130" height="270" rx="6" fill="#1d2233" stroke="#252d40" stroke-width="1"
+          transform="skewY(-3) skewX(-6)"/>
+    <rect x="305" y="110" width="130" height="270" rx="6" fill="#1d2233" stroke="#252d40" stroke-width="1"
+          transform="skewY(-3) skewX(-6)"/>
+    <rect x="445" y="110" width="130" height="270" rx="6" fill="#1d2233" stroke="#252d40" stroke-width="1"
+          transform="skewY(-3) skewX(-6)"/>
+
+    <!-- Detail panel -->
+    <rect x="580" y="100" width="40" height="300" fill="#171c28" stroke="#2f3a50" stroke-width="1"
+          transform="skewY(-3) skewX(-6)"/>
+
+    <!-- Edge highlight (thickness) -->
+    <rect x="60" y="398" width="560" height="3" fill="rgba(255,255,255,0.15)"
+          transform="skewY(-3) skewX(-6)"/>
+  </g>
+
+  <!-- Annotations -->
+  <!-- Arrow: camera slide -->
+  <line x1="680" y1="150" x2="620" y2="170" stroke="#4d94ff" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="685" y="148" font-size="13" fill="#4d94ff">camera slide</text>
+  <text x="685" y="163" font-size="11" fill="#7d9acc">translateX 900→0</text>
+  <text x="685" y="176" font-size="11" fill="#7d9acc">bezier(0.16,1,0.3,1)</text>
+
+  <!-- Arrow: yaw rotation -->
+  <line x1="680" y1="210" x2="620" y2="220" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="685" y="208" font-size="13" fill="#34d399">rotateY</text>
+  <text x="685" y="223" font-size="11" fill="#7ab8a0">-18 → -9 gradi</text>
+  <text x="685" y="236" font-size="11" fill="#7ab8a0">inOut(quad)</text>
+
+  <!-- Arrow: card stagger -->
+  <line x1="680" y1="270" x2="540" y2="280" stroke="#d97757" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <text x="685" y="268" font-size="13" fill="#d97757">card stagger</text>
+  <text x="685" y="283" font-size="11" fill="#b89070">col*12 + card*8 fr</text>
+  <text x="685" y="296" font-size="11" fill="#b89070">translateY 20→0</text>
+
+  <!-- Arrow: edge thickness -->
+  <line x1="680" y1="340" x2="600" y2="390" stroke="#aab0ba" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+  <text x="685" y="338" font-size="13" fill="#aab0ba">spessore bordo</text>
+  <text x="685" y="353" font-size="11" fill="#777d87">filo chiaro inferiore</text>
+
+  <!-- Bottom legend -->
+  <rect x="60" y="480" width="780" height="60" rx="8" fill="#1b1f2b" stroke="#2f3a50" stroke-width="1"/>
+  <text x="80" y="502" font-size="13" fill="#7d838d">Compositura</text>
+
+  <circle cx="90" cy="522" r="5" fill="#4d94ff"/>
+  <text x="100" y="526" font-size="12" fill="#aab0ba">lastra 2400x1200 (>1920px: bordi escono)</text>
+
+  <circle cx="300" cy="522" r="5" fill="#34d399"/>
+  <text x="310" y="526" font-size="12" fill="#aab0ba">frame-locked: solo useCurrentFrame()</text>
+
+  <circle cx="540" cy="522" r="5" fill="#d97757"/>
+  <text x="550" y="526" font-size="12" fill="#aab0ba">token da theme.ts (radii 8/6/4, font stack)</text>
+
+  <!-- Markers -->
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#4d94ff"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#d97757"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#aab0ba"/>
+    </marker>
+  </defs>
+</svg>
