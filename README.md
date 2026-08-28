@@ -77,10 +77,14 @@ before send, the pace of the streaming response. A strip of frames cannot show
 any of that.
 
 `fill-measure.sh` and `legibility.sh` are the two defects that sank the first
-scene, turned into numbers. Measured on this render: the frame is full on all
-four edges at every instant sampled, where the reference keeps two of four
-alive and `OrbitLoop` none. Text survives downscaling at least as well as the
-reference, and better below 640px wide.
+scene, turned into numbers. Measured on both renders: the frame is full on all
+four edges at every instant sampled (20 of 20 samples on `ui-mockup`), where the
+reference keeps two of four alive and the retired `OrbitLoop` none. Text
+survives downscaling at least as well as the reference, and better below 640px
+wide.
+
+`OrbitLoop` is what `UIMockup` replaced, and it is named here only as the
+baseline the measurements are read against. It is no longer a composition.
 
 ```bash
 cd video
@@ -91,9 +95,9 @@ npx remotion render <CompositionId> out/<name>.mp4
 
 ## The showcase page
 
-`showcase/index.html` is the public page: the two scenes playing, the four
-rules, the license note. It carries no build step and no dependency, so what
-you open locally is what ships.
+`showcase/index.html` is the public page: the two scenes playing (`PromptInput`
+and `UIMockup`), the four rules, the license note. It carries no build step and
+no dependency, so what you open locally is what ships.
 
 The renders are not committed, which is the only thing to know about deploying
 it. `showcase-build.sh` copies them next to the page into `showcase/dist/`, and
@@ -103,6 +107,8 @@ that directory is what goes up:
 ./scripts/showcase-build.sh
 npx wrangler pages deploy showcase/dist --project-name remotion-scenes
 ```
+
+Live at <https://scenes.armonia.io>.
 
 Re-render before building whenever a scene changes. The script refuses to
 assemble a page whose videos are missing, but it cannot tell a stale render

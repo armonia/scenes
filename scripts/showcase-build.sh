@@ -16,10 +16,14 @@ src="$root/video/out"
 dist="$root/showcase/dist"
 
 missing=0
-for f in prompt-input.mp4 orbit-loop.mp4; do
+for f in prompt-input.mp4 ui-mockup.mp4; do
   if [ ! -f "$src/$f" ]; then
     echo "missing render: video/out/$f" >&2
-    echo "  cd video && npx remotion render ${f%.mp4} out/$f" >&2
+    case "$f" in
+      prompt-input.mp4) id=PromptInput ;;
+      ui-mockup.mp4)    id=UIMockup ;;
+    esac
+    echo "  cd video && npx remotion render $id out/$f" >&2
     missing=1
   fi
 done
@@ -28,7 +32,7 @@ done
 rm -rf "$dist"
 mkdir -p "$dist"
 cp "$root/showcase/index.html" "$dist/index.html"
-cp "$src/prompt-input.mp4" "$src/orbit-loop.mp4" "$dist/"
+cp "$src/prompt-input.mp4" "$src/ui-mockup.mp4" "$dist/"
 
 echo "showcase/dist ready:"
 du -h "$dist"/* | sed 's|'"$root"'/||'

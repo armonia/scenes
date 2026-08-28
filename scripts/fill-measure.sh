@@ -24,6 +24,12 @@
 # Uso:  ./scripts/fill-measure.sh <video.mp4>
 set -uo pipefail
 
+# La misura e' un numero con il punto decimale, e printf lo formatta secondo il
+# locale. Su una macchina italiana LC_NUMERIC=it_IT vuole la virgola, quindi
+# `printf '%.2f' 25.34` fallisce con "invalid number" e la colonna esce vuota.
+# Fissare il locale numerico qui rende la stampa uguale ovunque giri.
+export LC_NUMERIC=C
+
 SRC="${1:?serve un video}"
 SOGLIA=2.0
 
