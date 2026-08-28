@@ -61,6 +61,7 @@ jobs:
           npx remotion render PromptInput out/prompt-input.mp4
           npx remotion render UIMockup    out/ui-mockup.mp4
           npx remotion render CardHandoff out/card-handoff.mp4
+          npx remotion render CardFocus   out/card-focus.mp4
 
       # Le misure che possono fallire. Se una scena e' rotta, il deploy non parte.
       - name: misure
@@ -69,7 +70,23 @@ jobs:
           ./scripts/fill-measure.sh video/out/ui-mockup.mp4
           ./scripts/fill-measure.sh video/out/card-handoff.mp4
           ./scripts/seam.sh
+          ./scripts/seam.sh video/out/card-handoff.mp4 video/out/card-focus.mp4
           ./scripts/handoff-travel.sh
+          ./scripts/fill-measure.sh video/out/card-focus.mp4
+          ./scripts/focus-sharpness.sh
+
+      # Il banco nuovo va messo alla prova sul caso che deve bocciare, non solo
+      # sul render che deve promuovere. Senza questo passo "verde" vorrebbe dire
+      # soltanto che lo script e' arrivato in fondo.
+      - name: il banco boccia il suo caso peggiore?
+        working-directory: .
+        run: |
+          ./scripts/fixture-screenshot.sh
+          if ./scripts/focus-sharpness.sh video/out/.fixture-card-focus-screenshot.mp4 >/dev/null 2>&1; then
+            echo "focus-sharpness.sh promuove una scena fatta di screenshot: non misura niente." >&2
+            exit 1
+          fi
+          echo "focus-sharpness.sh boccia la fixture, come deve."
 
       - name: assembla
         run: ./scripts/showcase-build.sh
