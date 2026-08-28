@@ -27,6 +27,9 @@
 # Uso:  ./scripts/legibility.sh
 set -uo pipefail
 
+# ImageMagick si chiama `magick` sulla 7 e `convert`/`compare` sulla 6.
+. "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MINE="$ROOT/video/out/prompt-input.mp4"
 REF="$ROOT/ref/7gZBxBTapDQ.mp4"
@@ -68,7 +71,7 @@ measure() {
         -vf "scale=${w}:-2" -y "$WORK/s.png" 2>/dev/null
       # L'OCR lavora meglio su una scala di grigi con un po' di contrasto, e il
       # trattamento e' identico per i due video: e' l'unica cosa che conta.
-      magick "$WORK/s.png" -colorspace Gray -normalize "$WORK/s2.png"
+      "${IM_CONVERT[@]}" "$WORK/s.png" -colorspace Gray -normalize "$WORK/s2.png"
       local n
       n=$(ocr_words "$WORK/s2.png" | wc -l | tr -d ' ')
       total=$((total + n))

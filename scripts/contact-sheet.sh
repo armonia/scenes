@@ -15,6 +15,9 @@
 # Uso:  ./scripts/contact-sheet.sh <destinazione.png>
 set -euo pipefail
 
+# ImageMagick si chiama `magick` sulla 7 e `convert`/`compare` sulla 6.
+. "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:-$ROOT/out/prompt-input-vs-ref.png}"
 
@@ -49,10 +52,10 @@ strip() {
 
   # -label "" perche' altrimenti montage prova a scrivere il nome del file e
   # cerca un font che non gli e' stato dato.
-  magick montage "$TMP/$tag-"*.png -label "" -font "$FONT" \
+  "${IM_MONTAGE[@]}" "$TMP/$tag-"*.png -label "" -font "$FONT" \
     -tile 4x2 -geometry +3+3 -background "#15171c" "$TMP/$tag-grid.png"
 
-  magick "$TMP/$tag-grid.png" \
+  "${IM_CONVERT[@]}" "$TMP/$tag-grid.png" \
     -background "#15171c" -fill "#e6e8ec" -font "$FONT" -pointsize 30 \
     label:"  $label" +swap -gravity west -append "$TMP/$tag-strip.png"
 }
@@ -60,9 +63,9 @@ strip() {
 strip "$MINE" mine "NOSTRO   prompt-input   1920x1080   30fps   13s"
 strip "$REF" ref "RIFERIMENTO   Linear, Introducing Linear Diffs   52s"
 
-magick "$TMP/mine-strip.png" "$TMP/ref-strip.png" \
+"${IM_CONVERT[@]}" "$TMP/mine-strip.png" "$TMP/ref-strip.png" \
   -background "#0b0d11" -gravity west -append \
   -bordercolor "#0b0d11" -border 16 "$OUT"
 
 echo "$OUT"
-magick identify -format '%wx%h\n' "$OUT"
+"${IM_IDENTIFY[@]}" -format '%wx%h\n' "$OUT"

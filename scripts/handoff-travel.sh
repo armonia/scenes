@@ -23,6 +23,9 @@
 #
 # Uso:  ./scripts/handoff-travel.sh [video.mp4]
 set -uo pipefail
+
+# ImageMagick si chiama `magick` sulla 7 e `convert`/`compare` sulla 6.
+. "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
 export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -54,20 +57,22 @@ for t in $SAMPLES; do
   if [ -n "$prev" ]; then
     # I pixel cambiati fra due campioni. La soglia toglie il rumore di encoding
     # e le micro-variazioni della camera, che si muove pianissimo.
-    magick "$prev" "$f" -compose difference -composite \
+    "${IM_CONVERT[@]}" "$prev" "$f" -compose difference -composite \
       -colorspace Gray -threshold 12% "$WORK/d$t.png"
 
     # Il centroide dei pixel accesi, e quanti sono.
-    read -r cx n < <(magick "$WORK/d$t.png" -format '%[fx:w] %[fx:h]' info: >/dev/null 2>&1; \
+    read -r cx n < <( \
       python3 - "$WORK/d$t.png" <<'PY'
-import subprocess, sys
+import os, subprocess, sys
 # Estrae la maschera come testo grezzo: piu' semplice di far fare a IM la
 # statistica dei momenti, e non dipende da quali feature ha questa build.
 out = subprocess.run(
-    ["magick", sys.argv[1], "-depth", "8", "gray:-"],
+    os.environ["IM_CONVERT_CMD"].split() + [sys.argv[1], "-depth", "8", "gray:-"],
     capture_output=True, check=True).stdout
-w = int(subprocess.run(["magick", sys.argv[1], "-format", "%w", "info:"],
-                       capture_output=True, text=True, check=True).stdout)
+# `identify -format %w file` e basta: la 7 tollera anche un "info:" in coda,
+# la 6 no e esce 1. La forma senza suffisso funziona su entrambe.
+w = int(subprocess.run(os.environ["IM_IDENTIFY_CMD"].split() + ["-format", "%w", sys.argv[1]],
+                       capture_output=True, text=True, check=True).stdout.strip())
 tot = sx = 0
 for i, v in enumerate(out):
     if v > 127:
@@ -76,6 +81,16 @@ for i, v in enumerate(out):
 print(f"{sx/tot:.1f} {tot}" if tot else "-1 0")
 PY
 )
+    # Se la lettura non ha prodotto due numeri, lo strumento non ha risposto:
+    # senza questo, `n` resta vuoto, il test numerico sotto stampa "integer
+    # expected" e il campione viene semplicemente saltato. Il verdetto finale
+    # dice allora "la card non viaggia", che e' una diagnosi falsa per un
+    # problema di attrezzatura.
+    case "${cx:-}|${n:-}" in
+      *'|'|'|'*) echo "lettura del centroide fallita a ${t}s" >&2; exit 3 ;;
+    esac
+    case "$n" in ''|*[!0-9]*) echo "conteggio non numerico a ${t}s: '$n'" >&2; exit 3 ;; esac
+
     printf '  %-6s x=%-8s pixel=%s\n' "${t}s" "$cx" "$n"
     # Sotto questa soglia il frame non contiene un oggetto in movimento, solo
     # rumore: non e' un campione, va scartato.

@@ -23,6 +23,9 @@
 #
 # Uso:  ./scripts/seam.sh
 set -uo pipefail
+
+# ImageMagick si chiama `magick` sulla 7 e `convert`/`compare` sulla 6.
+. "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
 export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -70,7 +73,7 @@ misura() {
   local diff
   # AE conta i pixel che differiscono oltre la fuzz. Su stderr, e con exit 1
   # quando ce ne sono: entrambi previsti.
-  diff=$(magick compare -metric AE -fuzz "$FUZZ" "$x" "$y" null: 2>&1 || true)
+  diff=$("${IM_COMPARE[@]}" -metric AE -fuzz "$FUZZ" "$x" "$y" null: 2>&1 || true)
   diff=$(echo "$diff" | tr -d '[:space:]' | sed 's/\..*//')
   # AE deve dare un intero. Se qui c'e' un messaggio d'errore, il confronto non
   # e' avvenuto e proseguire vorrebbe dire stampare un numero inventato.
@@ -81,7 +84,7 @@ misura() {
       ;;
   esac
   local tot
-  tot=$(magick identify -format '%[fx:w*h]' "$x")
+  tot=$("${IM_IDENTIFY[@]}" -format '%[fx:w*h]' "$x")
   python3 -c "print(f'{$diff / $tot:.5f} {$diff}')"
 }
 

@@ -24,6 +24,9 @@
 # Uso:  ./scripts/beats.sh [video.mp4]
 set -uo pipefail
 
+# ImageMagick si chiama `magick` sulla 7 e `convert`/`compare` sulla 6.
+. "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="${1:-$ROOT/video/out/prompt-input.mp4}"
 
@@ -49,7 +52,7 @@ ocr_at() {
   local t
   t=$(python3 -c "print(f'{$frame / $FPS:.4f}')")
   ffmpeg -v error -ss "$t" -i "$SRC" -frames:v 1 -y "$WORK/f.png" 2>/dev/null
-  magick "$WORK/f.png" -colorspace Gray -normalize "$WORK/g.png"
+  "${IM_CONVERT[@]}" "$WORK/f.png" -colorspace Gray -normalize "$WORK/g.png"
   tesseract "$WORK/g.png" stdout --psm 6 2>/dev/null | tr '[:upper:]' '[:lower:]'
 }
 
