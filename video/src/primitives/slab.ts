@@ -115,6 +115,8 @@ export type CameraPose = {
   pitch: number;
   pushZ: number;
   slideX: number;
+  /** Opzionale: finora nessuna scena si spostava in verticale, CardFocus si'. */
+  slideY?: number;
 };
 
 /**
@@ -135,3 +137,130 @@ export const UI_MOCKUP_START_POSE: CameraPose = {
   pushZ: 0,
   slideX: 900,
 };
+
+/**
+ * La posa in cui CardHandoff si ferma.
+ *
+ * Stava scritta come tre numeri letterali dentro `CardHandoff.tsx`, il che
+ * andava bene finche' nessuna scena doveva agganciarsi dopo. Dal momento in cui
+ * ce n'e' una, quei numeri sono un punto di giunzione, e un punto di giunzione
+ * copiato in due file resta esatto solo finche' nessuno tocca una delle copie.
+ * E' lo stesso ragionamento per cui UI_MOCKUP_END_POSE e' qui e non dentro
+ * UIMockup: `seam.sh` misura la giunta, ma non puo' misurare l'intenzione.
+ */
+export const CARD_HANDOFF_END_POSE: CameraPose = {
+  yaw: -4,
+  pitch: 1.2,
+  pushZ: 96,
+  slideX: 0,
+};
+
+/* ------------------------------------------------------------------ */
+/* Chi consegna cosa, e dove finisce                                    */
+/* ------------------------------------------------------------------ */
+
+/** La card che CardHandoff sposta, e le due colonne fra cui la sposta. */
+export const HANDOFF_FROM_COL = 1;
+export const HANDOFF_FROM_IDX = 1;
+export const HANDOFF_TO_COL = 2;
+
+export const handoffCard = (): Card =>
+  COLUMNS[HANDOFF_FROM_COL]!.cards[HANDOFF_FROM_IDX] as Card;
+
+/** La colonna di arrivo come resta dopo la consegna: le sue card piu' quella. */
+export const handoffTargetCards = (): Card[] => [
+  ...COLUMNS[HANDOFF_TO_COL]!.cards,
+  handoffCard(),
+];
+
+/**
+ * Il rettangolo in cui la card si posa, in coordinate lastra. Una scena che
+ * deve inquadrarla lo chiede qui invece di rifare la somma delle altezze: la
+ * somma e' gia' `cardY`, e rifarla e' il modo in cui due file smettono di
+ * essere d'accordo.
+ */
+export const handoffLandedRect = (): {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+} => {
+  const cards = handoffTargetCards();
+  const idx = cards.length - 1;
+  return {
+    x: columnX(HANDOFF_TO_COL),
+    y: cardY(cards, idx),
+    w: COL_W,
+    h: cardHeight(cards[idx] as Card),
+  };
+};
+
+/* ------------------------------------------------------------------ */
+/* Come la lastra finisce sullo schermo                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * L'impianto di ripresa, che finora stava ricopiato dentro ogni scena: la
+ * composizione, la scala della lastra, la prospettiva e la sua origine.
+ *
+ * Serve qui perche' una scena che deve centrare un elemento preciso ha bisogno
+ * di sapere dove quell'elemento finisce sullo schermo, e quel calcolo non si fa
+ * a occhio spostando numeri finche' sembra giusto: si fa una volta e si
+ * verifica sul render.
+ */
+export const COMP_W = 1920;
+export const COMP_H = 1080;
+export const SLAB_SCALE = 1.04;
+export const PERSPECTIVE = 2600;
+export const PERSPECTIVE_ORIGIN_Y = 0.46;
+
+/** Dove cade un punto della lastra, con yaw e pitch a zero e prima della spinta in Z. */
+export const slabPointOnScreen = (
+  x: number,
+  y: number,
+): { x: number; y: number } => ({
+  x: (COMP_W - SLAB_W) / 2 + SLAB_W / 2 + (x - SLAB_W / 2) * SLAB_SCALE,
+  y: (COMP_H - SLAB_H) / 2 + SLAB_H / 2 + (y - SLAB_H / 2) * SLAB_SCALE,
+});
+
+/**
+ * Lo scostamento che porta quel punto sull'origine della prospettiva.
+ *
+ * Serve perche' l'origine della prospettiva e' l'unico punto del quadro che non
+ * si sposta mentre la camera avanza in Z: qualsiasi altro punto scappa verso il
+ * bordo. Centrare li' l'oggetto e' la condizione perche' una discesa al macro
+ * resti puntata su di lui invece di scivolargli accanto.
+ */
+export const centreOn = (
+  x: number,
+  y: number,
+): { slideX: number; slideY: number } => {
+  const p = slabPointOnScreen(x, y);
+  return {
+    slideX: COMP_W / 2 - p.x,
+    slideY: COMP_H * PERSPECTIVE_ORIGIN_Y - p.y,
+  };
+};
+
+/** L'ingrandimento che produce una spinta in Z, e la spinta che serve per un ingrandimento. */
+export const zoomForPush = (z: number): number => PERSPECTIVE / (PERSPECTIVE - z);
+export const pushForZoom = (k: number): number => PERSPECTIVE * (1 - 1 / k);
+
+/** Quanto ingrandisce la discesa di CardFocus. Oltre 2,6 la card esce dal quadro. */
+export const CARD_FOCUS_ZOOM = 2.35;
+
+/**
+ * La posa in cui CardFocus si ferma: addosso alla card consegnata, frontale.
+ * Nessun numero scritto a mano, sono tutti derivati dalla geometria sopra.
+ */
+export const CARD_FOCUS_END_POSE: CameraPose = (() => {
+  const r = handoffLandedRect();
+  const c = centreOn(r.x + r.w / 2, r.y + r.h / 2);
+  return {
+    yaw: 0,
+    pitch: 0,
+    pushZ: pushForZoom(CARD_FOCUS_ZOOM),
+    slideX: c.slideX,
+    slideY: c.slideY,
+  };
+})();

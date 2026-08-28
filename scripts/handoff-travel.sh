@@ -61,26 +61,10 @@ for t in $SAMPLES; do
       -colorspace Gray -threshold 12% "$WORK/d$t.png"
 
     # Il centroide dei pixel accesi, e quanti sono.
-    read -r cx n < <( \
-      python3 - "$WORK/d$t.png" <<'PY'
-import os, subprocess, sys
-# Estrae la maschera come testo grezzo: piu' semplice di far fare a IM la
-# statistica dei momenti, e non dipende da quali feature ha questa build.
-out = subprocess.run(
-    os.environ["IM_CONVERT_CMD"].split() + [sys.argv[1], "-depth", "8", "gray:-"],
-    capture_output=True, check=True).stdout
-# `identify -format %w file` e basta: la 7 tollera anche un "info:" in coda,
-# la 6 no e esce 1. La forma senza suffisso funziona su entrambe.
-w = int(subprocess.run(os.environ["IM_IDENTIFY_CMD"].split() + ["-format", "%w", sys.argv[1]],
-                       capture_output=True, text=True, check=True).stdout.strip())
-tot = sx = 0
-for i, v in enumerate(out):
-    if v > 127:
-        tot += 1
-        sx += i % w
-print(f"{sx/tot:.1f} {tot}" if tot else "-1 0")
-PY
-)
+    # Il baricentro dei pixel accesi, e quanti sono. Il blocco stava qui come
+    # heredoc dentro la process substitution: bash 3.2 non sa leggerla, quindi
+    # su macOS lo script non partiva e dava la colpa alla scena.
+    read -r cx n < <(python3 "$ROOT/scripts/_centroid.py" "$WORK/d$t.png")
     # Se la lettura non ha prodotto due numeri, lo strumento non ha risposto:
     # senza questo, `n` resta vuoto, il test numerico sotto stampa "integer
     # expected" e il campione viene semplicemente saltato. Il verdetto finale

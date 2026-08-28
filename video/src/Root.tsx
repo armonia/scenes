@@ -4,6 +4,7 @@ import { PromptInput } from "./scenes/PromptInput";
 import { FrameLockedProbe } from "./scenes/FrameLockedProbe";
 import { UIMockup } from "./scenes/UIMockup";
 import { CardHandoff } from "./scenes/CardHandoff";
+import { CardFocus } from "./scenes/CardFocus";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -56,6 +57,19 @@ export const RemotionRoot: React.FC = () => {
         id="CardHandoff"
         component={CardHandoff}
         durationInFrames={240}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{}}
+      />
+
+      {/* Il terzo anello. Entra dalla posa in cui CardHandoff si ferma, quindi
+          seam.sh ha una seconda giunta da misurare e "niente tagli" smette di
+          essere una proprieta' di una coppia sola. */}
+      <Composition
+        id="CardFocus"
+        component={CardFocus}
+        durationInFrames={170}
         fps={30}
         width={1920}
         height={1080}

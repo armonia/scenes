@@ -21,7 +21,14 @@
 # soglia sta sulla frazione di pixel oltre una tolleranza percettiva, non
 # sull'uguaglianza binaria.
 #
-# Uso:  ./scripts/seam.sh
+# Uso:  ./scripts/seam.sh [scena-A.mp4] [scena-B.mp4]
+#
+# I due argomenti sono opzionali e senza di essi la coppia e' quella storica,
+# UIMockup -> CardHandoff. Sono diventati necessari con la quarta scena: una
+# giunta esiste per ogni coppia adiacente, e con i percorsi cablati dentro lo
+# script il secondo anello avrebbe voluto un secondo script identico a questo
+# tranne che per due righe. Da li' in poi le soglie divergono e nessuno se ne
+# accorge, che e' esattamente il modo in cui una misura smette di misurare.
 set -uo pipefail
 
 # ImageMagick si chiama `magick` sulla 7 e `convert`/`compare` sulla 6.
@@ -29,8 +36,8 @@ set -uo pipefail
 export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-A="$ROOT/video/out/ui-mockup.mp4"
-B="$ROOT/video/out/card-handoff.mp4"
+A="${1:-$ROOT/video/out/ui-mockup.mp4}"
+B="${2:-$ROOT/video/out/card-handoff.mp4}"
 
 # Oltre questa frazione di pixel diversi, la giunta e' un taglio.
 SOGLIA=0.02
@@ -56,7 +63,12 @@ ffmpeg -v error -i "$A" -fps_mode passthrough -update 1 -y "$TMP/a-last.png"
 # Primo fotogramma di B.
 ffmpeg -v error -i "$B" -frames:v 1 -y "$TMP/b-first.png"
 # Un fotogramma dal mezzo di B: il taglio finto, il controllo negativo.
-ffmpeg -v error -ss 4 -i "$B" -frames:v 1 -y "$TMP/b-mid.png"
+# La meta' si calcola, non si scrive: era 4 secondi, che e' meta' di
+# card-handoff e non meta' di nient'altro. Su una scena piu' corta quel valore
+# sarebbe caduto oltre la fine e il confronto avrebbe girato su un fotogramma
+# vuoto, cioe' su un controllo che boccia sempre e non prova niente.
+mid=$(python3 -c "print(f'{float('$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$B")') / 2:.3f}')")
+ffmpeg -v error -ss "$mid" -i "$B" -frames:v 1 -y "$TMP/b-mid.png"
 
 # Se un'estrazione e' andata a vuoto, fermarsi qui. Senza questo controllo il
 # confronto gira su file inesistenti e stampa 0.000%, cioe' il numero che si
@@ -74,7 +86,12 @@ misura() {
   # AE conta i pixel che differiscono oltre la fuzz. Su stderr, e con exit 1
   # quando ce ne sono: entrambi previsti.
   diff=$("${IM_COMPARE[@]}" -metric AE -fuzz "$FUZZ" "$x" "$y" null: 2>&1 || true)
-  diff=$(echo "$diff" | tr -d '[:space:]' | sed 's/\..*//')
+  # AE stampa "542.562 (0.000261652)": si tiene l'intero iniziale. Tagliare dal
+  # primo punto bastava finche' il conteggio non era esattamente zero, perche'
+  # allora la stringa e' "0 (0)", non ha punti, e restava "0(0)": il controllo
+  # numerico sotto la bocciava e lo script usciva 3 dicendo che il confronto era
+  # fallito. Cioe' proprio su una giunta perfetta.
+  diff=$(echo "$diff" | tr -d '[:space:]' | sed 's/[^0-9].*$//')
   # AE deve dare un intero. Se qui c'e' un messaggio d'errore, il confronto non
   # e' avvenuto e proseguire vorrebbe dire stampare un numero inventato.
   case "$diff" in
@@ -91,7 +108,7 @@ misura() {
 read -r seam_frac seam_px < <(misura "$TMP/a-last.png" "$TMP/b-first.png")
 read -r cut_frac cut_px < <(misura "$TMP/a-last.png" "$TMP/b-mid.png")
 
-echo "La giunta fra UIMockup e CardHandoff"
+echo "La giunta fra $(basename "$A" .mp4) e $(basename "$B" .mp4)"
 echo
 printf '  %-34s %9s %12s\n' "confronto" "diversi" "pixel"
 printf '  %-34s %8.3f%% %12s\n' "ultimo A  vs  primo B  (giunta)" \
@@ -101,17 +118,21 @@ printf '  %-34s %8.3f%% %12s\n' "ultimo A  vs  meta' B  (taglio)" \
 echo
 
 # Il controllo negativo deve essere almeno 10 volte peggiore, altrimenti la
-# misura non separa una giunta da un taglio e non prova niente.
+# misura non separa una giunta da un taglio e non prova niente. Il rapporto si
+# calcola sui conteggi di pixel: la frazione e' stampata a cinque decimali, e su
+# una giunta quasi perfetta vale 0.00000, quindi dividerci dentro stampava
+# numeri a sette cifre al posto di una separazione.
 if ! python3 -c "exit(0 if $cut_frac > $seam_frac * 10 else 1)"; then
   echo "MISURA INUTILE: giunta e taglio danno numeri simili, la soglia non separa." >&2
   exit 2
 fi
 
 if python3 -c "exit(0 if $seam_frac <= $SOGLIA else 1)"; then
-  echo "VERDETTO: giunta continua (sotto $(python3 -c "print($SOGLIA*100)")%), e il taglio di controllo e' $(python3 -c "print(f'{$cut_frac/max($seam_frac,1e-9):.0f}')")x peggiore."
+  echo "VERDETTO: giunta continua (sotto $(python3 -c "print($SOGLIA*100)")%), e il taglio di controllo e' $(python3 -c "print(f'{$cut_px/max($seam_px,1):.0f}')")x peggiore."
   exit 0
 fi
 
-echo "VERDETTO: c'e' un salto. La posa finale di UIMockup e quella iniziale di" >&2
-echo "CardHandoff non coincidono: controlla UI_MOCKUP_END_POSE in primitives/slab.ts." >&2
+echo "VERDETTO: c'e' un salto fra $(basename "$A" .mp4) e $(basename "$B" .mp4)." >&2
+echo "Le due pose non coincidono: la posa di giunzione va letta da" >&2
+echo "primitives/slab.ts da entrambe le scene, non riscritta in una delle due." >&2
 exit 1

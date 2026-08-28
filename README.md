@@ -33,6 +33,15 @@ a cut, because there is no motion to break. `CardHandoff` starts from the pose
 `UIMockup` stops in, both reading it from `primitives/slab.ts`, and `seam.sh`
 diffs the two frames to prove it.
 
+One measured join makes the rule true of a pair. `CardFocus` is the third link:
+it enters from the pose `CardHandoff` stops in and descends onto the card that
+scene has just delivered, magnifying it 2.35 times. `seam.sh` now takes the pair
+as arguments, because a join exists for every adjacent couple and hardcoding the
+paths meant a second script identical to the first but for two lines. Across the
+four scenes yaw runs -18, -9, -4, 0 and pitch 5, 2.5, 1.2, 0 without ever
+reversing: a join reads as a cut when the derivative flips, even when the pixels
+match.
+
 That is one verified join out of three scenes. `PromptInput` still stands on its
 own: it does not enter from anything and nothing enters from it, so the rule
 holds for the `UIMockup → CardHandoff` pair and is untested everywhere else.
@@ -67,8 +76,10 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/fill-measure.sh video/out/prompt-input.mp4    # does it fill the frame
 ./scripts/legibility.sh                                 # down to what size it reads
 ./scripts/framelocked-verdict.sh                        # is it really frame-locked
-./scripts/seam.sh                                       # is the join really cutless
+./scripts/seam.sh [A.mp4] [B.mp4]                       # is the join really cutless
 ./scripts/handoff-travel.sh                             # does the card actually cross
+./scripts/focus-sharpness.sh                            # does the text survive the push-in
+./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 ```
 
@@ -111,6 +122,24 @@ the two ever came out close the script exits 2 and says the measurement separate
 nothing, because a check that cannot fail is decoration. It does not demand
 zero either: two frames survive two independent H.264 encodes, so the bar is a
 fraction of pixels past a perceptual tolerance, not byte equality.
+
+`focus-sharpness.sh` is the only bench here whose first version was thrown away
+after it had already gone green. It compared the card crop against a blurred copy
+of itself, which sounds reasonable and measures nothing: that ratio stays high
+even when the source is already mush, because it is relative to itself. Put
+against a scene built by magnifying a still, exactly the defect it exists to
+catch, it scored 4.14x and passed it. The version that ships builds the
+counterfactual from the render's own first frame instead, so both readings are
+the same content at the same pixel size and the only remaining difference is the
+scale the pixels were rasterised at. Measured: 2.09x on the real render, 1.03x on
+the fixture, threshold at the geometric mean of the two.
+
+`handoff-travel.sh` had never run on macOS. Its centroid step was a heredoc
+inside a process substitution, which bash 3.2 cannot parse, so the script died
+before the first sample and printed "the card does not travel": a diagnosis about
+the scene for a fault in the equipment. CI runs bash 5 and went green, which is
+why it stayed invisible from one side and total from the other. The Python now
+lives in `scripts/_centroid.py`.
 
 `handoff-travel.sh` checks the thing none of the others look at: whether the
 gesture happens. A scene where the card never moves passes `seam.sh` and
@@ -183,6 +212,10 @@ from a fresh one, which is the whole argument for letting CI do it.
 
 The order matters, and step 4 is the one people skip.
 
+0. **Decide the pose it enters from and the pose it leaves in**, and put both in
+   `primitives/slab.ts`. `CARD_HANDOFF_END_POSE` spent three scenes as three
+   literals inside `CardHandoff.tsx`, which was fine exactly as long as nothing
+   came after it.
 1. **Write it in `video/src/scenes/`.** Take `progress?: number` and derive
    everything else from `useCurrentFrame()`. If you reach for `Date.now()`,
    `Math.random()` or a CSS keyframe, the scene is no longer reproducible and
