@@ -8,25 +8,21 @@ import {
 } from "remotion";
 import { app, fontStack } from "../theme";
 import {
+  CARD_HANDOFF_END_POSE,
   COLUMNS,
-  COL_W,
-  Card,
   SLAB_H,
   SLAB_W,
   UI_MOCKUP_END_POSE,
-  addCardY,
+  HANDOFF_FROM_COL,
+  HANDOFF_FROM_IDX,
+  HANDOFF_TO_COL,
   cardY,
   columnX,
+  handoffCard,
+  handoffTargetCards,
 } from "../primitives/slab";
-import {
-  AddCard,
-  AppChrome,
-  AppSidebar,
-  CardBox,
-  ColumnHeader,
-  DetailPanel,
-  SlabLighting,
-} from "../primitives/SlabChrome";
+import { SlabLighting } from "../primitives/SlabChrome";
+import { Board } from "../primitives/Board";
 
 /**
  * CardHandoff: la terza scena, e quella che rende dimostrabile la regola
@@ -62,11 +58,6 @@ export type CardHandoffProps = {
   progress?: number;
 };
 
-/** L'indice della card che si muove: "Metriche latenza p99", In corso -> In review. */
-const FROM_COL = 1;
-const FROM_IDX = 1;
-const TO_COL = 2;
-
 // I tempi. La card parte dopo un respiro, cosi' l'occhio ha il tempo di
 // riconoscere la board come la stessa di prima: se si muovesse al frame 0, la
 // giunta sarebbe corretta ma illeggibile.
@@ -84,15 +75,15 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   const last = durationInFrames - 1;
 
   // La camera continua l'arco di UIMockup: stessa direzione, stessa curva.
-  const yaw = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.yaw, -4], {
+  const yaw = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.yaw, CARD_HANDOFF_END_POSE.yaw], {
     easing: Easing.inOut(Easing.quad),
     extrapolateRight: "clamp",
   });
-  const pitch = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.pitch, 1.2], {
+  const pitch = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.pitch, CARD_HANDOFF_END_POSE.pitch], {
     easing: Easing.inOut(Easing.quad),
     extrapolateRight: "clamp",
   });
-  const pushZ = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.pushZ, 96], {
+  const pushZ = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.pushZ, CARD_HANDOFF_END_POSE.pushZ], {
     easing: Easing.inOut(Easing.quad),
     extrapolateRight: "clamp",
   });
@@ -101,16 +92,16 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   // maniere: il primo frame deve essere gia' pieno, identico all'ultimo di prima.
   const bgYaw = yaw * 0.6;
 
-  const moving = COLUMNS[FROM_COL]!.cards[FROM_IDX] as Card;
+  const moving = handoffCard();
 
   // Colonna di partenza senza la card che vola, colonna di arrivo con la card
   // in coda: sono gli elenchi da cui si calcolano le due posizioni di slot.
-  const fromRest = COLUMNS[FROM_COL]!.cards.filter((_, i) => i !== FROM_IDX);
-  const toWith = [...COLUMNS[TO_COL]!.cards, moving];
+  const fromRest = COLUMNS[HANDOFF_FROM_COL]!.cards.filter((_, i) => i !== HANDOFF_FROM_IDX);
+  const toWith = handoffTargetCards();
 
-  const x0 = columnX(FROM_COL);
-  const y0 = cardY(COLUMNS[FROM_COL]!.cards, FROM_IDX);
-  const x1 = columnX(TO_COL);
+  const x0 = columnX(HANDOFF_FROM_COL);
+  const y0 = cardY(COLUMNS[HANDOFF_FROM_COL]!.cards, HANDOFF_FROM_IDX);
+  const x1 = columnX(HANDOFF_TO_COL);
   const y1 = cardY(toWith, toWith.length - 1);
 
   // Il sollevamento: sale e poi si riposa. Due interpolazioni distinte perche'
@@ -235,138 +226,3 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   );
 };
 
-type BoardProps = {
-  closeGap: number;
-  travel: number;
-  lift: number;
-  cardX: number;
-  cardY: number;
-  moving: Card;
-  fromRest: Card[];
-  dimmed?: boolean;
-};
-
-const Board: React.FC<BoardProps> = ({
-  closeGap,
-  travel,
-  lift,
-  cardX,
-  cardY: movingY,
-  moving,
-  fromRest,
-  dimmed = false,
-}) => {
-  const op = dimmed ? 0.5 : 1;
-
-  return (
-    <>
-      <AppChrome />
-      <AppSidebar activeIdx={1} />
-
-      {COLUMNS.map((col, colIdx) => {
-        // I contatori cambiano a meta' tragitto, quando la card ha "lasciato"
-        // la colonna di partenza: e' il momento in cui una board vera aggiorna
-        // il numero, non allo stacco e non all'atterraggio.
-        const handedOver = travel >= 0.5 ? 1 : 0;
-        const count =
-          colIdx === FROM_COL
-            ? col.cards.length - handedOver
-            : colIdx === TO_COL
-              ? col.cards.length + handedOver
-              : col.cards.length;
-
-        return (
-          <React.Fragment key={col.name}>
-            <ColumnHeader
-              name={col.name}
-              count={count}
-              colIdx={colIdx}
-              highlight={colIdx === TO_COL ? travel : 0}
-            />
-
-            {col.cards.map((card, cardIdx) => {
-              // La card che vola e' disegnata a parte, sopra tutto.
-              if (colIdx === FROM_COL && cardIdx === FROM_IDX) return null;
-
-              let y = cardY(col.cards, cardIdx);
-
-              // Nella colonna di partenza, le card sotto quella andata via
-              // risalgono per chiudere il vuoto, ma solo mentre l'altra si posa.
-              if (colIdx === FROM_COL && cardIdx > FROM_IDX) {
-                const restIdx = cardIdx - 1;
-                const yClosed = cardY(fromRest, restIdx);
-                y = interpolate(closeGap, [0, 1], [y, yClosed]);
-              }
-
-              return (
-                <div
-                  key={card.title}
-                  style={{
-                    position: "absolute",
-                    left: columnX(colIdx),
-                    top: y,
-                    width: COL_W,
-                    opacity: op,
-                  }}
-                >
-                  <CardBox card={card} />
-                </div>
-              );
-            })}
-
-            <AddCard
-              colIdx={colIdx}
-              y={
-                colIdx === FROM_COL
-                  ? interpolate(
-                      closeGap,
-                      [0, 1],
-                      [addCardY(col.cards), addCardY(fromRest)],
-                    )
-                  : colIdx === TO_COL
-                    ? interpolate(
-                        travel,
-                        [0, 1],
-                        [
-                          addCardY(col.cards),
-                          addCardY([...col.cards, moving]),
-                        ],
-                      )
-                    : addCardY(col.cards)
-              }
-              dimmed={dimmed}
-            />
-          </React.Fragment>
-        );
-      })}
-
-      <DetailPanel
-        title={moving.title}
-        rows={[
-          { label: "Status", value: travel >= 0.5 ? "In review" : "In corso" },
-          { label: "Priority", value: "P1" },
-          { label: "Branch", value: "topics/latency-p99" },
-          { label: "Assignee", value: "Agent" },
-        ]}
-        description="La card cambia colonna senza un taglio: si alza, attraversa in arco, si posa, e solo mentre si posa la colonna sotto si richiude."
-      />
-
-      {/* La card in viaggio: fuori dal flusso, sopra tutto, con l'ombra che
-          cresce mentre si stacca dal piano. */}
-      <div
-        style={{
-          position: "absolute",
-          left: cardX,
-          top: movingY,
-          width: COL_W,
-          opacity: op,
-          transform: `scale(${1 + lift * 0.035})`,
-          transformOrigin: "50% 50%",
-          zIndex: 10,
-        }}
-      >
-        <CardBox card={moving} lifted={lift} />
-      </div>
-    </>
-  );
-};
