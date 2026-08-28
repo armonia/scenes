@@ -106,8 +106,11 @@ if [ "${#xs[@]}" -lt 4 ]; then
   exit 1
 fi
 
-python3 - "${xs[@]}" <<'PY'
-import sys
+MIN_TRAVEL_PX="$MIN_TRAVEL_PX" python3 - "${xs[@]}" <<'PY'
+import os, sys
+# La soglia arriva dall'ambiente: scritta due volte, la copia dentro python
+# sarebbe rimasta indietro alla prima modifica della costante sopra.
+MIN = float(os.environ["MIN_TRAVEL_PX"])
 xs = [float(v) for v in sys.argv[1:]]
 span = xs[-1] - xs[0]
 # Monotona a meno di un filo di tolleranza: il centroide include anche la coda
@@ -116,8 +119,8 @@ back = sum(1 for a, b in zip(xs, xs[1:]) if b < a - 8)
 print(f"  campioni: {len(xs)}   da x={xs[0]:.0f} a x={xs[-1]:.0f}   spostamento={span:.0f}px")
 print(f"  passi all'indietro: {back}")
 print()
-if span < 120:
-    print(f"FALLITO: la card si sposta di {span:.0f}px, meno di mezza colonna.", file=sys.stderr)
+if span < MIN:
+    print(f"FALLITO: la card si sposta di {span:.0f}px, sotto i {MIN:.0f} richiesti.", file=sys.stderr)
     sys.exit(1)
 if back > 1:
     print(f"FALLITO: il movimento torna indietro {back} volte, non e' un tragitto.", file=sys.stderr)

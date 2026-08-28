@@ -27,11 +27,15 @@ continuous transformation rather than by cut, and each one has to be able to
 enter from the previous one's final state. This is an architectural constraint,
 not a stylistic preference.
 
-That rule was an assertion until there were three scenes. Two clips that both
-start and end at rest can be placed in any order without anyone seeing a cut,
-because there is no motion to break. `CardHandoff` starts from the pose
+That rule was an assertion until one scene had to enter from another. Two clips
+that both start and end at rest can be placed in any order without anyone seeing
+a cut, because there is no motion to break. `CardHandoff` starts from the pose
 `UIMockup` stops in, both reading it from `primitives/slab.ts`, and `seam.sh`
 diffs the two frames to prove it.
+
+That is one verified join out of three scenes. `PromptInput` still stands on its
+own: it does not enter from anything and nothing enters from it, so the rule
+holds for the `UIMockup → CardHandoff` pair and is untested everywhere else.
 
 **Real UI, not a drawing of UI.** Slabs of the actual product on inclined
 planes, with the product's own tokens, radii and system font stack. A mockup
@@ -98,8 +102,12 @@ baseline the measurements are read against. It is no longer a composition.
 `UIMockup` and the first frame of `CardHandoff` and counts differing pixels.
 What makes the reading honest is the control beside it: the same last frame
 against a frame from the *middle* of `CardHandoff`, which is a deliberate cut.
-Measured: 552 pixels for the join, 18,019 for the cut, a 32× separation. If the
-two ever came out close the script exits 2 and says the measurement separates
+Measured on this machine: 552 pixels for the join, 18,019 for the cut. On the
+CI runner the same two frames give 3,921 and 160,595, because a different
+encoder puts different noise into both. The absolute counts are not portable and
+the script does not compare them across machines; what it checks is the ratio
+between the join and its control, which came out 32× locally and 41× on CI. If
+the two ever came out close the script exits 2 and says the measurement separates
 nothing, because a check that cannot fail is decoration. It does not demand
 zero either: two frames survive two independent H.264 encodes, so the bar is a
 fraction of pixels past a perceptual tolerance, not byte equality.
@@ -141,9 +149,18 @@ uploads the videos as run artifacts, so it is useful on day one and a CI nobody
 has to switch on:
 
 ```bash
-gh secret set CLOUDFLARE_API_TOKEN --repo armonia/scenes
-gh secret set CLOUDFLARE_ACCOUNT_ID --repo armonia/scenes  # 628858edcbd8e54fd59d77358b575cb1
+gh secret set CLOUDFLARE_API_TOKEN --repo armonia/scenes   # Pages:Edit
+gh secret set CLOUDFLARE_ACCOUNT_ID --repo armonia/scenes  # npx wrangler whoami
 ```
+
+Make the token at
+[dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens)
+with **Cloudflare Pages:Edit** on this account and nothing else. The credential
+`wrangler login` leaves on a laptop is not a substitute: it is an OAuth token
+that expires within the hour and carries account-wide scope, so pasting it into
+a repo secret would give a public repo's CI broad access to the account and stop
+working before anyone noticed. A scoped token is the smaller and the more
+durable option at the same time.
 
 The Pages project is still called `remotion-scenes` while the repo is `scenes`.
 Cloudflare cannot rename a project, and `scenes.armonia.io` is a CNAME to that

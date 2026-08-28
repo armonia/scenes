@@ -258,8 +258,10 @@
             This one starts where the last one stopped. Not roughly: both scenes
             read the same camera pose from the same module, so the first frame
             here <em>is</em> the last frame above, and <code>seam.sh</code>
-            proves it by diffing the two — 552 pixels apart, against 18,019 for
-            a deliberate cut, a 32× separation. The card lifts, crosses in an
+            proves it by diffing the two — the join comes out 32× closer than a
+            deliberate cut taken from the middle of this same scene, which is the
+            control that stops the number from being decoration. The card lifts,
+            crosses in an
             arc and lands, and the column below only closes up while it is
             landing. Snapping the gap shut on the frame it leaves would be a cut
             wearing an animation costume.
@@ -299,9 +301,9 @@
             <h3>No cuts</h3>
             <p>
               The reference commercials run 52 and 41 seconds in one shot. Scenes
-              chain by continuous transformation, not by cut. Two scenes can only
-              claim this; three can be measured, which is what
-              <code>seam.sh</code> does.
+              chain by continuous transformation, not by cut. A scene that has to
+              enter from another one's final state can be measured, which is what
+              <code>seam.sh</code> does to the join above.
             </p>
           </div>
           <div class="rule">
