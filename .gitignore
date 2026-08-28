@@ -12,3 +12,4 @@ showcase/dist/
 # from them. Someone else's copyrighted work: it is study material, not ours to
 # redistribute. README says how to fetch it again.
 ref/
+.wrangler/
