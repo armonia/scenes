@@ -3,6 +3,7 @@ import { Composition } from "remotion";
 import { PromptInput } from "./scenes/PromptInput";
 import { FrameLockedProbe } from "./scenes/FrameLockedProbe";
 import { UIMockup } from "./scenes/UIMockup";
+import { CardHandoff } from "./scenes/CardHandoff";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -42,6 +43,19 @@ export const RemotionRoot: React.FC = () => {
         id="UIMockup"
         component={UIMockup}
         durationInFrames={300}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{}}
+      />
+
+      {/* La terza scena parte dalla posa in cui UIMockup si ferma, cosi' la
+          regola "niente tagli" diventa una misura invece di un'affermazione:
+          seam.sh confronta l'ultimo frame di quella col primo di questa. */}
+      <Composition
+        id="CardHandoff"
+        component={CardHandoff}
+        durationInFrames={240}
         fps={30}
         width={1920}
         height={1080}

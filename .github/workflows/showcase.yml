@@ -1,0 +1,109 @@
+# Renderizza le scene e pubblica lo showcase.
+#
+# PERCHE' ESISTE. Il deploy era `wrangler pages deploy` lanciato a mano dalla
+# macchina di chi aveva i render sul disco. E' cosi' che la pagina ha mostrato
+# per giorni una scena che non esisteva piu': il codice era aggiornato, i .mp4
+# no, e nessuno dei due lo sapeva. Qui i video si rifanno dalla sorgente a ogni
+# push, quindi la pagina non puo' essere piu' vecchia del codice.
+#
+# I RENDER NON SONO IN GIT, ed e' il motivo per cui questo workflow renderizza
+# invece di limitarsi a copiare. Sono file grossi e rigenerabili: tenerli nel
+# repo li farebbe divergere in silenzio esattamente come e' successo.
+#
+# I BANCHI GIRANO PRIMA DEL DEPLOY, non dopo. Un sito pubblicato e poi trovato
+# rotto e' gia' stato visto da qualcuno.
+
+name: render e deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: showcase
+  cancel-in-progress: true
+
+jobs:
+  showcase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: video/package-lock.json
+
+      # ImageMagick e ffmpeg servono ai banchi di misura, non al render.
+      # Chromium se lo porta Remotion.
+      - name: strumenti di misura
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick ffmpeg
+
+      - name: dipendenze
+        working-directory: video
+        run: npm ci
+
+      - name: typecheck e lint
+        working-directory: video
+        run: npm run lint
+
+      - name: render
+        working-directory: video
+        run: |
+          npx remotion render PromptInput out/prompt-input.mp4
+          npx remotion render UIMockup    out/ui-mockup.mp4
+          npx remotion render CardHandoff out/card-handoff.mp4
+
+      # Le misure che possono fallire. Se una scena e' rotta, il deploy non parte.
+      - name: misure
+        run: |
+          ./scripts/framelocked-verdict.sh
+          ./scripts/fill-measure.sh video/out/ui-mockup.mp4
+          ./scripts/fill-measure.sh video/out/card-handoff.mp4
+          ./scripts/seam.sh
+          ./scripts/handoff-travel.sh
+
+      - name: assembla
+        run: ./scripts/showcase-build.sh
+
+      # I render restano scaricabili dalla run anche quando il deploy non parte,
+      # cosi' su una PR si guarda il video invece di fidarsi del diff.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renders
+          path: showcase/dist/*.mp4
+          retention-days: 7
+
+      # Il deploy e' l'unico passo che ha bisogno di una credenziale, quindi e'
+      # l'unico che puo' non essere disponibile. Senza il token il workflow
+      # renderizza, misura e carica gli artefatti lo stesso: una CI che si
+      # rifiuta di girare finche' non le dai un segreto e' una CI che nessuno
+      # accende. Con il token, il deploy parte da solo.
+      - name: c'e' il token?
+        id: cf
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=deploy saltato::CLOUDFLARE_API_TOKEN non configurato. I render sono negli artefatti della run. Per attivare il deploy automatico: gh secret set CLOUDFLARE_API_TOKEN --repo armonia/scenes"
+          fi
+
+      - name: deploy
+        if: |
+          steps.cf.outputs.ok == 'true' &&
+          github.ref == 'refs/heads/main' &&
+          github.event_name != 'pull_request'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy showcase/dist --project-name scenes --branch main

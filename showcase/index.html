@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>remotion-scenes — frame-locked scenes for product commercials</title>
+    <title>scenes — frame-locked scenes for product commercials</title>
     <meta
       name="description"
       content="Scenes for software product commercials, written in Remotion and locked to the frame clock. A prompt being typed, a cursor that acts, real app UI on a tilted plane, a response streaming in."
     />
-    <meta property="og:title" content="remotion-scenes" />
+    <meta property="og:title" content="scenes" />
     <meta
       property="og:description"
       content="Frame-locked scenes for software product commercials. Real UI, not a drawing of UI."
@@ -202,7 +202,7 @@
           gap is what this is for.
         </p>
         <div class="cta">
-          <a class="btn primary" href="https://github.com/armonia/remotion-scenes"
+          <a class="btn primary" href="https://github.com/armonia/scenes"
             >Source on GitHub</a
           >
           <a class="btn" href="#scenes">Watch the scenes</a>
@@ -251,6 +251,30 @@
             ></video>
           </div>
         </div>
+
+        <div class="scene">
+          <h2>Card handoff <span>CardHandoff · 1920×1080 · 30fps</span></h2>
+          <p>
+            This one starts where the last one stopped. Not roughly: both scenes
+            read the same camera pose from the same module, so the first frame
+            here <em>is</em> the last frame above, and <code>seam.sh</code>
+            proves it by diffing the two — 552 pixels apart, against 18,019 for
+            a deliberate cut, a 32× separation. The card lifts, crosses in an
+            arc and lands, and the column below only closes up while it is
+            landing. Snapping the gap shut on the frame it leaves would be a cut
+            wearing an animation costume.
+          </p>
+          <div class="frame">
+            <video
+              src="card-handoff.mp4"
+              autoplay
+              loop
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+          </div>
+        </div>
       </section>
 
       <section>
@@ -275,8 +299,9 @@
             <h3>No cuts</h3>
             <p>
               The reference commercials run 52 and 41 seconds in one shot. Scenes
-              chain by continuous transformation, not by cut. Architecture, not
-              taste.
+              chain by continuous transformation, not by cut. Two scenes can only
+              claim this; three can be measured, which is what
+              <code>seam.sh</code> does.
             </p>
           </div>
           <div class="rule">
@@ -292,7 +317,7 @@
       <footer>
         <span>Code MIT. Remotion carries its own license — check it before you render commercially.</span>
         <span
-          ><a href="https://github.com/armonia/remotion-scenes">GitHub</a> ·
+          ><a href="https://github.com/armonia/scenes">GitHub</a> ·
           <a href="https://armonia.io">Armonia</a></span
         >
       </footer>

@@ -1,4 +1,4 @@
-# remotion-scenes
+# scenes
 
 Scenes for **software product commercials**, written in [Remotion](https://remotion.dev)
 and locked to the frame clock.
@@ -26,6 +26,12 @@ and 41 seconds in one unbroken shot. Scenes therefore have to chain by
 continuous transformation rather than by cut, and each one has to be able to
 enter from the previous one's final state. This is an architectural constraint,
 not a stylistic preference.
+
+That rule was an assertion until there were three scenes. Two clips that both
+start and end at rest can be placed in any order without anyone seeing a cut,
+because there is no motion to break. `CardHandoff` starts from the pose
+`UIMockup` stops in, both reading it from `primitives/slab.ts`, and `seam.sh`
+diffs the two frames to prove it.
 
 **Real UI, not a drawing of UI.** Slabs of the actual product on inclined
 planes, with the product's own tokens, radii and system font stack. A mockup
@@ -57,6 +63,8 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/fill-measure.sh video/out/prompt-input.mp4    # does it fill the frame
 ./scripts/legibility.sh                                 # down to what size it reads
 ./scripts/framelocked-verdict.sh                        # is it really frame-locked
+./scripts/seam.sh                                       # is the join really cutless
+./scripts/handoff-travel.sh                             # does the card actually cross
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 ```
 
@@ -86,6 +94,25 @@ wide.
 `OrbitLoop` is what `UIMockup` replaced, and it is named here only as the
 baseline the measurements are read against. It is no longer a composition.
 
+`seam.sh` turns the no-cuts rule into a number. It pulls the last frame of
+`UIMockup` and the first frame of `CardHandoff` and counts differing pixels.
+What makes the reading honest is the control beside it: the same last frame
+against a frame from the *middle* of `CardHandoff`, which is a deliberate cut.
+Measured: 552 pixels for the join, 18,019 for the cut, a 32× separation. If the
+two ever came out close the script exits 2 and says the measurement separates
+nothing, because a check that cannot fail is decoration. It does not demand
+zero either: two frames survive two independent H.264 encodes, so the bar is a
+fraction of pixels past a perceptual tolerance, not byte equality.
+
+`handoff-travel.sh` checks the thing none of the others look at: whether the
+gesture happens. A scene where the card never moves passes `seam.sh` and
+`fill-measure.sh` with full marks, because a freeze frame has a perfect join and
+live edges. So this one tracks the centroid of changed pixels across the travel
+window and requires the horizontal motion to be monotonic and to cover half a
+column. Verified against both failure modes: it exits 1 on `ui-mockup` (a scene
+with no travelling card) and on a still frame looped into a video, and 0 on
+`card-handoff`.
+
 ```bash
 cd video
 npm install
@@ -95,24 +122,65 @@ npx remotion render <CompositionId> out/<name>.mp4
 
 ## The showcase page
 
-`showcase/index.html` is the public page: the two scenes playing (`PromptInput`
-and `UIMockup`), the four rules, the license note. It carries no build step and
-no dependency, so what you open locally is what ships.
-
-The renders are not committed, which is the only thing to know about deploying
-it. `showcase-build.sh` copies them next to the page into `showcase/dist/`, and
-that directory is what goes up:
-
-```bash
-./scripts/showcase-build.sh
-npx wrangler pages deploy showcase/dist --project-name remotion-scenes
-```
+`showcase/index.html` is the public page: the three scenes playing
+(`PromptInput`, `UIMockup`, `CardHandoff`), the four rules, the license note. It
+carries no build step and no dependency, so what you open locally is what ships.
 
 Live at <https://scenes.armonia.io>.
 
+**Pushing to `main` publishes it.** `.github/workflows/showcase.yml` renders the
+scenes from source, runs the measurements, and deploys only if they all pass.
+This exists because the page once spent days showing `OrbitLoop`, a scene that
+had already been deleted: the code was current, the `.mp4` files on somebody's
+laptop were not, and a hand-run `wrangler pages deploy` had no way to know. Now
+the videos cannot be older than the commit.
+
+The deploy step needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as repo
+secrets. Without them the workflow still renders, still measures, and still
+uploads the videos as run artifacts, so it is useful on day one and a CI nobody
+has to switch on:
+
+```bash
+gh secret set CLOUDFLARE_API_TOKEN --repo armonia/scenes
+gh secret set CLOUDFLARE_ACCOUNT_ID --repo armonia/scenes  # 628858edcbd8e54fd59d77358b575cb1
+```
+
+To publish by hand instead:
+
+```bash
+./scripts/showcase-build.sh
+npx wrangler pages deploy showcase/dist --project-name scenes
+```
+
 Re-render before building whenever a scene changes. The script refuses to
 assemble a page whose videos are missing, but it cannot tell a stale render
-from a fresh one.
+from a fresh one, which is the whole argument for letting CI do it.
+
+## Adding a scene
+
+The order matters, and step 4 is the one people skip.
+
+1. **Write it in `video/src/scenes/`.** Take `progress?: number` and derive
+   everything else from `useCurrentFrame()`. If you reach for `Date.now()`,
+   `Math.random()` or a CSS keyframe, the scene is no longer reproducible and
+   `framelocked-verdict.sh` will say so.
+2. **Reuse `primitives/`.** `slab.ts` holds the geometry and the camera poses,
+   `SlabChrome.tsx` the app furniture. A scene that redraws its own sidebar can
+   only stay aligned with the others by hand, and it will not.
+3. **Register it in `Root.tsx`** with an explicit `durationInFrames`.
+4. **Give it a check that can fail.** Every scene here has one bench that
+   fails when the scene's own promise is broken: `beats.sh` for the four beats,
+   `handoff-travel.sh` for the card crossing. Write the negative control first,
+   confirm it exits non-zero on a broken input, and only then trust the pass.
+   `npm run lint` proves nothing about a video.
+5. **Add it to `showcase/index.html` and `showcase-build.sh`**, and to the
+   render list in the workflow.
+6. **Push.** CI renders, measures, deploys.
+
+If your scene is meant to follow another without a cut, read the previous
+scene's end pose from `slab.ts` rather than retyping the numbers, then add it to
+`seam.sh`. Two copies of the same pose stay equal exactly as long as nobody
+edits one of them.
 
 ## Licensing, which has two halves
 
