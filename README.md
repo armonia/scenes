@@ -145,11 +145,17 @@ gh secret set CLOUDFLARE_API_TOKEN --repo armonia/scenes
 gh secret set CLOUDFLARE_ACCOUNT_ID --repo armonia/scenes  # 628858edcbd8e54fd59d77358b575cb1
 ```
 
+The Pages project is still called `remotion-scenes` while the repo is `scenes`.
+Cloudflare cannot rename a project, and `scenes.armonia.io` is a CNAME to that
+project's hostname: creating a correctly named project and moving the domain
+onto it took the site down with 522s until the domain was moved back. The
+internal name is invisible from outside, the outage was not.
+
 To publish by hand instead:
 
 ```bash
 ./scripts/showcase-build.sh
-npx wrangler pages deploy showcase/dist --project-name scenes
+npx wrangler pages deploy showcase/dist --project-name remotion-scenes
 ```
 
 Re-render before building whenever a scene changes. The script refuses to

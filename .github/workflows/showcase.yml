@@ -106,4 +106,10 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy showcase/dist --project-name scenes --branch main
+          # Il progetto Pages si chiama ancora 'remotion-scenes': Cloudflare non
+          # rinomina i progetti, e il record DNS di scenes.armonia.io punta al
+          # suo hostname. Crearne uno nuovo col nome giusto e spostarci il
+          # dominio ha mandato il sito in 522 per un quarto d'ora, perche' il
+          # CNAME continuava a puntare al vecchio. Il nome interno non si vede
+          # da fuori; il sito giu' si.
+          command: pages deploy showcase/dist --project-name remotion-scenes --branch main

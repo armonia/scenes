@@ -5,7 +5,7 @@
 # files are big and rebuildable. So the deploy directory is built here, by
 # copying the two renders next to the page, and it is what gets uploaded:
 #
-#   npx wrangler pages deploy showcase/dist --project-name scenes
+#   npx wrangler pages deploy showcase/dist --project-name remotion-scenes
 #
 # Run from the repo root. Exits non-zero if a render is missing, which is the
 # whole point: a showcase with a broken <video> is worse than no showcase.
