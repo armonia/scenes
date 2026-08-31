@@ -93,7 +93,7 @@ trap 'rm -rf "$TMP"' EXIT
 
 # L'ultimo fotogramma. `-update 1` riscrive lo stesso file a ogni frame, quindi
 # alla fine resta l'ultimo senza dover sapere quanti sono.
-ffmpeg -v error -i "$SRC" -fps_mode passthrough -update 1 -y "$TMP/last.png"
+ffmpeg -nostdin -v error -i "$SRC" -fps_mode passthrough -update 1 -y "$TMP/last.png"
 [ -s "$TMP/last.png" ] || { echo "estrazione dell'ultimo fotogramma fallita" >&2; exit 3; }
 
 # Il ritaglio: la card meno un margine dell'8%, per restare dentro il bordo e
@@ -108,7 +108,7 @@ iy=$(python3 -c "print(int($CY - $ih / 2))")
 
 # Il controinfattuale: il campo largo portato alla scala finale. Se la lastra
 # fosse stata uno screenshot, l'ultimo fotogramma sarebbe stato questo.
-ffmpeg -v error -i "$SRC" -frames:v 1 -y "$TMP/wide.png"
+ffmpeg -nostdin -v error -i "$SRC" -frames:v 1 -y "$TMP/wide.png"
 [ -s "$TMP/wide.png" ] || { echo "estrazione del primo fotogramma fallita" >&2; exit 3; }
 pc=$(python3 -c "print(f'{$K * 100:.4f}%')")
 sx=$(python3 -c "print(int($WX * $K - $iw / 2))")
