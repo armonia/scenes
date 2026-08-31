@@ -115,6 +115,7 @@ jobs:
           ./scripts/handoff-travel.sh
           ./scripts/focus-sharpness.sh
           ./scripts/rest-point.sh
+          ./scripts/click-gap.sh
 
       # Il banco nuovo va messo alla prova sul caso che deve bocciare, non solo
       # sul render che deve promuovere. Senza questo passo "verde" vorrebbe dire
@@ -150,6 +151,19 @@ jobs:
           rc=0; ./scripts/rest-point.sh /tmp/fermo.mp4 >/dev/null 2>&1 || rc=$?
           [ "$rc" = 2 ] || { echo "rest-point.sh su un fermo immagine: atteso 2, ottenuto $rc" >&2; exit 1; }
           echo "rest-point.sh distingue una scena mossa da un fermo immagine."
+
+          # click-gap.sh su una scena senza clic non deve trovare la coppia
+          # colpo/conseguenza, e su un ritaglio in cui i fotogrammi fra i due
+          # sono stati tolti deve accorgersi che si sono fusi.
+          rc=0; ./scripts/click-gap.sh video/out/card-handoff.mp4 >/dev/null 2>&1 || rc=$?
+          [ "$rc" = 1 ] || { echo "click-gap.sh su card-handoff: atteso 1, ottenuto $rc" >&2; exit 1; }
+
+          ffmpeg -nostdin -v error -i video/out/prompt-input.mp4 \
+            -vf "select='lt(n\,221)+gte(n\,225)',setpts=N/FRAME_RATE/TB" \
+            -fps_mode passthrough -y /tmp/fuso.mp4
+          rc=0; ./scripts/click-gap.sh /tmp/fuso.mp4 >/dev/null 2>&1 || rc=$?
+          [ "$rc" = 1 ] || { echo "click-gap.sh sul ritaglio fuso: atteso 1, ottenuto $rc" >&2; exit 1; }
+          echo "click-gap.sh boccia sia una scena senza clic sia i due eventi fusi."
 
 
       # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa

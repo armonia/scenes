@@ -260,8 +260,8 @@
           and names the bench that can fail it.
         </p>
         <p class="lede" style="margin-top:18px;font-size:16px">
-          Ten of the twenty-six name a bench that exists and runs in CI. The
-          other sixteen name one that does not exist yet, and those are printed
+          Eleven of the twenty-six name a bench that exists and runs in CI. The
+          other fifteen name one that does not exist yet, and those are printed
           in grey: a measurement nobody has written is a proposal, and this page
           would be doing the thing it warns against if it let the two look alike.
         </p>
@@ -1077,11 +1077,11 @@ var CAT=[
  c:"Arrival at f54, 16 frames of wait, press at f70. Under ten frames it does not register, over twenty-five something looks stuck.",
  d:"A zero-velocity window between arrival and press, and the obvious way to measure it does not work. A frame-to-frame pixel difference cannot tell a deliberate hold from a slow settle at these speeds: a bench built that way found a 40-frame pause in <code>CardHandoff</code>, which has no composer and never stops. It was written, it certified its own worst case, and it was removed. A bench for this has to follow the pointer, not the whole frame."},
 
-{fam:"cur",code:"CUR-03",p:1,t:"The click the UI answers",demo:"click",src:"the pressed state",
+{fam:"cur",code:"CUR-03",t:"The click the UI answers",demo:"click",src:"the pressed state",
  a:"The pressed state exists and it arrives before the consequence. Two frames of gap are enough for the gesture to look like it caused something.",
  b:"Button state and consequence on two different windows. The temptation is to put them on the same frame because it is shorter to write, and that is exactly what makes the click fake.",
- c:"Press at f48, consequence at f50. Under a frame of gap the link disappears, over five it becomes lag.",
- d:"The frame the button changes on against the frame the content changes on. Same frame, fail."},
+ c:"In the repo: the send lands at f220 and the bubble at f224, four frames apart. Under one the link disappears, over eight it stops reading as a consequence and starts reading as lag.",
+ d:"click-gap.sh, and it is not told the answer: it finds both events in the render. The send is the first frame whose changed-pixel count blows past the window median, because the composer empties and the text leaves; the consequence is the first frame that climbs back above the quiet following it. Every threshold is a ratio inside that window, since the same renders read five to ten times higher on Linux. Measured f221 and f225, which is the f220 and f224 the source declares. It exits 1 on the four scenes with no click at all, and on a clip with the frames between the two events removed."},
 
 {fam:"cur",code:"CUR-04",p:1,t:"Drag with weight",demo:"drag",src:"CardBox · lifted",
  a:"The dragged object lags the pointer and tilts into the direction of travel. Without the lag the card looks welded to the cursor.",
