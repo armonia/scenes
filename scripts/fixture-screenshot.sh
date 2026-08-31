@@ -33,7 +33,7 @@ case "${K:-}" in ''|*[!0-9.]*) echo "geometria non arrivata da slab.ts" >&2; exi
 
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 mkdir -p "$T/f"
-ffmpeg -v error -i "$SRC" -frames:v 1 -y "$T/wide.png"
+ffmpeg -nostdin -v error -i "$SRC" -frames:v 1 -y "$T/wide.png"
 [ -s "$T/wide.png" ] || { echo "estrazione del primo fotogramma fallita" >&2; exit 3; }
 
 # Il campo largo portato alla scala finale, ricentrato sulla card.
@@ -45,6 +45,6 @@ oy=$(python3 -c "print(int($WY * $K - $CY))")
 
 cp "$T/wide.png" "$T/f/0001.png"
 for i in $(seq 2 12); do cp "$T/last.png" "$T/f/$(printf '%04d' "$i").png"; done
-ffmpeg -v error -framerate 30 -i "$T/f/%04d.png" -pix_fmt yuv420p -y "$OUT"
+ffmpeg -nostdin -v error -framerate 30 -i "$T/f/%04d.png" -pix_fmt yuv420p -y "$OUT"
 [ -s "$OUT" ] || { echo "codifica della fixture fallita" >&2; exit 3; }
 echo "fixture: ${OUT#"$ROOT"/}  (primo fotogramma reale, ultimo ingrandito ${K}x)"

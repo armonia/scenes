@@ -96,10 +96,15 @@ estremi() {
 
   # `-vsync 0` non esiste piu' da ffmpeg 8: e' `-fps_mode passthrough`, che c'e'
   # dalla 5 in poi e quindi vale anche sulla ffmpeg di Ubuntu in CI.
+  #
+  # E `-nostdin`, che non e' un dettaglio: senza, ffmpeg legge lo standard input
+  # e si mangia le righe del `while read` che chiama questa funzione. In CI si
+  # vedeva il suo prompt interattivo nel log. E' lo stesso motivo per cui il
+  # passo delle misure gira con `< /dev/null`.
   i=0
   for f in 0 "$PASSO" $((n - 1)) $((n - 1 - PASSO)) "$m" $((m + PASSO)); do
     i=$((i + 1))
-    ffmpeg -v error -i "$src" -vf "select='eq(n\,$f)'" -fps_mode passthrough \
+    ffmpeg -nostdin -v error -i "$src" -vf "select='eq(n\,$f)'" -fps_mode passthrough \
       -frames:v 1 -y "$TMP/f$i.png"
     [ -s "$TMP/f$i.png" ] || { echo "estrazione del fotogramma $f fallita su $src" >&2; exit 3; }
   done

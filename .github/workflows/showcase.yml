@@ -134,13 +134,20 @@ jobs:
           # ritaglio preso dal mezzo di una scena si muove ai bordi (esce 1), un
           # fermo immagine non si muove da nessuna parte (esce 2). Se li
           # confondesse, o li promuovesse, non misurerebbe niente.
-          ffmpeg -v error -ss 2 -t 2 -i video/out/card-focus.mp4 -y /tmp/mosso.mp4
-          ./scripts/rest-point.sh /tmp/mosso.mp4 >/dev/null 2>&1; rc=$?
+          #
+          # `cmd; rc=$?` QUI NON FUNZIONA. Questo passo gira con `bash -e`: il
+          # comando esce 1, che e' quello che vogliamo, e la shell se ne va prima
+          # di assegnare rc. Il controllo non veniva nemmeno eseguito e il passo
+          # falliva su un esito corretto. La forma `|| rc=$?` e' l'unica che
+          # sopravvive a -e, ed e' il motivo per cui il controllo di
+          # focus-sharpness qui sopra e' scritto come un `if`.
+          ffmpeg -nostdin -v error -ss 2 -t 2 -i video/out/card-focus.mp4 -y /tmp/mosso.mp4
+          rc=0; ./scripts/rest-point.sh /tmp/mosso.mp4 >/dev/null 2>&1 || rc=$?
           [ "$rc" = 1 ] || { echo "rest-point.sh su un ritaglio mosso: atteso 1, ottenuto $rc" >&2; exit 1; }
 
-          ffmpeg -v error -i video/out/card-focus.mp4 -frames:v 1 -y /tmp/f.png
-          ffmpeg -v error -loop 1 -i /tmp/f.png -t 3 -r 30 -pix_fmt yuv420p -y /tmp/fermo.mp4
-          ./scripts/rest-point.sh /tmp/fermo.mp4 >/dev/null 2>&1; rc=$?
+          ffmpeg -nostdin -v error -i video/out/card-focus.mp4 -frames:v 1 -y /tmp/f.png
+          ffmpeg -nostdin -v error -loop 1 -i /tmp/f.png -t 3 -r 30 -pix_fmt yuv420p -y /tmp/fermo.mp4
+          rc=0; ./scripts/rest-point.sh /tmp/fermo.mp4 >/dev/null 2>&1 || rc=$?
           [ "$rc" = 2 ] || { echo "rest-point.sh su un fermo immagine: atteso 2, ottenuto $rc" >&2; exit 1; }
           echo "rest-point.sh distingue una scena mossa da un fermo immagine."
 
