@@ -81,7 +81,16 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/focus-sharpness.sh                            # does the text survive the push-in
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
+
+node scripts/catalog.mjs render                          # the render command for every scene
+node scripts/catalog.mjs measures                        # the benches the catalogue implies
 ```
+
+`catalog.mjs` is not a check, it is how everything that is not TypeScript reads
+`catalog.json`: the workflow gets its render and bench commands from it, and
+`showcase-build.sh` gets the scene section of the page. Run `render` and pipe it
+to a file to redo every scene from scratch — not straight into `sh`, because a
+bench that reads standard input will eat the lines it has not run yet.
 
 `beats.sh` is the one that earns its keep. `prompt-input` promises four beats:
 the cursor arrives, types, sends, and the answer streams in. For a full day the
