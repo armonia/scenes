@@ -47,6 +47,12 @@ export type AssistantProps = {
   frame?: number;
   branch?: string;
   dimmed?: boolean;
+  /**
+   * CAM-05: quanto resta acceso cio' che non e' la risposta. 1 = tutto acceso.
+   * Non e' una sfocatura: nessun pixel diventa illeggibile, cambia solo dove
+   * sta il contrasto pieno.
+   */
+  attn?: number;
 };
 
 export const Assistant: React.FC<AssistantProps> = ({
@@ -62,6 +68,7 @@ export const Assistant: React.FC<AssistantProps> = ({
   frame = 0,
   branch = "topics/verdant-ether",
   dimmed = false,
+  attn = 1,
 }) => {
   const armed = typed.length > 0 && !sent;
 
@@ -81,6 +88,7 @@ export const Assistant: React.FC<AssistantProps> = ({
     >
       <div
         style={{
+          opacity: attn,
           height: 52,
           display: "flex",
           alignItems: "center",
@@ -120,6 +128,7 @@ export const Assistant: React.FC<AssistantProps> = ({
           overflow: "hidden",
         }}
       >
+        <div style={{ opacity: attn, display: "flex", flexDirection: "column", gap: 16 }}>
         <Msg who="user" text="Prendi i quattro commercial e dimmi cosa fanno davvero." />
         <Msg
           who="assistant"
@@ -132,10 +141,12 @@ export const Assistant: React.FC<AssistantProps> = ({
           text="Fatto. Kanban aperto, la card attiva e' UIMockup: piano 3D piu' parallasse, e il pannello mostra branch e assegnatario."
         />
 
+        </div>
+
         {sent ? (
           <div
             style={{
-              opacity: bubbleIn,
+              opacity: bubbleIn * attn,
               transform: `translateY(${(1 - bubbleIn) * 14}px)`,
             }}
           >
@@ -151,6 +162,7 @@ export const Assistant: React.FC<AssistantProps> = ({
       <div
         style={{
           position: "absolute",
+          opacity: attn,
           left: COMPOSER_X - SIDEBAR_W,
           top: COMPOSER_Y - THREAD_TOP,
           width: COMPOSER_W,
