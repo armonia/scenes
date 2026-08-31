@@ -12,6 +12,20 @@
 #
 # I BANCHI GIRANO PRIMA DEL DEPLOY, non dopo. Un sito pubblicato e poi trovato
 # rotto e' gia' stato visto da qualcuno.
+#
+# RIFARE I VIDEO E' L'UNICA COSA CHE COSTA (quattro minuti su quattro scene) e
+# quasi ogni push non la richiede: correggere una riga della pagina o del README
+# non cambia un pixel dei render, che escono identici a quelli di prima. Quindi
+# i render passano da una cache la cui chiave e' il contenuto di tutto cio' che
+# puo' cambiarli o giudicarli: le sorgenti delle scene, le dipendenze, e anche i
+# banchi. Chiave presa = quei video esatti hanno gia' passato quei banchi
+# esatti, e rifarli non direbbe niente di nuovo; si va dritti al deploy.
+# Chiave diversa = giro intero, senza scorciatoie.
+#
+# LA CACHE SI SCRIVE SOLO A BANCHI PASSATI, con un save esplicito in fondo e non
+# con il salvataggio automatico di actions/cache. Altrimenti un render bocciato
+# finirebbe in cache, e la run dopo salterebbe i controlli che l'avevano
+# bocciato e lo pubblicherebbe.
 
 name: render e deploy
 
@@ -34,7 +48,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: chiave dei render
+        id: key
+        run: |
+          echo "value=renders-verificati-${{ hashFiles('video/src/**', 'video/package-lock.json', 'video/remotion.config.ts', 'video/tsconfig.json', 'video/eslint.config.mjs', 'scripts/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: render gia' verificati?
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: video/out
+          key: ${{ steps.key.outputs.value }}
+
       - uses: actions/setup-node@v4
+        if: steps.cache.outputs.cache-hit != 'true'
         with:
           node-version: 22
           cache: npm
@@ -43,15 +70,18 @@ jobs:
       # ImageMagick e ffmpeg servono ai banchi di misura, non al render.
       # Chromium se lo porta Remotion.
       - name: strumenti di misura
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq imagemagick ffmpeg
 
       - name: dipendenze
+        if: steps.cache.outputs.cache-hit != 'true'
         working-directory: video
         run: npm ci
 
       - name: typecheck e lint
+        if: steps.cache.outputs.cache-hit != 'true'
         working-directory: video
         run: npm run lint
 
@@ -65,6 +95,7 @@ jobs:
       # nella run 33404856145 fill-measure ha inghiottito mezzo comando e la
       # misura dopo e' morta con "cripts/seam.sh: not found".
       - name: render
+        if: steps.cache.outputs.cache-hit != 'true'
         working-directory: video
         run: |
           node ../scripts/catalog.mjs render > /tmp/render.sh
@@ -76,6 +107,7 @@ jobs:
       # arrivano dal catalogo. Le altre sono legate a una scena sola e restano
       # scritte qui: derivarle da un elenco nasconderebbe che esistono.
       - name: misure
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           ./scripts/framelocked-verdict.sh
           node scripts/catalog.mjs measures > /tmp/misure.sh
@@ -87,6 +119,7 @@ jobs:
       # sul render che deve promuovere. Senza questo passo "verde" vorrebbe dire
       # soltanto che lo script e' arrivato in fondo.
       - name: il banco boccia il suo caso peggiore?
+        if: steps.cache.outputs.cache-hit != 'true'
         working-directory: .
         run: |
           ./scripts/fixture-screenshot.sh
@@ -95,6 +128,15 @@ jobs:
             exit 1
           fi
           echo "focus-sharpness.sh boccia la fixture, come deve."
+
+      # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa
+      # run, o vengono da una che li aveva gia' misurati. Solo adesso si salvano.
+      - name: salva i render verificati
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: video/out
+          key: ${{ steps.key.outputs.value }}
 
       - name: assembla
         run: ./scripts/showcase-build.sh

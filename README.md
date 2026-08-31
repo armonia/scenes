@@ -245,7 +245,11 @@ The order matters, and step 4 is the one people skip.
    confirm it exits non-zero on a broken input, and only then trust the pass.
    `npm run lint` proves nothing about a video.
 5. **Push.** CI renders, measures, deploys — the scene is on the site without
-   any of those three files being touched.
+   any of those three files being touched. Rendering only happens when it can
+   change something: the renders are cached under a key made of the scene
+   sources, the dependencies and the benches, so a push that only touches the
+   page or the README reuses the videos that already passed and goes straight
+   to the deploy. Change a scene or a bench and the full run comes back.
 
 If your scene is meant to follow another without a cut, read the previous
 scene's end pose from `slab.ts` rather than retyping the numbers, and name that
