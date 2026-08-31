@@ -260,8 +260,8 @@
           and names the bench that can fail it.
         </p>
         <p class="lede" style="margin-top:18px;font-size:16px">
-          Eleven of the twenty-six name a bench that exists and runs in CI. The
-          other fifteen name one that does not exist yet, and those are printed
+          Ten of the twenty-six name a bench that exists and runs in CI. The
+          other sixteen name one that does not exist yet, and those are printed
           in grey: a measurement nobody has written is a proposal, and this page
           would be doing the thing it warns against if it let the two look alike.
         </p>
@@ -1071,11 +1071,11 @@ var CAT=[
  c:"Control at (1520, 790), 7.5 per cent maximum overshoot, 78 frames of travel and 12 of settling.",
  d:"Curvature and velocity profile on the rendered frames. Zero curvature or constant speed means that is not a hand, it is a tween."},
 
-{fam:"cur",code:"CUR-02",t:"The hesitation before the click",demo:"hesit",src:"PromptInput · T.pauseAfterTyping",
+{fam:"cur",code:"CUR-02",p:1,t:"The hesitation before the click",demo:"hesit",src:"PromptInput · T.pauseAfterTyping",
  a:"The cursor reaches the button and does not press. That pause is the whole story: it says this is a decision and not a formality.",
  b:"Three separate windows on the timeline: approach, wait, press. The wait is not a slow ease, it is real dead time, or it reads as the software being slow.",
  c:"Arrival at f54, 16 frames of wait, press at f70. Under ten frames it does not register, over twenty-five something looks stuck.",
- d:"hesitation.sh. It walks the render frame by frame and takes the longest run of frames that barely change: 26 against 4 for the runner-up. What counts as still is not written in the script, because a fixed number tuned here fails on Linux, where the same readings come out about seven times higher — it is the geometric mean of the window\u0027s own 10th and 50th percentiles, which lands between the still cluster and the moving one on either platform. The control is the window next door: over the typing there is no run that long, and pointed there the bench exits 1."},
+ d:"A zero-velocity window between arrival and press, and the obvious way to measure it does not work. A frame-to-frame pixel difference cannot tell a deliberate hold from a slow settle at these speeds: a bench built that way found a 40-frame pause in <code>CardHandoff</code>, which has no composer and never stops. It was written, it certified its own worst case, and it was removed. A bench for this has to follow the pointer, not the whole frame."},
 
 {fam:"cur",code:"CUR-03",p:1,t:"The click the UI answers",demo:"click",src:"the pressed state",
  a:"The pressed state exists and it arrives before the consequence. Two frames of gap are enough for the gesture to look like it caused something.",
