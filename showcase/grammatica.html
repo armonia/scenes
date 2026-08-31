@@ -260,8 +260,8 @@
           and names the bench that can fail it.
         </p>
         <p class="lede" style="margin-top:18px;font-size:16px">
-          Eleven of the twenty-six name a bench that exists and runs in CI. The
-          other fifteen name one that does not exist yet, and those are printed
+          Twenty-one of the twenty-six name a bench that exists and runs in CI.
+          The other five name one that does not exist yet, and those are printed
           in grey: a measurement nobody has written is a proposal, and this page
           would be doing the thing it warns against if it let the two look alike.
         </p>
@@ -321,6 +321,9 @@
               <tr><td>legibility.sh</td><td>Text that does not survive being scaled down</td><td class="n">holds under 640 px wide</td></tr>
               <tr><td>framelocked-verdict.sh</td><td>A scene that is not reproducible: it still renders, with different pixels</td><td class="n">same pixels every render</td></tr>
               <tr><td>focus-sharpness.sh</td><td>A slab that stopped being DOM: the text falls apart once the camera is on top of it</td><td class="n">2.09× against 1.03× on the fixture</td></tr>
+              <tr><td>rest-point.sh</td><td>A scene still moving where the next one has to attach. Its thresholds were absolute to begin with, tuned on this machine, and every one of them failed the move to Linux</td><td class="n">edges under 30% of mid-scene</td></tr>
+              <tr><td>click-gap.sh</td><td>A press and its consequence fused onto one frame, or so far apart that it stops reading as a consequence and starts reading as lag</td><td class="n">f221 and f225, four frames</td></tr>
+              <tr><td>demo-check.py</td><td>A demonstration on this page that has stopped demonstrating its own entry. The difference between showing a thesis and not showing it is almost always temporal, and a screenshot cannot see it, so this one scrubs</td><td class="n">15 entries, frame by frame</td></tr>
               <tr><td>fixture-screenshot.sh</td><td>Measures nothing. It builds the scene the bench above has to fail, and without it that bench is a promise</td><td class="n">first frame magnified 2.26×</td></tr>
             </tbody>
           </table>
@@ -622,6 +625,12 @@ function depth(S){
   S.panel.style.transform="translateZ(18px)";
   S.cards.forEach(function(c){ c.el.style.transform="translateZ("+(c.data.active?40:26)+"px)"; });
 }
+function flat(S){
+  S.hdr.style.transform="translateZ(0)";
+  S.side.style.transform="translateZ(0)";
+  S.panel.style.transform="translateZ(0)";
+  S.cards.forEach(function(c){ c.el.style.transform="translateZ(0)"; });
+}
 function svgPath(S,d,stroke,dash){
   var p=document.createElementNS("http://www.w3.org/2000/svg","path");
   p.setAttribute("d",d); p.setAttribute("fill","none"); p.setAttribute("stroke",stroke); p.setAttribute("stroke-width","3");
@@ -638,32 +647,77 @@ M.push={dur:150,draw:function(f,S){
   S.hud("yaw "+p.yaw.toFixed(1)+"  pitch "+p.pitch.toFixed(1)+"  pushZ "+Math.round(p.z)+"  slideX "+Math.round(p.x));
 }};
 
-M.truck={dur:180,init:depth,draw:function(f,S){
-  var t=E.sine(f<90?f/90:(180-f)/90), x=-360+720*t;
-  pose(S,{yaw:-11+t*5,pitch:2.5,z:70,x:x,y:0});
-  S.hud("slideX "+Math.round(x)+"   z: header 6 · sidebar 10 · panel 18 · board 26 · active card 40");
+/* --- CAM-02: la parallasse alla distanza a cui si vede -----------------
+   A posa larga i sei-quaranta pixel di stacco fra i piani valgono quattro
+   pixel di scorrimento differenziale su tutta la corsa: c'e', ma non si
+   vede, e una voce che promette di piu' di quello che mostra e' la cosa da
+   non fare. Da vicino gli stessi numeri, non gonfiati, ne valgono quattordici.
+   Il carrello del film si fa spinti dentro, non da fuori. */
+M.truck={dur:220,
+ init:function(S){
+   depth(S);
+   /* La parallasse si misura una volta, sui due estremi della corsa, con e
+      senza lo stacco in z: la differenza fra le due corse differenziali e'
+      quanto la profondita' da' davvero. Scritta a mano diventerebbe falsa al
+      primo ritocco della posa. */
+   var act=C(S,1,0).el;
+   function run(dep){
+     var o=[];
+     [-640,640].forEach(function(x){
+       (dep?depth:flat)(S);
+       S.cam.style.transform="translate3d("+x+"px,-90px,780px) rotateY(-7deg) rotateX(1.8deg)";
+       o.push([S.panel.getBoundingClientRect().left, act.getBoundingClientRect().left]);
+     });
+     return (o[1][1]-o[0][1])-(o[1][0]-o[0][0]);
+   }
+   S.px=Math.abs(run(true)-run(false)).toFixed(0);
+   depth(S);
+ },
+ draw:function(f,S){
+  var second=f>=110, q=second?f-110:f;
+  var t=E.sine(q<55?q/55:(110-q)/55), x=-640+1280*t;
+  (second?flat:depth)(S);
+  pose(S,{yaw:-7,pitch:1.8,z:780,x:x,y:-90});
+  S.hud(second
+    ? "the same slide with every layer at z 0: nothing shears, and it is a pan across a picture"
+    : "z: header 6 · sidebar 10 · panel 18 · board 26 · active card 40   worth "+S.px+" px of shear, measured on the rendering");
 }};
 
-M.orbit={dur:210,draw:function(f,S){
-  var t=E.sine(f<105?f/105:(210-f)/105), y=-36+46*t;
+M.orbit={dur:250,draw:function(f,S){
+  var y = f<100 ? 10-46*E.sine(f/100)            /* the range a film actually uses */
+        : f<150 ? -36-20*E.sine((f-100)/50)      /* past it, on purpose */
+        :         -56+66*E.sine((f-150)/100);
   pose(S,{yaw:y,pitch:3.2,z:-260,x:0,y:0});
-  S.hud("yaw "+y.toFixed(1)+"   the edge shows only because a second plane sits at -30 behind the first");
+  S.hud("yaw "+y.toFixed(1)+(Math.abs(y)>40
+    ? "   past forty the text has stopped reading. This is why the orbit turns back at 36"
+    : "   the edge shows only because a second plane sits at -30 behind the first"));
 }};
 
-M.macro={dur:180,init:depth,draw:function(f,S){
-  var t=E.inout(cl((f-8)/126));
-  pose(S,{yaw:-9+9*t,pitch:2.5-2.5*t,z:48+1400*t,x:70*t,y:173.5*t});
-  S.hud("pushZ "+Math.round(48+1400*t)+"   the text holds up because it is DOM, not a screenshot");
-}};
+M.macro={dur:210,
+ init:function(S,stage){ depth(S); S.stageEl=stage; },
+ draw:function(f,S){
+   var t=E.inout(cl((f-10)/150)), z=48+1180*t;
+   /* La traslazione esce da centreOn come in CAM-06: coi numeri fissi della
+      repo, su un palco di larghezza diversa, la camera passa accanto alla card. */
+   var r=S.stageEl.getBoundingClientRect(), base=(r.width/1920)*1.04;
+   var cx=colX(1)+COL_W/2, cy=cardY(COLUMNS[1].cards,0)+ACTIVE_CARD_H/2;
+   var tx=1200-cx, ty=(0.46-0.5)*r.height/base+370-cy;
+   pose(S,{yaw:-9+9*t,pitch:2.5-2.5*t,z:z,x:tx*t,y:ty*t});
+   S.hud("pushZ "+Math.round(z)+"   focus-sharpness.sh reads 2.09× against the same content magnified from the wide shot");
+ }};
 
-M.attn={dur:170,draw:function(f,S){
+M.attn={dur:250,draw:function(f,S){
   pose(S,END);
-  var t=E.inout(cl((f-16)/44))*(1-E.inout(cl((f-118)/40))), o=1-0.38*t, os=o.toFixed(3);
+  var a=E.inout(cl((f-16)/40)), b=E.inout(cl((f-120)/40)), c=E.inout(cl((f-206)/40));
+  var o=1-0.38*a-0.37*b; o=o+(1-o)*c;
+  var os=o.toFixed(3);
   S.side.style.opacity=os; S.panel.style.opacity=os; S.hdr.style.opacity=os;
-  S.cards.forEach(function(c){ c.el.style.opacity=c.col===1?"1":os; });
-  S.cols.forEach(function(c,i){ c.head.style.opacity=i===1?"1":os; });
-  S.adds.forEach(function(a){ a.el.style.opacity=a.col===1?"0.7":(0.7*o).toFixed(3); });
-  S.hud("backdrop "+o.toFixed(2)+"   measured: under 0.62 the attenuated content falls below 3:1 and reads as noise");
+  S.cards.forEach(function(cd){ cd.el.style.opacity=cd.col===1?"1":os; });
+  S.cols.forEach(function(cd,i){ cd.head.style.opacity=i===1?"1":os; });
+  S.adds.forEach(function(ad){ ad.el.style.opacity=ad.col===1?"0.7":(0.7*o).toFixed(3); });
+  S.hud("backdrop "+o.toFixed(2)+(o<0.5
+    ? "   under 3:1 once rendered: at this point it is not depth any more, it is dirt"
+    : "   0.62 is the floor: down there the attenuated content still reads"));
 }};
 
 M.arc={dur:170,
@@ -681,7 +735,7 @@ M.arc={dur:170,
    S.hud("u "+u.toFixed(3)+"   max overshoot 7.5%   in red, the same time on a straight line at constant speed");
  }};
 
-M.hesit={dur:190,
+M.hesit={dur:250,
  init:function(S){ S.composer.style.opacity="1"; S.ctext.textContent=PROMPT;
    S.stream.style.opacity="1"; S.stream.textContent="Ho la lastra ferma nella posa finale, con la board popolata e il pannello aperto sulla card attiva. La camera sta a yaw -9 e pitch 2,5, quindi la scena dopo entra da lì senza stacco. Dimmi durata e direzione di ingresso e ti do il piano dei frame.";
    S.msgu0.style.opacity="1"; S.msgu0.textContent="Fammi vedere la board con la card attiva.";
@@ -690,28 +744,33 @@ M.hesit={dur:190,
    S.old.style.opacity="1"; S.old.textContent="Fatto. Kanban aperto, la card attiva è UIMockup: piano 3D + parallasse, e il pannello mostra branch e assegnatario.";
    S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?"; },
  draw:function(f,S){
-   pose(S,{yaw:-6,pitch:2,z:190,x:0,y:-560});
+   pose(S,{yaw:-4,pitch:1.4,z:560,x:-620,y:-660});
+   var second=f>=125, q=second?f-125:f, wait=second?0:20, p0=50+wait, down=q>=p0&&q<p0+10;
    S.cur.style.opacity="1";
    var A={x:1240,y:1178},Cp={x:1600,y:990},B={x:1878,y:1116};
-   var q=bez(A,Cp,B,E.expo(cl((f-8)/46)));
-   S.cur.style.left=q.x+"px"; S.cur.style.top=(q.y+(f>=70&&f<80?7:0))+"px";
-   S.send.className="send"+(f>=70&&f<80?" press":"");
-   var ph=f<54?"approach":(f<70?"wait "+(f-54)+"f":(f<80?"press":"release"));
-   S.hud("arrival f54 · wait 16f · press f70   now: "+ph);
+   var pt=bez(A,Cp,B,E.expo(cl((q-8)/46)));
+   S.cur.style.left=pt.x+"px"; S.cur.style.top=(pt.y+(down?7:0))+"px";
+   S.send.className="send"+(down?" press":"");
+   S.hud(second
+     ? "press on the frame the hand lands: no wait at all, and it goes back to being a formality"
+     : "parked from f50 · wait 20f · press f70   now: "+(q<50?"approach":(q<70?"waiting "+(q-50)+"f":(q<80?"press":"release"))));
  }};
 
-M.click={dur:130,
+M.click={dur:230,
  init:function(S){ S.composer.style.opacity="1"; S.ctext.textContent=PROMPT;
    S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?"; },
  draw:function(f,S){
-   pose(S,{yaw:-4,pitch:1.4,z:260,x:-120,y:-600});
-   S.cur.style.opacity="1"; S.cur.style.left="1878px"; S.cur.style.top=(1116+(f>=48&&f<58?7:0))+"px";
-   S.send.className="send"+(f>=48&&f<58?" press":"");
-   var eff=cl((f-50)/12);
+   pose(S,{yaw:-3,pitch:1.2,z:640,x:-640,y:-690});
+   var second=f>=115, q=second?f-115:f, down=q>=48&&q<58;
+   S.cur.style.opacity="1"; S.cur.style.left="1878px"; S.cur.style.top=(1116+(down?7:0))+"px";
+   S.send.className="send"+(down&&!second?" press":"");
+   var eff=second?0:cl((q-50)/12);
    S.stream.style.opacity=eff.toFixed(3);
-   S.stream.textContent=f>=50?"In lavorazione":"";
+   S.stream.textContent=(!second&&q>=50)?"In lavorazione":"";
    S.stream.style.transform="translateY("+((1-E.out(eff))*26).toFixed(1)+"px)";
-   S.hud("press f48 · consequence f50 · 2 frames apart"+(f>=48&&f<50?"   ← in between right now":""));
+   S.hud(second
+     ? "the same press, with nothing answering: no pressed state, no line arriving. The hand is talking to a picture"
+     : "press f48 · consequence f50 · 2 frames apart"+(q>=48&&q<50?"   ← in between right now":""));
  }};
 
 function dragPos(f){
@@ -738,7 +797,7 @@ M.type={dur:230,
    S.old.style.opacity="1"; S.old.textContent="Fatto. Kanban aperto, la card attiva è UIMockup: piano 3D + parallasse, e il pannello mostra branch e assegnatario.";
    S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?"; },
  draw:function(f,S){
-   pose(S,{yaw:-5,pitch:1.6,z:190,x:0,y:-560});
+   pose(S,{yaw:-4,pitch:1.4,z:600,x:300,y:-672});
    var n=typedCount(S.sched,f);
    S.ctext.textContent=PROMPT.slice(0,n);
    S.caret.style.opacity=(f%20<13)?"1":"0.18";
@@ -752,7 +811,7 @@ M.stream={dur:260,
    S.old.style.opacity="1"; S.old.textContent="Fatto. Kanban aperto, la card attiva è UIMockup: piano 3D + parallasse, e il pannello mostra branch e assegnatario.";
    S.msgu.style.opacity="1"; S.msgu.textContent=PROMPT; },
  draw:function(f,S){
-   pose(S,{yaw:-5,pitch:1.6,z:190,x:0,y:-560});
+   pose(S,{yaw:-4,pitch:1.4,z:520,x:-90,y:-720});
    S.stream.style.opacity="1";
    var prog=cl(ip(f,[24,110],[0,0.42],E.out)+(f>130?ip(f,[130,214],[0,0.58],E.lin):0));
    var n=Math.floor(prog*S.words.length);
@@ -769,7 +828,7 @@ M.metric={dur:170,draw:function(f,S){
   S.hud("128 ms · back out, 7.5% overshoot · tabular-nums, so the width never changes and nothing reflows");
 }};
 
-M.insert={dur:190,
+M.insert={dur:250,
  init:function(S){
    var d=el("div","card","left:"+colX(0)+"px;top:"+cardY(COLUMNS[0].cards,1)+"px;width:"+COL_W+"px;height:"+CARD_H+"px;opacity:0;z-index:5");
    var r1=el("div","r1");
@@ -780,13 +839,16 @@ M.insert={dur:190,
  },
  draw:function(f,S){
    pose(S,{yaw:-10,pitch:2.4,z:80,x:180,y:0});
-   var gap=E.out(cl((f-20)/34)), land=E.out(cl((f-38)/42)), shift=(CARD_H+CARD_GAP)*gap;
+   var second=f>=125, q=second?f-125:f, lead=second?0:18;
+   var gap=E.out(cl((q-20)/34)), land=E.out(cl((q-20-lead)/42)), shift=(CARD_H+CARD_GAP)*gap;
    [1,2].forEach(function(i){ var c=C(S,0,i); c.el.style.top=(c.y+shift)+"px"; });
    S.adds[0].el.style.top=(S.adds[0].y+shift)+"px";
    S.newcard.style.opacity=land.toFixed(3);
    S.newcard.style.top=(cardY(COLUMNS[0].cards,1)-52+52*land)+"px";
-   S.cols[0].cnt.textContent=f>=56?"4":"3";
-   S.hud("gap at f20, landing at f38: 18 frames of lead. Started together, the row looks stuck on top of the layout");
+   S.cols[0].cnt.textContent=q>=56?"4":"3";
+   S.hud(second
+     ? "gap and landing on the same frame: the row sits on top of a layout that has not made room yet"
+     : "gap at f20, landing at f38: 18 frames of lead, so the space opens before the row gets there");
  }};
 
 M.handoff={dur:250,
@@ -811,35 +873,67 @@ M.handoff={dur:250,
    S.hud("gap f30 · flight f40-126 · close f56   handoff-travel.sh wants a monotonic centroid across half a column");
  }};
 
-M.reflow={dur:190,init:depth,draw:function(f,S){
-  pose(S,{yaw:-10,pitch:2.4,z:70,x:160,y:0});
-  var target=C(S,0,1), gone=E.out(cl((f-18)/26));
-  target.el.style.opacity=(1-gone).toFixed(3);
-  target.el.style.transform="translateZ(26px) scale("+(1-0.14*gone).toFixed(3)+")";
-  var ox=colX(0)+COL_W/2, oy=target.y+CARD_H/2;
-  S.cards.forEach(function(c){
-    if(c===target) return;
-    var dx=(colX(c.col)+COL_W/2)-ox, dy=(c.y+c.h/2)-oy, d=Math.sqrt(dx*dx+dy*dy);
-    var t=E.out(cl((f-30-(d/1400)*22)/34));
-    c.el.style.top=(c.y+((c.col===0&&c.idx>1)?-(CARD_H+CARD_GAP)*t:0))+"px";
-    c.el.style.left=(colX(c.col)+(c.col===0?0:-7*t))+"px";
-  });
-  S.adds[0].el.style.top=(S.adds[0].y-(CARD_H+CARD_GAP)*E.out(cl((f-46)/34)))+"px";
-  S.cols[0].cnt.textContent=f>=44?"2":"3";
-  S.hud("delay = distance from the change / 1400 × 22f. Staggered by index the layout reads as a scrolling list, not as a space");
-}};
+/* --- CHR-02: il ritardo segue la distanza, e per vederlo serve la board intera
+   In una colonna sola l'ordine per distanza e quello per indice sono lo
+   stesso ordine, quindi la dimostrazione precedente - una card tolta e la
+   sua vicina che sale - non poteva far vedere la differenza fra le due
+   regole. Qui il cambiamento e' la card attiva che si posa, e tutto il
+   resto della board si assesta intorno: sei card a sei distanze diverse in
+   due dimensioni, dove i due ordini finalmente divergono. */
+M.reflow={dur:250,
+ init:function(S){
+   depth(S);
+   var a=C(S,1,0), ox=colX(1)+COL_W/2, oy=a.y+ACTIVE_CARD_H/2;
+   S.act=a; S.rf=[];
+   function add(el,cx,cy){
+     var dx=cx-ox, dy=cy-oy;
+     S.rf.push({el:el, base:el.style.transform||"", d:Math.sqrt(dx*dx+dy*dy), cy:cy, cx:cx});
+   }
+   S.cards.forEach(function(c){ if(c!==a) add(c.el, colX(c.col)+COL_W/2, c.y+c.h/2); });
+   S.cols.forEach(function(c,i){ add(c.head, colX(i)+COL_W/2, 64); });
+   S.adds.forEach(function(ad){ add(ad.el, colX(ad.col)+COL_W/2, ad.y); });
+   /* L'ordine di lettura, riga per riga, per il contronegativo. */
+   var byRead=S.rf.slice().sort(function(u,v){ return (u.cy-v.cy)||(u.cx-v.cx); });
+   byRead.forEach(function(r,i){ r.i=i; });
+   /* I due scaglionamenti coprono lo stesso arco di frame: cosi' l'unica
+      differenza fra le due meta' e' l'ordine, non la durata. */
+   var ds=S.rf.map(function(r){ return r.d/1400*22; });
+   var lo=Math.min.apply(null,ds), hi=Math.max.apply(null,ds), n=S.rf.length-1;
+   S.rf.forEach(function(r){ r.byD=r.d/1400*22; r.byI=lo+(hi-lo)*(r.i/n); });
+   S.rfSpan=(hi-lo).toFixed(1);
+ },
+ draw:function(f,S){
+   pose(S,{yaw:-9,pitch:2.4,z:120,x:0,y:0});
+   var second=f>=125, q=second?f-125:f;
+   /* Il cambiamento: la card attiva si posa. Tutto il resto data da qui. */
+   var land=E.out(cl((q-8)/30));
+   S.act.el.style.transform="translateZ(40px) translateY("+((1-land)*-58).toFixed(1)+"px)";
+   S.act.el.style.opacity=land.toFixed(3);
+   S.rf.forEach(function(r){
+     var t=E.out(cl((q-26-(second?r.byI:r.byD))/30));
+     r.el.style.transform=r.base+" translateY("+((1-t)*26).toFixed(1)+"px)";
+     r.el.style.opacity=(0.08+0.92*t).toFixed(3);
+   });
+   S.hud(second
+     ? "the same span staggered by reading order: the board fills left to right, and it reads as a list arriving"
+     : "delay = distance from the change / 1400 × 22f, "+S.rfSpan+"f of spread: it opens outward from the card, and it reads as a space");
+ }};
 
-M.prop={dur:200,draw:function(f,S){
+M.prop={dur:260,draw:function(f,S){
   pose(S,{yaw:-9,pitch:2.5,z:60,x:0,y:0});
-  var card=C(S,1,0), done=f>=30, col=done?"#34d399":"#4d94ff";
+  var second=f>=130, q=second?f-130:f;
+  var fn=second?30:35, fp=second?30:41;
+  var card=C(S,1,0), done=q>=30, col=done?"#34d399":"#4d94ff";
   card.el.querySelector(".ttl").className="ttl"+(done?" done":"");
   card.tag.textContent=done?"done":"feature";
   card.tag.style.color=col; card.tag.style.background=col+"22"; card.tag.style.borderColor=col+"44";
-  S.cols[1].cnt.textContent=f>=35?"1":"2";
-  S.cols[1].cnt.style.color=(f>=35&&f<58)?"#4d94ff":"#7d838d";
-  S.prows[0].textContent=f>=41?"Fatto":"In corso";
-  S.prows[0].style.color=f>=41?"#34d399":"#ccced4";
-  S.hud("card f30 → count f35 → panel f41.  The two delays are what read as cause: in sync they would be three unrelated things");
+  S.cols[1].cnt.textContent=q>=fn?"1":"2";
+  S.cols[1].cnt.style.color=(q>=fn&&q<fn+23)?"#4d94ff":"#7d838d";
+  S.prows[0].textContent=q>=fp?"Fatto":"In corso";
+  S.prows[0].style.color=q>=fp?"#34d399":"#ccced4";
+  S.hud(second
+    ? "card, count and panel on the same frame: three things that happen at once, and not one of them caused another"
+    : "card f30 → count f35 → panel f41.  The two delays are the whole of what reads as cause");
 }};
 
 M.thick={dur:200,draw:function(f,S){
@@ -866,10 +960,14 @@ M.seam={dur:240,draw:function(f,S){
   S.hud((f<120?"UIMockup":"CardHandoff")+"   join at f120"+(at?"  ← now":"")+"   seam.sh: 552 px against 18,019 for the control cut, 33×");
 }};
 
-M.rest={dur:210,draw:function(f,S){
-  var t=E.inout(cl((f-10)/172)), t0=E.inout(cl((f-11)/172));
+M.rest={dur:260,draw:function(f,S){
+  var second=f>=130, q=second?f-130:f, ez=second?E.lin:E.inout;
+  function s(u){ return ez(cl(u<65?u/64:(129-u)/64)); }
+  var t=s(q), v=Math.abs(t-s(q-1))*100;
   pose(S,mix(START,END,t));
-  S.hud("|v| "+(Math.abs(t-t0)*100).toFixed(2)+"   zero at f000 and f209: two scenes at rest at both ends go in any order");
+  S.hud("|v| "+v.toFixed(2)+(second
+    ? "   linear: at the far pose it is still moving, so there is no frame the next scene can start from"
+    : "   eased: it goes to zero at the far pose, and that frame is where the next scene attaches"));
 }};
 
 M.through={dur:240,draw:function(f,S){
@@ -1001,7 +1099,7 @@ M.fix={dur:290,
    S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?";
  },
  draw:function(f,S){
-   pose(S,{yaw:-5,pitch:1.6,z:190,x:0,y:-560});
+   pose(S,{yaw:-4,pitch:1.4,z:600,x:300,y:-672});
    var DEL0=118, DEL_END=DEL0+Math.ceil((WRONG.length-KEEP)/1.6), txt, fase;
    if(f<DEL0){ txt=WRONG.slice(0,typedCount(S.s1,f)); fase="typing"; }
    else if(f<DEL_END){
@@ -1035,47 +1133,47 @@ var CAT=[
  c:"yaw -18 to -9, pitch 5 to 2.5, pushZ 0 to 48, slideX 900 to 0. 108 frames of inOut cubic, then 42 at rest.",
  d:"fill-measure.sh. A push-in that starts too tight lets an edge die: on the repo the reading is 20 samples out of 20 with all four sides alive."},
 
-{fam:"cam",code:"CAM-02",p:1,t:"Truck with parallax",demo:"truck",src:"translateZ per layer",
+{fam:"cam",code:"CAM-02",t:"Truck with parallax",demo:"truck",src:"translateZ per layer",
  a:"The camera slides sideways and sidebar, board and panel separate because they sit at different depths. It is what tells a slab apart from a photograph being panned.",
  b:"Every part of the UI takes a translateZ inside a preserve-3d container. The parallax is not animated: it falls out of the perspective while the camera moves.",
- c:"header 6, sidebar 10, panel 18, board 26, active card 40. slideX -360 to 360 in inOut sine.",
- d:"A displacement comparison between two layers. If panel and board travel the same pixels there is no depth, and what you are watching is a pan over a flat image."},
+ c:"header 6, sidebar 10, panel 18, board 26, active card 40, and the truck runs pushed in at 780 rather than from the wide pose. That is not a taste: at the wide pose those same offsets buy four pixels of shear over the whole move, which is real and invisible. Close in they buy twenty, and the readout measures them rather than claiming them.",
+ d:"demo-check.py. Panel and board travel different pixels even flat, because they sit at different points on an inclined plane, so the differential travel on its own measures nothing. What measures the depth is how much that difference changes when the z offsets come off: nineteen pixels, and the readout takes them off the rendering rather than from this sentence."},
 
 {fam:"cam",code:"CAM-03",t:"Orbit that shows the edge",demo:"orbit",src:"the second plane at -30",
  a:"The camera goes around the slab far enough to show it has an edge. It establishes the thing as an object, and a film does that once.",
  b:"A second plane behind the first, slightly larger, with the contact shadow. Past forty degrees of yaw the text stops reading, so the orbit stops before that.",
- c:"yaw -36 to +10, inOut sine over 105 frames out and 105 back. Edge 30, shadow 90 offset and 180 blur.",
+ c:"yaw +10 to -36, which is the range a film uses, then out to -56 and back. The overshoot is there so the limit is something you see rather than something you are told: past forty degrees the board foreshortens to 59 per cent of its width and the titles stop being titles. Edge 30, shadow 90 offset and 180 blur.",
  d:"legibility.sh. A wide orbit drops the text under the legibility threshold, and the bench says down to what size it survives instead of leaving it to taste."},
 
 {fam:"cam",code:"CAM-04",t:"Descent to macro",demo:"macro",src:"scenes/CardFocus.tsx",
  a:"The camera carries on past the readable pose and into a single element, which fills the frame and stays sharp.",
  b:"A growing translateZ plus a translation that puts the element centre on the perspective origin. The sharpness is not the move doing something: it is why the slab has to be DOM.",
- c:"In the repo: pushZ 96 to 1493.6 over 169 frames of inOut cubic, 2.35 times, with the translation coming out of centreOn. The demo above runs at the stage own scale, so its numbers are smaller.",
+ c:"In the repo: pushZ 96 to 1493.6 over 169 frames of inOut cubic, 2.35 times, with the translation coming out of centreOn. The demo above takes its translation from the same formula measured on its own stage, and it has to: with the repo numbers hardcoded on a stage of a different width the camera goes past the card and the frame ends black.",
  d:"focus-sharpness.sh. It compares the high-frequency energy of the card crop against the same content magnified from the wide shot: 2.09× on the real render, 1.03× on the fixture. Its first version compared the crop to a blurred copy of itself, scored the fixture 4.14× and passed it."},
 
 {fam:"cam",code:"CAM-05",p:1,t:"Attention by opacity",demo:"attn",src:"theme.ts · BACKDROP_OPACITY",
  a:"Instead of blurring the rest, the rest drops in opacity. The eye goes where the contrast is full and no pixel becomes unreadable.",
  b:"One value applied to every layer that is not the subject. It lives in theme.ts because it is a measurement and not a taste.",
- c:"0.62. Below that the attenuated content falls under 3:1 once rendered, and at that point it reads as noise rather than as depth.",
- d:"A contrast check on the rendered frame. If the attenuated layer goes under 3:1 the bench fails, and the number to raise is that one, not the subject opacity."},
+ c:"0.62. The demo goes down to it and then carries on to 0.25, because a floor you never touch is a number somebody wrote down: at 0.25 the attenuated content is under 3:1 and reads as dirt on the background rather than as a plane behind.",
+ d:"A contrast check on the rendered frame, and that one is still missing: demo-check.py only holds the demonstration to the floor, verifying that it touches 0.62 and then goes under it. What nobody has measured yet is the ratio the attenuated layer actually lands on once rendered, which is the number the 0.62 is supposed to come from."},
 
-{fam:"cam",code:"CAM-06",p:1,t:"The point that does not run",demo:"centre",src:"slab.ts · centreOn",
+{fam:"cam",code:"CAM-06",t:"The point that does not run",demo:"centre",src:"slab.ts · centreOn",
  a:"Under a push in Z there is exactly one point of the frame that stays put, the perspective origin. Everything else runs for the edge, faster the further out it sits.",
  b:"Work out where the subject centre lands on screen with yaw and pitch at zero, then translate the slab by enough to put it on the origin. From there the push magnifies it without moving it. In slab.ts that is slabPointOnScreen and centreOn, and the final pose of CardFocus comes out of them instead of out of numbers nudged by eye.",
- c:"Origin at (960, 496.8), that is 50% and 46% of 1920 by 1080. The 46 is the term people drop: centring vertically is not half the slab minus the subject, and with the wrong formula the subject sits forty pixels off. The demo measures the drift on the rendering every frame: at the same push it is 386 px without compensation and 0 with.",
- d:"The distance between the subject centre and the origin on the last frame. If it is not within a couple of pixels the descent is sliding past the subject rather than into it, and you only notice at the end."},
+ c:"Origin at (960, 496.8), that is 50% and 46% of 1920 by 1080. The 46 is the term people drop: centring vertically is not half the slab minus the subject, and with the wrong formula the subject sits forty pixels off. The demo measures the drift on the rendering every frame: at the same push it is 477 px without compensation and 0 with.",
+ d:"demo-check.py measures the distance between the subject centre and the origin on the last frame of each half: 477 px uncompensated, 0 with. If it is not within a couple of pixels the descent is sliding past the subject rather than into it, and you only notice at the end."},
 
-{fam:"cur",code:"CUR-01",p:1,t:"Arc and overshoot",demo:"arc",src:"primitives/Cursor.tsx",
+{fam:"cur",code:"CUR-01",t:"Arc and overshoot",demo:"arc",src:"primitives/Cursor.tsx",
  a:"The pointer arrives on a curve, overshoots the target slightly and settles on it. In red, over the same time, the straight line at constant speed.",
  b:"A quadratic bezier with the control point off the axis, and a back curve on the parameter rather than on the position. That way the overshoot happens along the tangent and stays on the path.",
  c:"Control at (1520, 790), 7.5 per cent maximum overshoot, 78 frames of travel and 12 of settling.",
- d:"Curvature and velocity profile on the rendered frames. Zero curvature or constant speed means that is not a hand, it is a tween."},
+ d:"demo-check.py, on both: the hand bows 62 px off the chord against 0.1 for the control, and its speed swings 331 per cent against 24. That 24 is worth keeping: a straight line at genuinely constant speed still varies a quarter on screen, because the plane is inclined. Which is why the threshold is a ratio between the two and not a number on the control alone."},
 
-{fam:"cur",code:"CUR-02",p:1,t:"The hesitation before the click",demo:"hesit",src:"PromptInput · T.pauseAfterTyping",
+{fam:"cur",code:"CUR-02",t:"The hesitation before the click",demo:"hesit",src:"PromptInput · T.pauseAfterTyping",
  a:"The cursor reaches the button and does not press. That pause is the whole story: it says this is a decision and not a formality.",
  b:"Three separate windows on the timeline: approach, wait, press. The wait is not a slow ease, it is real dead time, or it reads as the software being slow.",
- c:"Arrival at f54, 16 frames of wait, press at f70. Under ten frames it does not register, over twenty-five something looks stuck.",
- d:"A zero-velocity window between arrival and press, and the obvious way to measure it does not work. A frame-to-frame pixel difference cannot tell a deliberate hold from a slow settle at these speeds: a bench built that way found a 40-frame pause in <code>CardHandoff</code>, which has no composer and never stops. It was written, it certified its own worst case, and it was removed. A bench for this has to follow the pointer, not the whole frame."},
+ c:"The easing window closes at f54 and the press is at f70, which on paper is 16 frames of wait. Measured on the rendering the pointer is already within two pixels of the button at f50, so what the eye is given is 20. The end of an eased move and the frame it stops looking like it is moving are not the same frame, and the number that matters is the second one. Under ten frames it does not register, over twenty-five something looks stuck.",
+ d:"demo-check.py, and only because on this page the pointer has a position that can be read. On the render the obvious approach does not work: a frame-to-frame pixel difference cannot tell a deliberate hold from a slow settle at these speeds, and a bench built that way found a 40-frame pause in <code>CardHandoff</code>, which has no composer and never stops. It was written, it certified its own worst case, and it was removed. Here the measurement is the gap between the frame the pointer lands on the button and the frame the button goes down: 20 in the first half, 0 in the second. The bench for the render is still missing, and it has to follow the pointer rather than the whole frame."},
 
 {fam:"cur",code:"CUR-03",t:"The click the UI answers",demo:"click",src:"the pressed state",
  a:"The pressed state exists and it arrives before the consequence. Two frames of gap are enough for the gesture to look like it caused something.",
@@ -1083,11 +1181,11 @@ var CAT=[
  c:"In the repo: the send lands at f220 and the bubble at f224, four frames apart. Under one the link disappears, over eight it stops reading as a consequence and starts reading as lag.",
  d:"click-gap.sh, and it is not told the answer: it finds both events in the render. The send is the first frame whose changed-pixel count blows past the window median, because the composer empties and the text leaves; the consequence is the first frame that climbs back above the quiet following it. Every threshold is a ratio inside that window, since the same renders read five to ten times higher on Linux. Measured f221 and f225, which is the f220 and f224 the source declares. It exits 1 on the four scenes with no click at all, and on a clip with the frames between the two events removed."},
 
-{fam:"cur",code:"CUR-04",p:1,t:"Drag with weight",demo:"drag",src:"CardBox · lifted",
+{fam:"cur",code:"CUR-04",t:"Drag with weight",demo:"drag",src:"CardBox · lifted",
  a:"The dragged object lags the pointer and tilts into the direction of travel. Without the lag the card looks welded to the cursor.",
  b:"The card position is the cursor position three frames earlier: arithmetic on the frame, no stored state. The tilt comes from the difference between two samples.",
  c:"3 frames of lag, 0.11 degrees per pixel of speed, shadow from 18/30 to 44/74, border lit from the lift onward.",
- d:"The tilt at both ends of the drag has to be zero. A constant tilt is not a card in a hand, it is a crooked card."},
+ d:"demo-check.py: 0.00° at both ends against 5.50° mid-travel, and 51 px of lag behind the pointer at speed. A constant tilt is not a card in a hand, it is a crooked card."},
 
 {fam:"txt",code:"TXT-01",t:"Typing with human rhythm",demo:"type",src:"primitives/rhythm.ts",
  a:"The text appears with a person pauses: thinking after punctuation, slowing before a long word, and bursts inside the words the fingers know.",
@@ -1101,17 +1199,17 @@ var CAT=[
  c:"Growth stops between f110 and f130. The block sits above the composer, which is 96 tall and starts 36 from the bottom of the slab.",
  d:"beats.sh, the bench that paid for itself. For a full day the render promised four beats and delivered three: the answer was assembling under the opaque composer, and every type check passed. Now the bench requires the word count to GROW across the window, not merely to be non-zero."},
 
-{fam:"txt",code:"TXT-03",p:1,t:"A number that settles",demo:"metric",src:"tabular-nums",
+{fam:"txt",code:"TXT-03",t:"A number that settles",demo:"metric",src:"tabular-nums",
  a:"A metric arrives on its value with a small overshoot and stops, instead of scrolling like an odometer.",
  b:"A back curve on the value and fixed-width digits, so the width never changes. A number that changes width moves everything around it, and you did not choose that movement.",
  c:"128 ms, 7.5 per cent overshoot, 72 frames.",
- d:"The block width measured frame by frame. If it changes there is a reflow, and reflow is what makes a dashboard look fake."},
+ d:"demo-check.py measures the block width frame by frame: 296.7 px on every one of them, while the number climbs to 138 and settles on 128. If the width changes there is a reflow, and reflow is what makes a dashboard look fake."},
 
-{fam:"txt",code:"TXT-04",p:1,t:"A row landing in an ordered list",demo:"insert",src:"cardY · absolute positioning",
+{fam:"txt",code:"TXT-04",t:"A row landing in an ordered list",demo:"insert",src:"cardY · absolute positioning",
  a:"The gap opens before the row arrives. The list makes room, and the row lands in a space that is already there.",
  b:"The cards are absolutely positioned and their y is pure arithmetic, so one can be inserted without the layout collapsing on the same frame. With a flex, adding is a cut wearing an animation costume.",
  c:"Gap at f20, landing at f38, eighteen frames of lead. The shift is 108, a card height plus the gap.",
- d:"The frame the shift starts on against the frame the row becomes visible. If they coincide the row looks stuck on top of the layout rather than in it."},
+ d:"demo-check.py finds both frames on the rendering rather than reading them off the source: 18 apart in the first half, 0 in the second. When they coincide the row looks stuck on top of the layout rather than in it, which is what the second half is there to show."},
 
 {fam:"txt",code:"TXT-05",p:1,t:"The correction",demo:"fix",src:"primitives/rhythm.ts",
  a:"Something gets typed, then a stop, then it is deleted back to a word boundary and retyped. It is the cheapest way to show the product forgives a change of mind.",
@@ -1125,17 +1223,17 @@ var CAT=[
  c:"Gap at f30, flight f40 to f126, close at f56. A step of 123, the active card height plus the gap.",
  d:"handoff-travel.sh, the only bench that looks at whether the gesture happens: a freeze frame passes seam.sh and fill-measure.sh with full marks. It tracks the centroid of changed pixels and requires monotonic horizontal motion across at least half a column."},
 
-{fam:"chr",code:"CHR-02",p:1,t:"Reflow by distance",demo:"reflow",src:"a stagger choice",
+{fam:"chr",code:"CHR-02",t:"Reflow by distance",demo:"reflow",src:"a stagger choice",
  a:"When something changes, the rest settles with a delay proportional to its distance from where it happened, not to its index in the list.",
  b:"For each element you take the distance from the point where the thing happened and that becomes the delay. It costs a square root per element per frame, which at these counts does not show.",
  c:"Delay equals distance over 1400, times 22 frames.",
- d:"The correlation between delay and distance on the rendered frames. If the delay grows with the index instead of the distance the bench sees it, and so does the eye: the layout reads as a list scrolling rather than a space reacting."},
+ d:"demo-check.py ranks the cards by the frame they start on and by their distance from the change: the correlation is 1.00 in the first half and 0.43 in the second, over the same 24 frames of spread. Same duration, same easing, only the order changes, and the eye reads one as a space reacting and the other as a list scrolling."},
 
-{fam:"chr",code:"CHR-03",p:1,t:"State propagating",demo:"prop",src:"counts and panel",
+{fam:"chr",code:"CHR-03",t:"State propagating",demo:"prop",src:"counts and panel",
  a:"A change in one place causes another somewhere else, after a delay. It is the delay that reads as cause.",
  b:"Three cascading windows on the same timeline. No events and no state: three different frame thresholds, so it stays a function of the frame.",
  c:"Card at f30, column count at f35, panel at f41. Five and six frames apart.",
- d:"The order of the changing frames. If two land on the same frame there is no chain: they are three unrelated things changing together."},
+ d:"demo-check.py reads the three changes off the DOM rather than off the source: f30, f35, f41 in the first half, and all three on f160 in the second. If two land on the same frame there is no chain, only three unrelated things changing together."},
 
 {fam:"chr",code:"CHR-04",p:1,t:"Before and after without a divider",demo:"ba",src:"build list · before-after",
  a:"You compare two states by letting the state change while the camera moves. No slider to drag and no vertical wipe: the before and the after are the same shot at two moments.",
@@ -1143,11 +1241,11 @@ var CAT=[
  c:"First card at f52, second at f88, metric from 128 to 64 ms between f120 and f200. The camera is not still at any of those.",
  d:"The frame a count changes on must not coincide with a frame where the camera is still. If they coincide, what you made is a cut with the camera parked over it."},
 
-{fam:"mat",code:"MAT-01",p:1,t:"Edge and contact shadow",demo:"thick",src:"the plane behind the plane",
+{fam:"mat",code:"MAT-01",t:"Edge and contact shadow",demo:"thick",src:"the plane behind the plane",
  a:"The slab has an edge and it rests on something. In the second half of the demo the edge is switched off, to see what goes.",
  b:"A second plane behind the first, slightly larger, with a deep shadow. It costs one div, and it decides whether the object reads as an object.",
  c:"Edge 30 behind the plane, shadow 90 offset and 180 blur at 75 per cent.",
- d:"No number needed here, a comparison is: switch it off and look. It is the same reason every measurement in the repo prints two columns instead of one value."},
+ d:"No number needed here, a comparison is: switch it off and look. demo-check.py does exactly that, and holds the second half to it. It is the same reason every measurement in the repo prints two columns instead of one value."},
 
 {fam:"mat",code:"MAT-02",p:1,t:"Screen light on the floor",demo:"spill",src:"the glow under the slab",
  a:"The screen dominant colour spills onto the plane below, and changes when what is on screen changes.",
