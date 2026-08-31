@@ -59,9 +59,16 @@ jobs:
       # file da cui Root.tsx dichiara le composition e da cui la pagina prende
       # la vetrina. Una scena aggiunta la' viene renderizzata, misurata e
       # pubblicata senza toccare questo workflow.
+      # I comandi si scrivono in un file e si eseguono con lo stdin chiuso,
+      # invece di finire in `| sh`. Con il pipe, il primo comando che legge lo
+      # stdin (imagemagick lo fa) si mangia le righe successive dello script:
+      # nella run 33404856145 fill-measure ha inghiottito mezzo comando e la
+      # misura dopo e' morta con "cripts/seam.sh: not found".
       - name: render
         working-directory: video
-        run: node ../scripts/catalog.mjs render | sh -e
+        run: |
+          node ../scripts/catalog.mjs render > /tmp/render.sh
+          sh -e /tmp/render.sh < /dev/null
 
       # Le misure che possono fallire. Se una scena e' rotta, il deploy non parte.
       #
@@ -71,7 +78,8 @@ jobs:
       - name: misure
         run: |
           ./scripts/framelocked-verdict.sh
-          node scripts/catalog.mjs measures | sh -e
+          node scripts/catalog.mjs measures > /tmp/misure.sh
+          sh -e /tmp/misure.sh < /dev/null
           ./scripts/handoff-travel.sh
           ./scripts/focus-sharpness.sh
 
