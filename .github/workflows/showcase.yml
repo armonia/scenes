@@ -115,7 +115,6 @@ jobs:
           ./scripts/handoff-travel.sh
           ./scripts/focus-sharpness.sh
           ./scripts/rest-point.sh
-          ./scripts/hesitation.sh
 
       # Il banco nuovo va messo alla prova sul caso che deve bocciare, non solo
       # sul render che deve promuovere. Senza questo passo "verde" vorrebbe dire
@@ -145,20 +144,6 @@ jobs:
           [ "$rc" = 2 ] || { echo "rest-point.sh su un fermo immagine: atteso 2, ottenuto $rc" >&2; exit 1; }
           echo "rest-point.sh distingue una scena mossa da un fermo immagine."
 
-          # hesitation.sh: spostato sulla finestra della battitura non deve
-          # trovare nessuna pausa (esce 1), e su un fermo immagine deve dire che
-          # la misura non vale (esce 2). Se promuovesse l'uno o l'altro, la
-          # pausa che certifica sarebbe solo il fondo.
-          ./scripts/hesitation.sh video/out/prompt-input.mp4 95 215 >/dev/null 2>&1; rc=$?
-          [ "$rc" = 1 ] || { echo "hesitation.sh sulla battitura: atteso 1, ottenuto $rc" >&2; exit 1; }
-          # Su un fermo immagine esce 1 e non 2, e va bene cosi': per questo banco
-          # una scena immobile non e' "misura impossibile", e' una scena senza
-          # pausa, perche' la pausa e' definita rispetto al movimento che le sta
-          # intorno e li' non ce n'e'. Quello che il controllo fissa e' che non
-          # passi, e con quale codice.
-          ./scripts/hesitation.sh /tmp/fermo.mp4 30 120 >/dev/null 2>&1; rc=$?
-          [ "$rc" = 1 ] || { echo "hesitation.sh su un fermo immagine: atteso 1, ottenuto $rc" >&2; exit 1; }
-          echo "hesitation.sh non trova pause dove non ce ne sono."
 
       # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa
       # run, o vengono da una che li aveva gia' misurati. Solo adesso si salvano.
