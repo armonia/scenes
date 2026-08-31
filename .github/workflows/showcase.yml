@@ -55,24 +55,24 @@ jobs:
         working-directory: video
         run: npm run lint
 
+      # L'elenco delle scene non e' scritto qui: esce da catalog.json, lo stesso
+      # file da cui Root.tsx dichiara le composition e da cui la pagina prende
+      # la vetrina. Una scena aggiunta la' viene renderizzata, misurata e
+      # pubblicata senza toccare questo workflow.
       - name: render
         working-directory: video
-        run: |
-          npx remotion render PromptInput out/prompt-input.mp4
-          npx remotion render UIMockup    out/ui-mockup.mp4
-          npx remotion render CardHandoff out/card-handoff.mp4
-          npx remotion render CardFocus   out/card-focus.mp4
+        run: node ../scripts/catalog.mjs render | sh -e
 
       # Le misure che possono fallire. Se una scena e' rotta, il deploy non parte.
+      #
+      # Le generiche (riempimento di ogni scena, giunta di ogni coppia adiacente)
+      # arrivano dal catalogo. Le altre sono legate a una scena sola e restano
+      # scritte qui: derivarle da un elenco nasconderebbe che esistono.
       - name: misure
         run: |
           ./scripts/framelocked-verdict.sh
-          ./scripts/fill-measure.sh video/out/ui-mockup.mp4
-          ./scripts/fill-measure.sh video/out/card-handoff.mp4
-          ./scripts/seam.sh
-          ./scripts/seam.sh video/out/card-handoff.mp4 video/out/card-focus.mp4
+          node scripts/catalog.mjs measures | sh -e
           ./scripts/handoff-travel.sh
-          ./scripts/fill-measure.sh video/out/card-focus.mp4
           ./scripts/focus-sharpness.sh
 
       # Il banco nuovo va messo alla prova sul caso che deve bocciare, non solo

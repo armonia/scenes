@@ -55,8 +55,8 @@ that is 3px off reads as a mockup.
 | | |
 |---|---|
 | `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/` |
-| `scripts/` | Six things, all run by hand. Four measurements, one review page, one showcase build. See below |
-| `showcase/` | The public pages. `index.html` and `grammatica.html` are committed, the renders beside them are not: `showcase-build.sh` puts them there |
+| `scripts/` | The measurements, the review page, the showcase build, and `catalog.mjs`, which is how shell and CI read `catalog.json` without a compiler. See below |
+| `showcase/` | The public pages. `index.template.html` and `grammatica.html` are committed; the scene section and the renders are not, `showcase-build.sh` generates the first from `catalog.json` and copies the second into `showcase/dist/` |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
 | `ref/` | Reference commercials and their contact sheets. **Not in git**, see below |
 
@@ -159,7 +159,11 @@ npx remotion render <CompositionId> out/<name>.mp4
 
 ## The showcase page
 
-`showcase/index.html` is the public page: the four scenes playing
+`showcase/index.template.html` is the public page, and it is a template: the
+scene section is generated from `catalog.json` by `showcase-build.sh`, so a
+render that exists and a page that shows it cannot drift apart. Open
+`showcase/dist/index.html` after a build to see it. It carries the four scenes
+playing
 (`PromptInput`, `UIMockup`, `CardHandoff`, `CardFocus`), the four rules, the
 license note. Beside it, `showcase/grammatica.html` is the catalogue: twenty-six
 movements with a live demo each, the numbers they start from, and the bench that
@@ -228,19 +232,24 @@ The order matters, and step 4 is the one people skip.
 2. **Reuse `primitives/`.** `slab.ts` holds the geometry and the camera poses,
    `SlabChrome.tsx` the app furniture. A scene that redraws its own sidebar can
    only stay aligned with the others by hand, and it will not.
-3. **Register it in `Root.tsx`** with an explicit `durationInFrames`.
+3. **Add one entry to `video/src/scenes/catalog.json`** — id, slug, duration,
+   the blurb for the page, and `seamAfter` if it follows another scene — then
+   the one line in `COMPONENTS` in `Root.tsx` that binds the id to the import.
+   That entry is what the render step, the generic benches and the showcase
+   page all read: there is no second list to keep in sync. Leave out the
+   `COMPONENTS` line and the project refuses to load and says which id is
+   unbound, which is the one failure mode a JSON file cannot cover on its own.
 4. **Give it a check that can fail.** Every scene here has one bench that
    fails when the scene's own promise is broken: `beats.sh` for the four beats,
    `handoff-travel.sh` for the card crossing. Write the negative control first,
    confirm it exits non-zero on a broken input, and only then trust the pass.
    `npm run lint` proves nothing about a video.
-5. **Add it to `showcase/index.html` and `showcase-build.sh`**, and to the
-   render list in the workflow.
-6. **Push.** CI renders, measures, deploys.
+5. **Push.** CI renders, measures, deploys — the scene is on the site without
+   any of those three files being touched.
 
 If your scene is meant to follow another without a cut, read the previous
-scene's end pose from `slab.ts` rather than retyping the numbers, then add it to
-`seam.sh`. Two copies of the same pose stay equal exactly as long as nobody
+scene's end pose from `slab.ts` rather than retyping the numbers, and name that
+scene in `seamAfter`. Two copies of the same pose stay equal exactly as long as nobody
 edits one of them.
 
 ## Licensing, which has two halves
