@@ -1,153 +1,159 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
-    <title>Grammatica della lastra — scenes</title>
-    <meta
-      name="description"
-      content="Ventisei movimenti per un commercial di prodotto girato in una sola inquadratura. Ogni voce ha una demo che gira la lastra vera, i numeri con cui parte e il banco che la puo' bocciare."
-    />
-    <meta property="og:title" content="Grammatica della lastra" />
-    <meta
-      property="og:description"
-      content="Il vocabolario delle scene di armonia/scenes: movimenti continui su UI vera, niente stacchi, ognuno con la misura che lo smentisce."
-    />
-  </head>
-  <body>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+    <title>The grammar — scenes</title>
+    <meta name="description" content="Twenty-six movements for a software product commercial shot in one take. Each one runs a live demo of the slab, states the numbers it starts from, and names the bench that can fail it." />
+    <meta property="og:title" content="The grammar — scenes" />
+    <meta property="og:description" content="The vocabulary behind armonia/scenes: continuous movements over real UI, no cuts, each with the measurement that can disprove it." />
+    <style>
+      :root {
+        --bg: hsl(222 16% 8.5%);
+        --surface: hsl(222 14% 11%);
+        --elevated: hsl(220 13% 14%);
+        --border: hsl(220 11% 18%);
+        --text: hsl(210 20% 92%);
+        --muted: hsl(215 12% 62%);
+        --faint: hsl(215 10% 44%);
+        --accent: hsl(18 74% 60%);
+        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.55;
+      }
+      .wrap { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+      header { padding: 92px 0 56px; }
+      .eyebrow {
+        font-family: var(--mono); font-size: 13px; letter-spacing: 1.4px;
+        text-transform: uppercase; color: var(--faint); margin: 0 0 20px;
+      }
+      h1 {
+        font-size: clamp(38px, 6vw, 66px); line-height: 1.05;
+        letter-spacing: -0.025em; margin: 0 0 22px; font-weight: 600;
+      }
+      .lede { font-size: clamp(17px, 2vw, 21px); color: var(--muted); max-width: 62ch; margin: 0; }
+      .lede strong { color: var(--text); font-weight: 600; }
+      .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+      .btn {
+        display: inline-flex; align-items: center; gap: 9px; height: 44px; padding: 0 20px;
+        border-radius: 8px; border: 1px solid var(--border); background: var(--elevated);
+        color: var(--text); text-decoration: none; font-size: 15px;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+      .btn:hover { background: hsl(220 12% 17%); border-color: hsl(220 11% 26%); }
+      .btn.primary { background: var(--accent); border-color: var(--accent); color: hsl(222 30% 8%); font-weight: 600; }
+      .btn.primary:hover { background: hsl(18 74% 65%); border-color: hsl(18 74% 65%); }
+      section { padding: 40px 0; }
+      .section-title {
+        font-family: var(--mono); font-size: 13px; letter-spacing: 1.4px;
+        text-transform: uppercase; color: var(--faint); margin: 0 0 28px;
+      }
 
-<style>
-/* ---------------- token: la stanza (chiara o scura). La lastra no: quella
-   e' uno schermo e resta scura in tutti e due i temi. ---------------- */
-:root{
-  --ground:#07080B; --ground-2:#0B0D12; --raise:#10131A;
-  --ink:#E6E8EC; --ink-2:#A8AEB8; --ink-3:#787E88;
-  --line:rgba(230,232,236,.12); --line-2:rgba(230,232,236,.24);
-  --accent:#4D94FF; --warn:#D97757; --ok:#34D399;
-  --floor:#0A0C11;
-  color-scheme:dark;
-}
+      /* the filter rail, built from .btn so it belongs to the same set */
+      .rail { position: sticky; top: 0; z-index: 40; background: var(--bg);
+        border-bottom: 1px solid var(--border); }
+      .railin { display: flex; gap: 8px; align-items: center; padding: 12px 0;
+        overflow-x: auto; scrollbar-width: none; }
+      .railin::-webkit-scrollbar { display: none; }
+      .chip {
+        flex: 0 0 auto; height: 34px; padding: 0 14px; border-radius: 8px;
+        border: 1px solid var(--border); background: transparent; color: var(--muted);
+        font-family: var(--mono); font-size: 12px; cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      }
+      .chip:hover { background: var(--elevated); color: var(--text); }
+      .chip[aria-pressed="true"] { background: var(--elevated); color: var(--text); border-color: hsl(220 11% 26%); }
+      .chip b { font-weight: 400; color: var(--faint); margin-left: 6px; }
+      .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .railin .gap { flex: 1 1 auto; min-width: 6px; }
 
-*{box-sizing:border-box}
-body{
-  margin:0; background:var(--ground); color:var(--ink);
-  font-family:"Instrument Sans",-apple-system,BlinkMacSystemFont,sans-serif;
-  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
-}
-.wrap{max-width:1200px;margin:0 auto;padding:0 26px}
-@media (max-width:680px){.wrap{padding:0 16px}}
-.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
-.lab{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+      /* a family, then its entries: same shape as the scenes on the index */
+      .fam { padding-top: 56px; }
+      .famhead { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+        border-top: 1px solid var(--border); padding-top: 34px; margin-bottom: 40px; }
+      .famhead .k { font-family: var(--mono); font-size: 13px; letter-spacing: 1.4px;
+        text-transform: uppercase; color: var(--faint); }
+      .famhead h2 { font-size: 24px; letter-spacing: -0.01em; margin: 0; font-weight: 600; }
+      .famhead p { margin: 0; color: var(--muted); font-size: 15px; max-width: 52ch; }
+      .mv { margin-bottom: 72px; }
+      .mvhead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; }
+      .mvhead h3 { font-size: 24px; letter-spacing: -0.01em; margin: 0; font-weight: 600; order: 1; }
+      .mvhead .code { font-family: var(--mono); font-size: 13px; color: var(--faint); order: 2; }
+      .mvhead .from { font-family: var(--mono); font-size: 13px; color: var(--faint); order: 3; }
+      .mvhead .code::after { content: " ·"; }
 
-/* ---------------- testata ---------------- */
-.top{padding:34px 0 0}
-.topbar{display:flex;gap:16px;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line-2);padding-bottom:9px;flex-wrap:wrap}
-.topbar strong{font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"wdth" 88,"wght" 700;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
-h1{
-  font-family:"Bricolage Grotesque",sans-serif;
-  font-variation-settings:"opsz" 96,"wdth" 82,"wght" 750;
-  font-size:clamp(40px,7.4vw,92px); line-height:.92; letter-spacing:-.028em;
-  margin:30px 0 0; text-wrap:balance; max-width:15ch;
-}
-h1 b{font-weight:inherit;color:var(--accent)}
-.lede{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:36px;margin-top:28px;padding-bottom:28px;border-bottom:1px solid var(--line)}
-@media (max-width:860px){.lede{grid-template-columns:1fr;gap:20px}}
-.lede p{margin:0 0 13px;max-width:62ch;font-size:17px;color:var(--ink-2)}
-.lede p b{color:var(--ink);font-weight:600}
-.card-note{border:1px solid var(--line);background:var(--ground-2);padding:18px 20px;align-self:start}
-.card-note h4{margin:0 0 10px;font-size:12px;font-family:"JetBrains Mono",monospace;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
-.card-note ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
-.card-note li{font-size:14px;line-height:1.45;color:var(--ink-2);padding-left:16px;position:relative}
-.card-note li::before{content:"";position:absolute;left:0;top:.65em;width:7px;height:1px;background:var(--warn)}
+      /* the demo sits in the same frame the videos sit in on the index */
+      .stage { position: relative; aspect-ratio: 16/9; border: 1px solid var(--border);
+        border-radius: 10px; overflow: hidden; background: #000; container-type: inline-size; }
+      .room { position: absolute; inset: 0; perspective: 2400px; perspective-origin: 50% 46%; }
+      .rig { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
+      .hud { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center;
+        gap: 12px; padding: 9px 14px; font-family: var(--mono); font-size: 11px;
+        color: hsl(215 12% 62% / 0.9); background: linear-gradient(to top, rgba(0,0,0,.66), rgba(0,0,0,0));
+        pointer-events: none; z-index: 6; }
+      .hud .f { color: var(--accent); flex: 0 0 auto; }
+      .hud > span { flex: 0 0 auto; white-space: nowrap; }
+      .hud .rd { flex: 1 1 auto; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .scrub { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; z-index: 7;
+        cursor: ew-resize; touch-action: none; }
+      .scrub::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+        background: hsl(220 11% 26%); }
+      .scrub i { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--accent); width: 0; }
+      .stage.rm .scrub { cursor: pointer; }
 
-/* ---------------- rifiutato ---------------- */
-.reject{margin-top:34px;border:1px solid var(--line);border-left:2px solid var(--warn);background:var(--ground-2);padding:20px 24px}
-.reject h3{margin:0 0 6px;font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"wdth" 86,"wght" 700;font-size:17px}
-.reject p{margin:0 0 12px;font-size:14.5px;color:var(--ink-2);max-width:78ch}
-.reject-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:14px}
-@media (max-width:760px){.reject-grid{grid-template-columns:1fr}}
-.reject-grid div{background:var(--ground-2);padding:11px 14px}
-.reject-grid b{display:block;font-family:"JetBrains Mono",monospace;font-size:19px;color:var(--warn);font-weight:500}
-.reject-grid span{display:block;font-size:12.5px;color:var(--ink-3);margin-top:3px;line-height:1.4}
+      /* the four fields, on the grid the index uses for the rules */
+      .spec { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 26px; margin: 22px 0 0; }
+      .spec > div { margin: 0; }
+      .spec dt { font-family: var(--mono); font-size: 12px; letter-spacing: 0.6px;
+        color: var(--faint); margin: 0 0 7px; }
+      .spec dd { margin: 0; color: var(--muted); font-size: 15px; }
+      .spec .bench dt { color: var(--accent); }
+      code { font-family: var(--mono); font-size: 0.92em; color: var(--text); }
 
-/* ---------------- barra famiglie ---------------- */
-.rail{position:sticky;top:0;z-index:40;background:var(--ground);border-bottom:1px solid var(--line-2);margin-top:40px}
-.railin{display:flex;gap:7px;align-items:center;padding:10px 0;overflow-x:auto;scrollbar-width:none}
-.railin::-webkit-scrollbar{display:none}
-.chip{flex:0 0 auto;appearance:none;background:transparent;border:1px solid var(--line-2);color:var(--ink);
-  font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;padding:7px 11px;cursor:pointer}
-.chip:hover{background:var(--ground-2)}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--ground);border-color:var(--ink)}
-.chip b{font-weight:400;opacity:.5;margin-left:5px}
-.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.railin .gap{flex:1 1 auto;min-width:6px}
+      /* the sequence and the two tables */
+      .take { display: grid; grid-template-columns: 88px 1fr; border-top: 1px solid var(--border); }
+      .take > div { padding: 13px 0; border-bottom: 1px solid var(--border); }
+      .take > div:nth-child(odd) { font-family: var(--mono); font-size: 13px; color: var(--faint); }
+      .take > div:nth-child(even) { color: var(--muted); font-size: 15px; padding-left: 8px; }
+      .take b { color: var(--text); font-weight: 600; }
+      table { width: 100%; border-collapse: collapse; font-size: 15px; }
+      th, td { text-align: left; padding: 13px 16px 13px 0; border-bottom: 1px solid var(--border);
+        vertical-align: top; color: var(--muted); }
+      th { font-family: var(--mono); font-size: 12px; letter-spacing: 0.6px; color: var(--faint); font-weight: 400; }
+      td:first-child { color: var(--text); }
+      td.n { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+      .tblwrap { overflow-x: auto; }
+      .note { color: var(--faint); font-size: 14px; max-width: 78ch; margin: 20px 0 0; }
+      footer { border-top: 1px solid var(--border); margin-top: 64px; padding: 30px 0 64px;
+        color: var(--faint); font-size: 14px; display: flex; flex-wrap: wrap;
+        gap: 8px 22px; justify-content: space-between; }
+      footer a { color: var(--muted); text-decoration: none; }
+      footer a:hover { color: var(--text); }
 
-/* ---------------- famiglia ---------------- */
-.fam{padding-top:56px}
-.famhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line-2);padding-bottom:8px}
-.famhead h2{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"opsz" 72,"wdth" 84,"wght" 720;font-size:clamp(23px,3.2vw,34px);letter-spacing:-.02em}
-.famhead .k{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--accent);letter-spacing:.1em}
-.famhead p{margin:0 0 0 auto;max-width:52ch;font-size:14px;color:var(--ink-3);text-align:right}
-@media (max-width:900px){.famhead p{margin-left:0;text-align:left}}
-
-/* ---------------- la voce ---------------- */
-.mv{padding:30px 0 6px;border-bottom:1px solid var(--line)}
-.mvhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-.mvhead .code{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);letter-spacing:.06em}
-.mvhead h3{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"wdth" 90,"wght" 660;font-size:21px;letter-spacing:-.012em}
-.mvhead .from{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;color:var(--ink-3);border:1px solid var(--line);padding:3px 8px;white-space:nowrap}
-
-/* palco */
-.stage{position:relative;aspect-ratio:16/9;background:var(--floor);overflow:hidden;border:1px solid var(--line-2);container-type:inline-size}
-.room{position:absolute;inset:0;perspective:2400px;perspective-origin:50% 46%}
-.rig{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
-.hud{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding:7px 10px;
-  font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.06em;color:rgba(232,236,244,.5);
-  background:linear-gradient(to top,rgba(0,0,0,.62),rgba(0,0,0,0));pointer-events:none;z-index:6}
-.hud .f{color:var(--accent);flex:0 0 auto}
-.hud>span{flex:0 0 auto;white-space:nowrap}
-.hud .rd{flex:1 1 auto;text-align:right;color:rgba(232,236,244,.66);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.scrub{position:absolute;left:0;right:0;bottom:0;height:16px;z-index:7;cursor:ew-resize;touch-action:none}
-.scrub::before{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.14)}
-.scrub i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent);width:0}
-.stage.rm .scrub{cursor:pointer}
-
-/* spec */
-.spec{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--line);border-top:0}
-@media (max-width:1000px){.spec{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:600px){.spec{grid-template-columns:1fr}}
-.spec>div{padding:14px 16px;border-right:1px solid var(--line)}
-.spec>div:last-child{border-right:0}
-@media (max-width:1000px){.spec>div:nth-child(2n){border-right:0}.spec>div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
-@media (max-width:600px){.spec>div{border-right:0;border-bottom:1px solid var(--line)}.spec>div:last-child{border-bottom:0}}
-.spec dt{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px}
-.spec dd{margin:0;font-size:14px;line-height:1.5;color:var(--ink-2)}
-.spec .bench dt{color:var(--ok)}
-.spec code{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--ink);background:var(--ground-2);padding:1px 4px;border:1px solid var(--line)}
-
-/* ---------------- sezioni finali ---------------- */
-.sec{padding-top:62px}
-.sechead{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line-2);padding-bottom:8px;flex-wrap:wrap}
-.sechead h2{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"opsz" 72,"wdth" 84,"wght" 720;font-size:clamp(23px,3.2vw,34px);letter-spacing:-.02em}
-.sechead .k{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--accent);letter-spacing:.1em}
-.tbl{width:100%;border-collapse:collapse;border:1px solid var(--line);border-top:0;font-size:14px}
-.tbl th,.tbl td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line);vertical-align:top}
-.tbl th{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
-.tbl td:first-child{color:var(--ink);font-weight:500}
-.tbl td.n{font-family:"JetBrains Mono",monospace;white-space:nowrap;font-variant-numeric:tabular-nums}
-.tblwrap{overflow-x:auto}
-.take{display:grid;grid-template-columns:88px 1fr;border:1px solid var(--line);border-top:0}
-.take>div{padding:12px 15px;border-bottom:1px solid var(--line)}
-.take>div:nth-child(odd){border-right:1px solid var(--line);font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--accent);font-variant-numeric:tabular-nums}
-.take>div:nth-child(even){font-size:14px;color:var(--ink-2)}
-.take b{color:var(--ink);font-weight:600}
-footer{margin-top:70px;border-top:1px solid var(--line-2);padding:22px 0 62px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
-footer p{margin:0;font-size:13px;color:var(--ink-3);max-width:64ch}
-footer a{color:var(--ink)}
+      /* markers and the chain graph */
+      .mk { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px;
+        pointer-events: none; z-index: 10; color: #4d94ff; }
+      .mk::before, .mk::after { content: ""; position: absolute; background: currentColor; }
+      .mk::before { left: 0; right: 0; top: 29px; height: 6px; }
+      .mk::after { top: 0; bottom: 0; left: 29px; width: 6px; }
+      .origin { position: absolute; left: 50%; top: 46%; width: 26px; height: 26px;
+        margin: -13px 0 0 -13px; color: #f87171; z-index: 11; pointer-events: none; }
+      .origin::before, .origin::after { content: ""; position: absolute; background: currentColor; }
+      .origin::before { left: 0; right: 0; top: 12px; height: 2px; }
+      .origin::after { top: 0; bottom: 0; left: 12px; width: 2px; }
+      .graph { position: absolute; right: 10px; top: 10px; width: 32%; max-width: 290px;
+        z-index: 8; display: block; background: rgba(4,6,10,.66);
+        border: 1px solid hsl(220 11% 26%); border-radius: 6px; }
 
 /* ================= LA LASTRA =================
    Geometria da video/src/primitives/slab.ts, token da video/src/theme.ts,
@@ -233,137 +239,106 @@ footer a{color:var(--ink)}
 .graph{position:absolute;right:9px;top:9px;width:32%;max-width:290px;z-index:8;display:block;
   background:rgba(4,6,10,.62);border:1px solid rgba(255,255,255,.16)}
 
-@media (prefers-reduced-motion:reduce){.rig{transition:none}}
-</style>
 
-<div class="wrap">
-
-  <header class="top">
-    <div class="topbar">
-      <strong>Grammatica della lastra</strong>
-      <a class="lab" href="./" style="text-decoration:none;border-bottom:1px solid var(--line-2);padding-bottom:2px">&larr; le scene</a>
-      <span class="lab">26 voci &middot; 30 fps</span>
+      @media (prefers-reduced-motion: reduce) { .rig { transition: none; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <p class="eyebrow">The grammar</p>
+        <h1>Twenty-six movements,<br />no cuts.</h1>
+        <p class="lede">
+          The vocabulary the scenes are built from. A transition is something you
+          pick between two finished clips; <strong>a movement carries the film
+          from one state to the next with no join to hide</strong>. Every entry
+          here runs a live demo of the slab, states the numbers it starts from,
+          and names the bench that can fail it.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="./">Back to the scenes</a>
+          <a class="btn" href="https://github.com/armonia/scenes">Source on GitHub</a>
+        </div>
+      </header>
     </div>
 
-    <h1>Ventisei movimenti, <b>nessuno stacco</b></h1>
-
-    <div class="lede">
-      <div>
-        <p>Questo è il vocabolario di un commercial di prodotto software girato in una sola inquadratura. Non sono transizioni: una transizione la scegli fra due clip già chiuse, <b>un movimento invece porta il film da uno stato al successivo senza che ci sia una giunta da nascondere</b>.</p>
-        <p>Ogni voce sta dentro le quattro regole del repo, e ognuna porta con sé il controllo che la può bocciare. È la parte che di solito manca: un effetto senza un banco che lo smentisca resta un'opinione.</p>
-        <p>Le demo qui sotto non sono disegni di UI. Girano la lastra vera: geometria da <code class="mono">slab.ts</code>, token da <code class="mono">theme.ts</code>, contenuto da <code class="mono">SlabChrome.tsx</code>, font di sistema e raggi 8/6/4. Ogni fotogramma è funzione del numero di frame, quindi puoi trascinare la barra sotto ogni demo e fermarti dove vuoi.</p>
+    <nav class="rail" aria-label="Filter by family">
+      <div class="wrap railin">
+        <button class="chip" data-fam="all" aria-pressed="true">All <b>26</b></button>
+        <button class="chip" data-fam="cam" aria-pressed="false">Camera <b>6</b></button>
+        <button class="chip" data-fam="cur" aria-pressed="false">Cursor <b>4</b></button>
+        <button class="chip" data-fam="txt" aria-pressed="false">Text <b>5</b></button>
+        <button class="chip" data-fam="chr" aria-pressed="false">Choreography <b>4</b></button>
+        <button class="chip" data-fam="mat" aria-pressed="false">Material <b>3</b></button>
+        <button class="chip" data-fam="giu" aria-pressed="false">Joins <b>4</b></button>
+        <span class="gap"></span>
+        <button class="chip" id="pause" aria-pressed="false">Stop all</button>
       </div>
-      <aside class="card-note">
-        <h4>Le quattro regole</h4>
-        <ul>
-          <li><b>Frame-locked.</b> Solo <code class="mono">useCurrentFrame()</code>. Niente keyframe CSS, niente rAF, niente orologio di sistema.</li>
-          <li><b>Progress da 0 a 1.</b> Ogni scena accetta un progress normalizzato, così una timeline padre può guidarla.</li>
-          <li><b>Niente tagli.</b> Le scene si concatenano per trasformazione continua, e ognuna entra dalla posa in cui si ferma la precedente.</li>
-          <li><b>UI vera.</b> Lastre del prodotto su piani inclinati, con i suoi token. Un mockup sbagliato di 3px legge come mockup.</li>
-        </ul>
-      </aside>
-    </div>
-  </header>
+    </nav>
 
-  <section class="reject">
-    <h3>Perché la prima versione di questo catalogo era da buttare</h3>
-    <p>Il catalogo che ti avevo dato raccoglieva wipe geometrici, lamelle sfalsate, flip in prospettiva, dissolvenze a blocchi e whip pan. Quella roba era già stata contata e scartata dentro questo repo: è il gruppo <em>Transitions</em> degli 81 template dell'ecosistema, e dodici di quelle arrivano gratis con <code class="mono">@remotion/transitions</code>. Anche il ripiego che stavo per fare, shader con dispersione e campi di particelle, finiva nel gruppo <em>Backgrounds &amp; FX</em>: stesso secchio, solo più lucido.</p>
-    <p>La differenza non è la difficoltà tecnica, è l'unità di misura. Il template è una clip che finisce e stacca. Qui l'unità è una scena che deve poter entrare da quella prima e uscire verso quella dopo, e questo cambia quali movimenti hanno senso esistere.</p>
-    <div class="reject-grid">
-      <div><b>81</b><span>template nel catalogo più grande dell'ecosistema, contati in CATALOG.md</span></div>
-      <div><b>9</b><span>di quegli 81 sono modi diversi di rivelare un logo</span></div>
-      <div><b>12</b><span>sono transizioni che Remotion regala già di suo</span></div>
-    </div>
-  </section>
+    <div class="wrap">
+      <main id="cat"></main>
 
-  <nav class="rail" aria-label="Filtro per famiglia">
-    <div class="wrap railin">
-      <button class="chip" data-fam="all" aria-pressed="true">Tutte <b>26</b></button>
-      <button class="chip" data-fam="cam" aria-pressed="false">Camera <b>6</b></button>
-      <button class="chip" data-fam="cur" aria-pressed="false">Cursore <b>4</b></button>
-      <button class="chip" data-fam="txt" aria-pressed="false">Testo e dati <b>5</b></button>
-      <button class="chip" data-fam="chr" aria-pressed="false">Coreografia <b>4</b></button>
-      <button class="chip" data-fam="mat" aria-pressed="false">Materia <b>3</b></button>
-      <button class="chip" data-fam="giu" aria-pressed="false">Giunte <b>4</b></button>
-      <span class="gap"></span>
-      <button class="chip" id="pause" aria-pressed="false">Ferma tutto</button>
-    </div>
-  </nav>
+      <section>
+        <p class="section-title">Forty-five seconds, one shot</p>
+        <div class="take">
+          <div>f0000</div><div><b>CAM-01</b> the slab enters from off-frame and straightens, from <code>UI_MOCKUP_START_POSE</code> to <code>UI_MOCKUP_END_POSE</code></div>
+          <div>f0120</div><div><b>CAM-02</b> truck left: sidebar, board and panel separate because they sit at different depths</div>
+          <div>f0240</div><div><b>CUR-01</b> the cursor arrives on an arc, overshoots the active card slightly and settles on it</div>
+          <div>f0330</div><div><b>CUR-04</b> it picks the card up and drags: three frames of lag, tilting into the direction of travel</div>
+          <div>f0450</div><div><b>CHR-01</b> the destination column opens the slot before the card arrives, the source closes behind</div>
+          <div>f0570</div><div><b>CHR-03</b> the column count drops, then the panel changes state six frames later. The delay is what reads as cause</div>
+          <div>f0660</div><div><b>CAM-04</b> descent to macro onto the card just delivered. That is <code>CardFocus</code>, and it stays sharp because it is DOM</div>
+          <div>f0780</div><div><b>TXT-01</b> the cursor reaches the composer and types with a person's pauses</div>
+          <div>f0930</div><div><b>CUR-02</b> half a second of hesitation on the button, then <b>CUR-03</b> presses and the UI answers two frames later</div>
+          <div>f0990</div><div><b>TXT-02</b> the answer arrives in chunks, and inside the visible area rather than under the composer</div>
+          <div>f1140</div><div><b>CAM-05</b> everything that is not the answer drops to 0.62 opacity</div>
+          <div>f1230</div><div><b>CAM-03</b> a short orbit shows the edge of the slab and stops at rest</div>
+          <div>f1350</div><div>End. At rest, so another scene can attach here without it showing</div>
+        </div>
+      </section>
 
-  <main id="cat"></main>
+      <section>
+        <p class="section-title">The benches, and what they fail</p>
+        <div class="tblwrap">
+          <table>
+            <thead><tr><th>Bench</th><th>The failure it catches</th><th>Reading on the repo</th></tr></thead>
+            <tbody>
+              <tr><td>seam.sh</td><td>A join that is really a cut in costume</td><td class="n">552 px against 18,019, 33×</td></tr>
+              <tr><td>handoff-travel.sh</td><td>A card that does not actually cross. A freeze frame passes the other checks with full marks, and for months this one did not run at all on macOS, printing a diagnosis about the scene for a fault in itself</td><td class="n">154 px, monotonic centroid</td></tr>
+              <tr><td>beats.sh</td><td>A promised beat that is not on screen. The answer was assembling under the composer</td><td class="n">the word count must grow</td></tr>
+              <tr><td>fill-measure.sh</td><td>A frame that lets its edges die</td><td class="n">20 of 20 samples, four sides alive</td></tr>
+              <tr><td>legibility.sh</td><td>Text that does not survive being scaled down</td><td class="n">holds under 640 px wide</td></tr>
+              <tr><td>framelocked-verdict.sh</td><td>A scene that is not reproducible: it still renders, with different pixels</td><td class="n">same pixels every render</td></tr>
+              <tr><td>focus-sharpness.sh</td><td>A slab that stopped being DOM: the text falls apart once the camera is on top of it</td><td class="n">2.09× against 1.03× on the fixture</td></tr>
+              <tr><td>fixture-screenshot.sh</td><td>Measures nothing. It builds the scene the bench above has to fail, and without it that bench is a promise</td><td class="n">first frame magnified 2.26×</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">The negative control gets written first. A bench that cannot fail measures nothing, so it is made to exit non-zero on a broken input before its green is worth anything.</p>
+      </section>
 
-  <section class="sec" id="take">
-    <div class="sechead">
-      <span class="k">TAKE</span>
-      <h2>Quarantacinque secondi, una sola inquadratura</h2>
-      <p class="lab" style="margin-left:auto">1350 frame a 30 fps</p>
-    </div>
-    <div class="take">
-      <div>f0000</div><div><b>CAM-01</b> la lastra entra da fuori campo e si raddrizza, da <code class="mono">UI_MOCKUP_START_POSE</code> a <code class="mono">UI_MOCKUP_END_POSE</code></div>
-      <div>f0120</div><div><b>CAM-02</b> carrello a sinistra: sidebar, board e pannello si separano perché stanno a profondità diverse</div>
-      <div>f0240</div><div><b>CUR-01</b> il cursore entra in arco, supera di poco la card attiva e ci si posa</div>
-      <div>f0330</div><div><b>CUR-04</b> la prende e la trascina: la card resta indietro di tre frame e si inclina nella direzione del moto</div>
-      <div>f0450</div><div><b>CHR-01</b> la colonna di arrivo apre il varco prima che la card arrivi, quella di partenza si richiude dietro</div>
-      <div>f0570</div><div><b>CHR-03</b> il conteggio della colonna cala, poi il pannello cambia stato sei frame dopo. Il ritardo è quello che legge come causa</div>
-      <div>f0660</div><div><b>CAM-04</b> discesa al macro sulla card appena posata: è <code class="mono">CardFocus</code>, e resta nitida perché è DOM e non uno screenshot</div>
-      <div>f0780</div><div><b>TXT-01</b> il cursore raggiunge il composer e scrive con le pause di una persona</div>
-      <div>f0930</div><div><b>CUR-02</b> esita mezzo secondo sul pulsante, poi <b>CUR-03</b> preme e la UI risponde due frame dopo</div>
-      <div>f0990</div><div><b>TXT-02</b> la risposta arriva a blocchi, e arriva dentro l'area visibile, non sotto al composer</div>
-      <div>f1140</div><div><b>CAM-05</b> tutto quello che non è la risposta scende a 0,62 di opacità</div>
-      <div>f1230</div><div><b>CAM-03</b> orbita corta che scopre lo spessore della lastra e si ferma in posa di riposo</div>
-      <div>f1350</div><div>Fine. Ferma, quindi un'altra scena può attaccarsi qui senza che si veda</div>
-    </div>
-  </section>
+      <section>
+        <p class="section-title">What stays out</p>
+        <div class="tblwrap">
+          <table>
+            <thead><tr><th>Excluded</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr><td>The nine ways to reveal a logo</td><td>One is enough, and it goes at the end. Nine is a symptom of what the ecosystem thinks it is for</td></tr>
+              <tr><td>The twelve template transitions</td><td>They ship with Remotion already. Rewriting them is wasted work, and they are cuts anyway</td></tr>
+              <tr><td>YouTube furniture</td><td>Subscribe reminders, end cards, credits rolls, countdowns. A different trade</td></tr>
+              <tr><td>Decorative backgrounds</td><td>Bokeh, matrix rain, particle explosions, starfields. Handsome and mute: they say nothing about the product</td></tr>
+              <tr><td>Anything that needs a cut</td><td>If it only works thanks to the edit, it does not belong in one unbroken shot</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-  <section class="sec" id="benches">
-    <div class="sechead">
-      <span class="k">BENCH</span>
-      <h2>I banchi, e cosa bocciano</h2>
+      <footer>
+        <span>The demos are browser re-creations of the slab, not the renders. The renders are on <a href="./">the scenes page</a>.</span>
+        <span><a href="https://github.com/armonia/scenes">GitHub</a> · <a href="https://armonia.io">Armonia</a></span>
+      </footer>
     </div>
-    <div class="tblwrap">
-      <table class="tbl">
-        <thead><tr><th>Banco</th><th>Il modo di fallire che intercetta</th><th>Misura sul repo</th></tr></thead>
-        <tbody>
-          <tr><td>seam.sh</td><td>Una giunta che in realtà è uno stacco travestito</td><td class="n">552 px contro 18.019, separazione 32×</td></tr>
-          <tr><td>handoff-travel.sh</td><td>Una card che non attraversa davvero: un fermo immagine passa gli altri controlli a pieni voti. Per mesi non è partito affatto su macOS, e la diagnosi che stampava era sulla scena invece che su sé stesso</td><td class="n">154 px, centroide monotono</td></tr>
-          <tr><td>beats.sh</td><td>Un beat promesso che non è sullo schermo. La risposta si assemblava sotto al composer</td><td class="n">il conteggio parole deve crescere</td></tr>
-          <tr><td>fill-measure.sh</td><td>Un'inquadratura che lascia morire i bordi</td><td class="n">20 campioni su 20 pieni sui 4 lati</td></tr>
-          <tr><td>legibility.sh</td><td>Testo che non regge la riduzione</td><td class="n">tiene sotto i 640 px di larghezza</td></tr>
-          <tr><td>framelocked-verdict.sh</td><td>Una scena non riproducibile, che esce lo stesso ma con pixel diversi</td><td class="n">stessi pixel a ogni render</td></tr>
-          <tr><td>focus-sharpness.sh</td><td>Una lastra che ha smesso di essere DOM: il testo si sfalda quando la camera ci arriva addosso</td><td class="n">2,09× contro 1,03× sulla fixture</td></tr>
-          <tr><td>fixture-screenshot.sh</td><td>Non misura: costruisce la scena che il banco sopra deve bocciare, e senza di essa quel banco è una promessa</td><td class="n">primo fotogramma ingrandito 2,26×</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p style="font-size:14px;color:var(--ink-3);margin:14px 0 0;max-width:78ch">Il controllo negativo va scritto per primo. Un banco che non può fallire non misura niente, e la regola nel README è esplicita: prima lo si fa uscire diverso da zero su un input rotto, poi ci si fida del verde.</p>
-  </section>
-
-  <section class="sec" id="out">
-    <div class="sechead">
-      <span class="k">OUT</span>
-      <h2>Quello che resta fuori, e perché</h2>
-    </div>
-    <div class="tblwrap">
-      <table class="tbl">
-        <thead><tr><th>Escluso</th><th>Motivo</th></tr></thead>
-        <tbody>
-          <tr><td>I nove modi di rivelare un logo</td><td>Ne serve uno, e va in fondo al film. Nove è un sintomo di cosa pensa di essere l'ecosistema</td></tr>
-          <tr><td>Le dodici transizioni da template</td><td>Arrivano già con Remotion. Riscriverle è lavoro buttato, e sono comunque stacchi</td></tr>
-          <tr><td>Il mobilio da YouTube</td><td>Subscribe reminder, end card, credits roll, countdown. Altro mestiere</td></tr>
-          <tr><td>Gli sfondi decorativi</td><td>Bokeh, matrix rain, particle explosion, starfield. Belli e muti: non dicono niente del prodotto</td></tr>
-          <tr><td>Qualsiasi cosa che pretenda un taglio</td><td>Se funziona solo grazie allo stacco, non entra in un piano sequenza</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <footer>
-    <p>Costruito leggendo <a href="https://github.com/armonia/scenes">armonia/scenes</a> al commit del 28 agosto 2026: README, CATALOG.md, <code class="mono">primitives/slab.ts</code>, <code class="mono">primitives/rhythm.ts</code>, <code class="mono">primitives/SlabChrome.tsx</code>, <code class="mono">theme.ts</code>, <code class="mono">Root.tsx</code>. I numeri delle pose e delle misure vengono da lì, non sono inventati qui.</p>
-    <p style="margin-top:10px">Questa pagina sta nel repo, in <code class="mono">showcase/grammatica.html</code>, e si deploya insieme alle scene che descrive. Non ha build step: quello che apri in locale è quello che va online.</p>
-    <p class="lab">armonia/scenes &middot; showcase/grammatica.html</p>
-  </footer>
-
-</div>
 
 <script>
 (function(){
@@ -542,7 +517,7 @@ function buildSlab(){
      Nel render vero e' un layer a parte: senza, il fotogramma sotto la board
      resta vuoto e la lastra galleggia. */
   var bg=el("div","bgslab","position:absolute;left:-1380px;top:-450px;width:2400px;height:1200px;"+
-    "opacity:0.62;transform:translateZ(-60px) rotateY(8deg) rotateX(4deg) scale(.92);transform-origin:50% 50%");
+    "opacity:0.45;filter:blur(14px);transform:translateZ(-60px) rotateY(8deg) rotateX(4deg) scale(.92);transform-origin:50% 50%");
   S.bg=bg;
   cam.appendChild(bg); cam.appendChild(edge); cam.appendChild(glow); cam.appendChild(slab);
   bg.appendChild(slab.cloneNode(true));
@@ -656,19 +631,19 @@ M.push={dur:150,draw:function(f,S){
 M.truck={dur:180,init:depth,draw:function(f,S){
   var t=E.sine(f<90?f/90:(180-f)/90), x=-360+720*t;
   pose(S,{yaw:-11+t*5,pitch:2.5,z:70,x:x,y:0});
-  S.hud("slideX "+Math.round(x)+"   z: header 6 · sidebar 10 · pannello 18 · board 26 · card attiva 40");
+  S.hud("slideX "+Math.round(x)+"   z: header 6 · sidebar 10 · panel 18 · board 26 · active card 40");
 }};
 
 M.orbit={dur:210,draw:function(f,S){
   var t=E.sine(f<105?f/105:(210-f)/105), y=-36+46*t;
   pose(S,{yaw:y,pitch:3.2,z:-260,x:0,y:0});
-  S.hud("yaw "+y.toFixed(1)+"   il bordo si vede solo perché dietro il piano c'è un secondo piano a -30");
+  S.hud("yaw "+y.toFixed(1)+"   the edge shows only because a second plane sits at -30 behind the first");
 }};
 
 M.macro={dur:180,init:depth,draw:function(f,S){
   var t=E.inout(cl((f-8)/126));
   pose(S,{yaw:-9+9*t,pitch:2.5-2.5*t,z:48+1400*t,x:70*t,y:173.5*t});
-  S.hud("pushZ "+Math.round(48+1400*t)+"   il testo regge l'ingrandimento perché è DOM, non uno screenshot");
+  S.hud("pushZ "+Math.round(48+1400*t)+"   the text holds up because it is DOM, not a screenshot");
 }};
 
 M.attn={dur:170,draw:function(f,S){
@@ -678,7 +653,7 @@ M.attn={dur:170,draw:function(f,S){
   S.cards.forEach(function(c){ c.el.style.opacity=c.col===1?"1":os; });
   S.cols.forEach(function(c,i){ c.head.style.opacity=i===1?"1":os; });
   S.adds.forEach(function(a){ a.el.style.opacity=a.col===1?"0.7":(0.7*o).toFixed(3); });
-  S.hud("backdrop "+o.toFixed(2)+"   misurato: sotto 0,62 il contenuto attenuato scende sotto 3:1 e legge come rumore");
+  S.hud("backdrop "+o.toFixed(2)+"   measured: under 0.62 the attenuated content falls below 3:1 and reads as noise");
 }};
 
 M.arc={dur:170,
@@ -693,7 +668,7 @@ M.arc={dur:170,
    var raw=cl((f-8)/78), u=E.back(raw), q=bez(A,Cp,B,u);
    S.cur.style.left=q.x+"px"; S.cur.style.top=q.y+"px";
    S.ghost.style.left=(A.x+(B.x-A.x)*raw)+"px"; S.ghost.style.top=(A.y+(B.y-A.y)*raw)+"px";
-   S.hud("u "+u.toFixed(3)+"   sorpasso max 7,5%   in rosso lo stesso tempo su una retta a velocità costante");
+   S.hud("u "+u.toFixed(3)+"   max overshoot 7.5%   in red, the same time on a straight line at constant speed");
  }};
 
 M.hesit={dur:190,
@@ -711,8 +686,8 @@ M.hesit={dur:190,
    var q=bez(A,Cp,B,E.expo(cl((f-8)/46)));
    S.cur.style.left=q.x+"px"; S.cur.style.top=(q.y+(f>=70&&f<80?7:0))+"px";
    S.send.className="send"+(f>=70&&f<80?" press":"");
-   var ph=f<54?"avvicinamento":(f<70?"attesa "+(f-54)+"f":(f<80?"pressione":"rilascio"));
-   S.hud("arrivo f54 · attesa 16f · pressione f70   ora: "+ph);
+   var ph=f<54?"approach":(f<70?"wait "+(f-54)+"f":(f<80?"press":"release"));
+   S.hud("arrival f54 · wait 16f · press f70   now: "+ph);
  }};
 
 M.click={dur:130,
@@ -726,7 +701,7 @@ M.click={dur:130,
    S.stream.style.opacity=eff.toFixed(3);
    S.stream.textContent=f>=50?"In lavorazione":"";
    S.stream.style.transform="translateY("+((1-E.out(eff))*26).toFixed(1)+"px)";
-   S.hud("pressione f48 · conseguenza f50 · scarto 2 frame"+(f>=48&&f<50?"   ← siamo nel mezzo adesso":""));
+   S.hud("press f48 · consequence f50 · 2 frames apart"+(f>=48&&f<50?"   ← in between right now":""));
  }};
 
 function dragPos(f){
@@ -743,7 +718,7 @@ M.drag={dur:210,init:depth,draw:function(f,S){
   card.el.style.transform="translateZ("+(held?150:40)+"px) rotate("+(vx*0.11).toFixed(2)+"deg)";
   card.el.style.boxShadow=held?"0 44px 74px rgba(0,0,0,.62)":"0 4px 20px rgba(0,0,0,.32)";
   card.el.style.borderColor=held?"#4d94ff":"hsl(220 10% 24%)";
-  S.hud("ritardo 3 frame   inclinazione "+(vx*0.11).toFixed(2)+"°, proporzionale alla velocità e quindi zero agli estremi");
+  S.hud("3 frames of lag   tilt "+(vx*0.11).toFixed(2)+"°, proportional to speed and therefore zero at both ends");
 }};
 
 M.type={dur:230,
@@ -758,7 +733,7 @@ M.type={dur:230,
    S.ctext.textContent=PROMPT.slice(0,n);
    S.caret.style.opacity=(f%20<13)?"1":"0.18";
    var gap=n>1?(S.sched[n-1]-S.sched[n-2]):0;
-   S.hud("caratteri "+n+"/"+PROMPT.length+"   Δ ultimo tasto "+gap.toFixed(1)+"f   cps 13, seme 20260812, mulberry32");
+   S.hud("characters "+n+"/"+PROMPT.length+"   Δ last key "+gap.toFixed(1)+"f   13 cps, seed 20260812, mulberry32");
  }};
 
 M.stream={dur:260,
@@ -773,7 +748,7 @@ M.stream={dur:260,
    var n=Math.floor(prog*S.words.length);
    S.stream.textContent=S.words.slice(0,n).join(" ");
    var stall=f>=110&&f<=130;
-   S.hud("parole "+n+"/"+S.words.length+(stall?"   stasi":"")+"   il conteggio deve CRESCERE nella finestra, non solo essere diverso da zero");
+   S.hud("words "+n+"/"+S.words.length+(stall?"   stall":"")+"   the count must GROW across the window, not merely be non-zero");
  }};
 
 M.metric={dur:170,draw:function(f,S){
@@ -781,7 +756,7 @@ M.metric={dur:170,draw:function(f,S){
   var t=Math.min(E.back(cl((f-14)/72)),1.075);
   S.metric.textContent=Math.round(128*t)+" ms";
   S.metric.style.color=f>92?"#34d399":"#e6e8ec";
-  S.hud("128 ms · back out, sorpasso 7,5% · tabular-nums, quindi la larghezza non cambia mai e niente riflusso");
+  S.hud("128 ms · back out, 7.5% overshoot · tabular-nums, so the width never changes and nothing reflows");
 }};
 
 M.insert={dur:190,
@@ -801,7 +776,7 @@ M.insert={dur:190,
    S.newcard.style.opacity=land.toFixed(3);
    S.newcard.style.top=(cardY(COLUMNS[0].cards,1)-52+52*land)+"px";
    S.cols[0].cnt.textContent=f>=56?"4":"3";
-   S.hud("varco a f20, atterraggio a f38: 18 frame di anticipo. Se partono insieme la riga sembra incollata sopra il layout");
+   S.hud("gap at f20, landing at f38: 18 frames of lead. Started together, the row looks stuck on top of the layout");
  }};
 
 M.handoff={dur:250,
@@ -823,7 +798,7 @@ M.handoff={dur:250,
    S.adds[1].el.style.top=(S.adds[1].y-step*close)+"px";
    S.cols[1].cnt.textContent=f>=100?"1":"2";
    S.cols[2].cnt.textContent=f>=100?"3":"2";
-   S.hud("varco f30 · volo f40-126 · chiusura f56   handoff-travel.sh vuole centroide monotono e mezza colonna attraversata");
+   S.hud("gap f30 · flight f40-126 · close f56   handoff-travel.sh wants a monotonic centroid across half a column");
  }};
 
 M.reflow={dur:190,init:depth,draw:function(f,S){
@@ -841,7 +816,7 @@ M.reflow={dur:190,init:depth,draw:function(f,S){
   });
   S.adds[0].el.style.top=(S.adds[0].y-(CARD_H+CARD_GAP)*E.out(cl((f-46)/34)))+"px";
   S.cols[0].cnt.textContent=f>=44?"2":"3";
-  S.hud("ritardo = distanza dal cambiamento / 1400 × 22f. Sfalsando per indice il layout legge come una lista che scorre, non come uno spazio");
+  S.hud("delay = distance from the change / 1400 × 22f. Staggered by index the layout reads as a scrolling list, not as a space");
 }};
 
 M.prop={dur:200,draw:function(f,S){
@@ -854,14 +829,14 @@ M.prop={dur:200,draw:function(f,S){
   S.cols[1].cnt.style.color=(f>=35&&f<58)?"#4d94ff":"#7d838d";
   S.prows[0].textContent=f>=41?"Fatto":"In corso";
   S.prows[0].style.color=f>=41?"#34d399":"#ccced4";
-  S.hud("card f30 → conteggio f35 → pannello f41.  Sono i due ritardi a leggersi come causa: in sincrono sarebbero tre cose scollegate");
+  S.hud("card f30 → count f35 → panel f41.  The two delays are what read as cause: in sync they would be three unrelated things");
 }};
 
 M.thick={dur:200,draw:function(f,S){
   var t=E.sine(f<100?f/100:(200-f)/100), off=f>=100;
   pose(S,{yaw:-30+40*t,pitch:3,z:-300,x:0,y:0});
   S.edge.style.opacity=off?"0":"1";
-  S.hud(off?"senza spessore: la lastra legge come carta da parati incollata al fondo":"spessore 30 dietro il piano, ombra di contatto 90/180");
+  S.hud(off?"no edge: the slab reads as wallpaper glued to the background":"edge 30 behind the plane, contact shadow 90/180");
 }};
 
 M.spill={dur:222,draw:function(f,S){
@@ -870,7 +845,7 @@ M.spill={dur:222,draw:function(f,S){
   S.tabs.forEach(function(t,i){ t.className="tab"+(i===ph?" on":""); });
   S.glow.style.opacity=(0.72+0.26*E.sine(cl((f%74)/26))).toFixed(3);
   S.glow.style.background="radial-gradient(ellipse at 50% 0%,rgba("+col+",.55),rgba("+col+",0) 66%)";
-  S.hud("il colore che si versa sul piano è quello dominante dello schermo in quel frame, non una luce decisa a mano");
+  S.hud("the colour spilling onto the floor is the screen dominant one on that frame, not a light chosen by hand");
 }};
 
 M.seam={dur:240,draw:function(f,S){
@@ -878,19 +853,19 @@ M.seam={dur:240,draw:function(f,S){
               :mix(END,{yaw:-9,pitch:2.5,z:440,x:-170,y:70},E.inout(cl((f-120)/112)));
   pose(S,p);
   var at=f>=117&&f<=123;
-  S.hud((f<120?"UIMockup":"CardHandoff")+"   giunta a f120"+(at?"  ← adesso":"")+"   seam.sh: 552 px contro 18.019 del taglio di controllo, 32×");
+  S.hud((f<120?"UIMockup":"CardHandoff")+"   join at f120"+(at?"  ← now":"")+"   seam.sh: 552 px against 18,019 for the control cut, 33×");
 }};
 
 M.rest={dur:210,draw:function(f,S){
   var t=E.inout(cl((f-10)/172)), t0=E.inout(cl((f-11)/172));
   pose(S,mix(START,END,t));
-  S.hud("|v| "+(Math.abs(t-t0)*100).toFixed(2)+"   a f000 e a f209 è zero: due scene ferme agli estremi si mettono in qualsiasi ordine");
+  S.hud("|v| "+(Math.abs(t-t0)*100).toFixed(2)+"   zero at f000 and f209: two scenes at rest at both ends go in any order");
 }};
 
 M.through={dur:240,draw:function(f,S){
   var t=f/239, at=Math.abs(f-120)<4;
   pose(S,{yaw:-22+26*t,pitch:4.2-2.2*t,z:340*t,x:660-660*t,y:0});
-  S.hud("un montaggio normale metterebbe lo stacco a f120"+(at?"  ← passa adesso":"")+". La camera non si ferma, quindi non c'è niente da nascondere");
+  S.hud("a normal edit would put the cut at f120"+(at?"  ← passing now":"")+". The camera does not stop, so there is nothing to hide");
 }};
 
 /* --- CAM-06: il solo punto del quadro che non scappa sotto una spinta in Z --- */
@@ -926,7 +901,7 @@ M.centre={dur:210,
        d=Math.round(Math.sqrt(dx*dx+dy*dy))+"px";
      }
    }
-   S.hud((second?"con compensazione":"senza compensazione")+"   pushZ "+Math.round(z)+"   deriva misurata sul rendering: "+d);
+   S.hud((second?"compensated":"no compensation")+"   pushZ "+Math.round(z)+"   drift measured on the rendering: "+d);
  }};
 
 /* --- GIU-04: le tre grandezze della camera lungo tutta la catena --- */
@@ -969,7 +944,7 @@ M.chain={dur:330,
      c.font="500 17px ui-monospace, Menlo, monospace";
      series.forEach(function(sr,i){ c.fillStyle=sr[1]; c.fillText(sr[0],pad+i*112,18); });
    }
-   S.hud(L.n+"   yaw "+p.yaw.toFixed(1)+"  pitch "+p.pitch.toFixed(1)+"  push "+Math.round(p.z)+"   tutte e tre monotone, nessuna inverte");
+   S.hud(L.n+"   yaw "+p.yaw.toFixed(1)+"  pitch "+p.pitch.toFixed(1)+"  push "+Math.round(p.z)+"   all three monotonic, none reverses");
  }};
 
 /* --- MAT-03: il piano attenuato dietro, acceso e spento --- */
@@ -979,9 +954,9 @@ M.backdrop={dur:220,draw:function(f,S){
      della lastra, altrimenti lo copre lei stessa. */
   pose(S,{yaw:-21+9*t,pitch:3.6,z:-520,x:330,y:130});
   var on=f<110;
-  S.bg.style.opacity=on?"0.62":"0";
-  S.hud(on?"piano dietro a 0,62: il fotogramma ha un fondo e la lastra appoggia"
-          :"piano dietro spento: sotto la board resta il vuoto e la lastra galleggia");
+  S.bg.style.opacity=on?"0.45":"0";
+  S.hud(on?"plane behind at 0.45, blurred 14: the frame has a ground and the slab rests on it"
+          :"plane behind off: under the board it goes empty and the slab floats");
 }};
 
 /* --- CHR-04: prima e dopo senza divisorio --- */
@@ -1002,7 +977,7 @@ M.ba={dur:250,init:depth,draw:function(f,S){
   var mt=E.out(cl((f-120)/80));
   S.metric.textContent=Math.round(128-64*mt)+" ms";
   S.metric.style.color=mt>0.9?"#34d399":"#e6e8ec";
-  S.hud("nessun divisorio e nessuno slider: il prima e il dopo sono lo stesso piano in due istanti diversi");
+  S.hud("no divider and no slider: the before and the after are the same shot at two different moments");
 }};
 
 /* --- TXT-05: la correzione --- */
@@ -1018,187 +993,187 @@ M.fix={dur:290,
  draw:function(f,S){
    pose(S,{yaw:-5,pitch:1.6,z:190,x:0,y:-560});
    var DEL0=118, DEL_END=DEL0+Math.ceil((WRONG.length-KEEP)/1.6), txt, fase;
-   if(f<DEL0){ txt=WRONG.slice(0,typedCount(S.s1,f)); fase="scrive"; }
+   if(f<DEL0){ txt=WRONG.slice(0,typedCount(S.s1,f)); fase="typing"; }
    else if(f<DEL_END){
      /* Si cancella a raffica, alla cadenza di un tasto tenuto premuto: circa un
         carattere e mezzo per frame, quasi quattro volte piu' veloce di come si
         scrive. E ci si ferma su un confine di parola, non a meta'. */
      var gone=Math.floor((f-DEL0)*1.6);
-     txt=WRONG.slice(0,Math.max(KEEP,WRONG.length-gone)); fase="cancella";
+     txt=WRONG.slice(0,Math.max(KEEP,WRONG.length-gone)); fase="deleting";
    } else {
-     txt=RIGHT.slice(0,KEEP+typedCount(S.s2,f-DEL_END-8)); fase="riscrive";
+     txt=RIGHT.slice(0,KEEP+typedCount(S.s2,f-DEL_END-8)); fase="rewriting";
    }
    S.ctext.textContent=txt;
    S.caret.style.opacity=(f%20<13)?"1":"0.18";
-   S.hud(fase+"   "+txt.length+" caratteri   cancella a 1,6 car/frame contro 0,43 in scrittura, e si ferma su un confine di parola");
+   S.hud(fase+"   "+txt.length+" characters   deleting at 1.6 char/frame against 0.43 typing, and stopping on a word boundary");
  }};
 
 /* ============================================================ il catalogo */
 var FAMS=[
- {k:"cam",n:"La camera sulla lastra",d:"Sei modi di muovere la macchina su un piano di UI. Nessuno di questi taglia."},
- {k:"cur",n:"Il cursore come attore",d:"Il puntatore non è un cursore, è il protagonista. Ha peso, esita, e la UI gli risponde."},
- {k:"txt",n:"Testo e dati",d:"Scrivere, sbagliare, rispondere, contare. Quello che un prodotto software fa davanti a te."},
- {k:"chr",n:"Coreografia dentro una sola inquadratura",d:"Il layout che si muove da solo, senza che nessuno stacchi."},
- {k:"mat",n:"La materia della lastra",d:"Tre dettagli che decidono se quello sullo schermo è un oggetto o uno sfondo."},
- {k:"giu",n:"Le giunte",d:"La parte che questo repo ha e nessun altro: come due scene si attaccano senza che si veda."}
+ {k:"cam",n:"The camera on the slab",d:"Six ways to move the camera over a plane of UI. None of them cut."},
+ {k:"cur",n:"The cursor as an actor",d:"The pointer is the protagonist, not a cursor. It has weight, it hesitates, and the UI answers it."},
+ {k:"txt",n:"Text and data",d:"Typing, correcting, answering, counting. What a software product does in front of you."},
+ {k:"chr",n:"Choreography inside one shot",d:"The layout moving on its own, without anyone cutting."},
+ {k:"mat",n:"The material of the slab",d:"Three details that decide whether what is on screen is an object or a backdrop."},
+ {k:"giu",n:"The joins",d:"What this repo has and nothing else does: how two scenes attach without it showing."}
 ];
 
 var CAT=[
-{fam:"cam",code:"CAM-01",t:"Avvicinamento che si raddrizza",demo:"push",src:"slab.ts · START/END_POSE",
- a:"La lastra entra da fuori campo obliqua e arriva ferma, più frontale di come era partita. Lo yaw che si chiude è il modo di dire che adesso si può leggere.",
- b:"Due pose dentro slab.ts e una sola interpolate fra le due. La posa finale vive nel modulo e non dentro la scena, perché è il punto di aggancio di quella dopo.",
- c:"yaw da -18 a -9, pitch da 5 a 2,5, pushZ da 0 a 48, slideX da 900 a 0. Centootto frame in inOut cubic, poi quarantadue di riposo.",
- d:"fill-measure.sh. Un avvicinamento che parte troppo stretto lascia morire un bordo: sul repo la misura è 20 campioni su 20 con tutti e quattro i lati pieni."},
+{fam:"cam",code:"CAM-01",t:"Straightening push-in",demo:"push",src:"slab.ts · START/END_POSE",
+ a:"The slab enters from off-frame at an angle and arrives at rest, more frontal than it started. The closing yaw is how you say it can be read now.",
+ b:"Two poses in slab.ts and one interpolate between them. The final pose lives in the module rather than in the scene, because it is where the next one attaches.",
+ c:"yaw -18 to -9, pitch 5 to 2.5, pushZ 0 to 48, slideX 900 to 0. 108 frames of inOut cubic, then 42 at rest.",
+ d:"fill-measure.sh. A push-in that starts too tight lets an edge die: on the repo the reading is 20 samples out of 20 with all four sides alive."},
 
-{fam:"cam",code:"CAM-02",t:"Carrello con parallasse fra i piani",demo:"truck",src:"translateZ per livello",
- a:"La camera scorre di lato e sidebar, board e pannello si separano perché stanno a profondità diverse. È quello che distingue una lastra da una fotografia che trasla.",
- b:"Ogni parte della UI prende un translateZ dentro un contenitore in preserve-3d. La parallasse non si anima: esce dalla prospettiva mentre la camera si muove.",
- c:"header 6, sidebar 10, pannello 18, board 26, card attiva 40. slideX da -360 a 360 in inOut sine.",
- d:"Un confronto di spostamento fra due livelli. Se pannello e board percorrono gli stessi pixel la profondità non c'è, e quello che stai guardando è un pan su un'immagine piatta."},
+{fam:"cam",code:"CAM-02",t:"Truck with parallax",demo:"truck",src:"translateZ per layer",
+ a:"The camera slides sideways and sidebar, board and panel separate because they sit at different depths. It is what tells a slab apart from a photograph being panned.",
+ b:"Every part of the UI takes a translateZ inside a preserve-3d container. The parallax is not animated: it falls out of the perspective while the camera moves.",
+ c:"header 6, sidebar 10, panel 18, board 26, active card 40. slideX -360 to 360 in inOut sine.",
+ d:"A displacement comparison between two layers. If panel and board travel the same pixels there is no depth, and what you are watching is a pan over a flat image."},
 
-{fam:"cam",code:"CAM-03",t:"Orbita che scopre lo spessore",demo:"orbit",src:"il secondo piano a -30",
- a:"La camera gira attorno alla lastra quanto basta a mostrare che ha un bordo. Serve a stabilire che è un oggetto, e in un film si fa una volta sola.",
- b:"Un secondo piano dietro il primo, appena più grande, con l'ombra di contatto. Oltre i quaranta gradi di yaw il testo smette di leggersi, quindi l'orbita si ferma prima.",
- c:"yaw da -36 a +10, inOut sine su 105 frame di andata e altrettanti di ritorno. Spessore 30, ombra 90 di offset e 180 di sfocatura.",
- d:"legibility.sh. Un'orbita larga porta il testo sotto la soglia di leggibilità, e il banco dice fino a che riduzione regge invece di lasciarlo al gusto."},
+{fam:"cam",code:"CAM-03",t:"Orbit that shows the edge",demo:"orbit",src:"the second plane at -30",
+ a:"The camera goes around the slab far enough to show it has an edge. It establishes the thing as an object, and a film does that once.",
+ b:"A second plane behind the first, slightly larger, with the contact shadow. Past forty degrees of yaw the text stops reading, so the orbit stops before that.",
+ c:"yaw -36 to +10, inOut sine over 105 frames out and 105 back. Edge 30, shadow 90 offset and 180 blur.",
+ d:"legibility.sh. A wide orbit drops the text under the legibility threshold, and the bench says down to what size it survives instead of leaving it to taste."},
 
-{fam:"cam",code:"CAM-04",t:"Discesa al macro",demo:"macro",src:"scenes/CardFocus.tsx",
- a:"La camera prosegue oltre la posa leggibile ed entra dentro un singolo elemento, che riempie il fotogramma restando nitido.",
- b:"translateZ che cresce più una traslazione che porta il centro dell'elemento sull'origine. La nitidezza non è merito del movimento: è il motivo per cui la lastra deve essere DOM.",
- c:"Nel repo: pushZ da 96 a 1493,6 su 169 frame in inOut cubic, cioè 2,35 volte, con la traslazione che esce da centreOn. La demo qui sopra gira alla scala del palco, quindi i suoi numeri sono più piccoli.",
- d:"focus-sharpness.sh. Confronta l'energia alle alte frequenze del ritaglio della card con lo stesso contenuto ingrandito dal campo largo: 2,09× sul render vero contro 1,03× sulla fixture. La prima versione di quel banco confrontava il ritaglio con una copia sfocata di sé stesso, dava 4,14× alla fixture e la promuoveva."},
+{fam:"cam",code:"CAM-04",t:"Descent to macro",demo:"macro",src:"scenes/CardFocus.tsx",
+ a:"The camera carries on past the readable pose and into a single element, which fills the frame and stays sharp.",
+ b:"A growing translateZ plus a translation that puts the element centre on the perspective origin. The sharpness is not the move doing something: it is why the slab has to be DOM.",
+ c:"In the repo: pushZ 96 to 1493.6 over 169 frames of inOut cubic, 2.35 times, with the translation coming out of centreOn. The demo above runs at the stage own scale, so its numbers are smaller.",
+ d:"focus-sharpness.sh. It compares the high-frequency energy of the card crop against the same content magnified from the wide shot: 2.09× on the real render, 1.03× on the fixture. Its first version compared the crop to a blurred copy of itself, scored the fixture 4.14× and passed it."},
 
-{fam:"cam",code:"CAM-05",t:"Attenzione per opacità",demo:"attn",src:"theme.ts · BACKDROP_OPACITY",
- a:"Invece di sfocare il resto, il resto scende di opacità. L'occhio va dove il contrasto è pieno e nessun pixel diventa illeggibile.",
- b:"Un solo valore applicato a tutti i livelli che non sono il soggetto. Sta in theme.ts perché è una misura e non un gusto.",
- c:"0,62. Sotto quella soglia il contenuto attenuato scende sotto 3:1 da renderizzato, e a quel punto legge come rumore invece che come profondità.",
- d:"Un controllo di contrasto sul frame renderizzato. Se il livello attenuato passa sotto 3:1 il banco boccia, e il numero da alzare è quello, non l'opacità del soggetto."},
+{fam:"cam",code:"CAM-05",t:"Attention by opacity",demo:"attn",src:"theme.ts · BACKDROP_OPACITY",
+ a:"Instead of blurring the rest, the rest drops in opacity. The eye goes where the contrast is full and no pixel becomes unreadable.",
+ b:"One value applied to every layer that is not the subject. It lives in theme.ts because it is a measurement and not a taste.",
+ c:"0.62. Below that the attenuated content falls under 3:1 once rendered, and at that point it reads as noise rather than as depth.",
+ d:"A contrast check on the rendered frame. If the attenuated layer goes under 3:1 the bench fails, and the number to raise is that one, not the subject opacity."},
 
-{fam:"cam",code:"CAM-06",t:"Il centro che non scappa",demo:"centre",src:"slab.ts · centreOn",
- a:"Sotto una spinta in Z c'è un solo punto del quadro che resta fermo, ed è l'origine della prospettiva. Tutto il resto scappa verso il bordo, tanto più in fretta quanto più sta lontano da lì.",
- b:"Si calcola dove cade il centro del soggetto sullo schermo con yaw e pitch a zero, e si trasla la lastra di quanto serve a portarcelo sopra. Da quel momento la spinta lo ingrandisce senza spostarlo. In slab.ts sono slabPointOnScreen e centreOn, e la posa finale di CardFocus esce da quelle due invece che da numeri aggiustati a occhio.",
- c:"origine a (960 , 496,8), cioè 50% e 46% di 1920 per 1080. Il termine che si dimentica è proprio quel 46: centrare in verticale non è metà lastra meno il soggetto, e con la formula sbagliata il soggetto resta fuori di una quarantina di pixel. Nella demo la deriva è misurata sul rendering a ogni frame: a parità di spinta sono 386 px senza compensazione e 0 con.",
- d:"La distanza fra il centro del soggetto e l'origine sull'ultimo fotogramma. Se non sta dentro un paio di pixel, la discesa sta scivolando accanto al soggetto invece che dentro, e a occhio te ne accorgi solo alla fine."},
+{fam:"cam",code:"CAM-06",t:"The point that does not run",demo:"centre",src:"slab.ts · centreOn",
+ a:"Under a push in Z there is exactly one point of the frame that stays put, the perspective origin. Everything else runs for the edge, faster the further out it sits.",
+ b:"Work out where the subject centre lands on screen with yaw and pitch at zero, then translate the slab by enough to put it on the origin. From there the push magnifies it without moving it. In slab.ts that is slabPointOnScreen and centreOn, and the final pose of CardFocus comes out of them instead of out of numbers nudged by eye.",
+ c:"Origin at (960, 496.8), that is 50% and 46% of 1920 by 1080. The 46 is the term people drop: centring vertically is not half the slab minus the subject, and with the wrong formula the subject sits forty pixels off. The demo measures the drift on the rendering every frame: at the same push it is 386 px without compensation and 0 with.",
+ d:"The distance between the subject centre and the origin on the last frame. If it is not within a couple of pixels the descent is sliding past the subject rather than into it, and you only notice at the end."},
 
-{fam:"cur",code:"CUR-01",t:"Traiettoria con arco e sorpasso",demo:"arc",src:"primitives/Cursor.tsx",
- a:"Il puntatore arriva su una curva, supera di poco il bersaglio e ci si posa. In rosso, sullo stesso tempo, la retta a velocità costante.",
- b:"Bezier quadratica con il punto di controllo fuori asse, e una curva back applicata al parametro invece che alla posizione. Così il sorpasso avviene lungo la tangente e resta sulla traiettoria.",
- c:"controllo a (1520 , 790), sorpasso massimo 7,5 per cento, 78 frame di percorso e 12 di assestamento.",
- d:"Curvatura e profilo di velocità sui frame renderizzati. Curvatura zero o velocità costante vuol dire che quella non è una mano, è un tween."},
+{fam:"cur",code:"CUR-01",t:"Arc and overshoot",demo:"arc",src:"primitives/Cursor.tsx",
+ a:"The pointer arrives on a curve, overshoots the target slightly and settles on it. In red, over the same time, the straight line at constant speed.",
+ b:"A quadratic bezier with the control point off the axis, and a back curve on the parameter rather than on the position. That way the overshoot happens along the tangent and stays on the path.",
+ c:"Control at (1520, 790), 7.5 per cent maximum overshoot, 78 frames of travel and 12 of settling.",
+ d:"Curvature and velocity profile on the rendered frames. Zero curvature or constant speed means that is not a hand, it is a tween."},
 
-{fam:"cur",code:"CUR-02",t:"L'esitazione prima del clic",demo:"hesit",src:"dramaturgia, non codice",
- a:"Il cursore arriva sul pulsante e non preme subito. Quella pausa è tutto il racconto: dice che è una decisione e non un passaggio obbligato.",
- b:"Tre finestre separate sulla timeline: avvicinamento, attesa, pressione. L'attesa non è un ease lento, è tempo morto vero, altrimenti legge come lentezza del software.",
- c:"arrivo a f54, attesa 16 frame, pressione a f70. Sotto i dieci frame non si sente, sopra i venticinque sembra che si sia bloccato qualcosa.",
- d:"Una finestra a velocità nulla fra arrivo e pressione. Se il banco non la trova, l'esitazione è nel copione ma non nel render."},
+{fam:"cur",code:"CUR-02",t:"The hesitation before the click",demo:"hesit",src:"dramaturgy, not code",
+ a:"The cursor reaches the button and does not press. That pause is the whole story: it says this is a decision and not a formality.",
+ b:"Three separate windows on the timeline: approach, wait, press. The wait is not a slow ease, it is real dead time, or it reads as the software being slow.",
+ c:"Arrival at f54, 16 frames of wait, press at f70. Under ten frames it does not register, over twenty-five something looks stuck.",
+ d:"A zero-velocity window between arrival and press. If the bench cannot find one, the hesitation is in the script and not in the render."},
 
-{fam:"cur",code:"CUR-03",t:"Il clic a cui la UI risponde",demo:"click",src:"lo stato premuto",
- a:"Lo stato premuto esiste e arriva prima della conseguenza. Due frame di scarto bastano perché il gesto sembri causare qualcosa.",
- b:"Stato del pulsante e conseguenza su due finestre diverse. La tentazione è metterli sullo stesso frame perché è più corto da scrivere, ed è esattamente quello che rende il clic finto.",
- c:"pressione a f48, conseguenza a f50. Sotto un frame di scarto il nesso sparisce, sopra i cinque diventa lentezza.",
- d:"Confronto fra il frame in cui cambia il pulsante e quello in cui cambia il contenuto. Se sono lo stesso, boccia."},
+{fam:"cur",code:"CUR-03",t:"The click the UI answers",demo:"click",src:"the pressed state",
+ a:"The pressed state exists and it arrives before the consequence. Two frames of gap are enough for the gesture to look like it caused something.",
+ b:"Button state and consequence on two different windows. The temptation is to put them on the same frame because it is shorter to write, and that is exactly what makes the click fake.",
+ c:"Press at f48, consequence at f50. Under a frame of gap the link disappears, over five it becomes lag.",
+ d:"The frame the button changes on against the frame the content changes on. Same frame, fail."},
 
-{fam:"cur",code:"CUR-04",t:"Trascinamento con peso",demo:"drag",src:"CardBox · lifted",
- a:"L'oggetto trascinato resta indietro rispetto al puntatore e si inclina nella direzione del moto. Senza il ritardo la card sembra saldata al cursore.",
- b:"La posizione della card è la posizione del cursore calcolata tre frame prima: aritmetica sul frame, nessuna memoria di stato. L'inclinazione viene dalla differenza fra due campioni.",
- c:"ritardo 3 frame, inclinazione 0,11 gradi per pixel di velocità, ombra da 18/30 a 44/74, bordo acceso a partire dal sollevamento.",
- d:"L'inclinazione agli estremi del trascinamento deve essere zero. Un'inclinazione costante non è una card in mano, è una card storta."},
+{fam:"cur",code:"CUR-04",t:"Drag with weight",demo:"drag",src:"CardBox · lifted",
+ a:"The dragged object lags the pointer and tilts into the direction of travel. Without the lag the card looks welded to the cursor.",
+ b:"The card position is the cursor position three frames earlier: arithmetic on the frame, no stored state. The tilt comes from the difference between two samples.",
+ c:"3 frames of lag, 0.11 degrees per pixel of speed, shadow from 18/30 to 44/74, border lit from the lift onward.",
+ d:"The tilt at both ends of the drag has to be zero. A constant tilt is not a card in a hand, it is a crooked card."},
 
-{fam:"txt",code:"TXT-01",t:"Digitazione con ritmo umano",demo:"type",src:"primitives/rhythm.ts",
- a:"Il testo compare con le pause di una persona: si pensa dopo la punteggiatura, si rallenta prima di una parola lunga, e dentro le parole che le dita conoscono partono raffiche.",
- b:"Uno schedule di frame per carattere calcolato una volta sola, poi una ricerca per frame. Il caso viene da mulberry32 con seme fisso: Math.random romperebbe il frame-lock in silenzio.",
- c:"13 caratteri al secondo di base, jitter da 0,55 a 1,50, pausa dopo punteggiatura da 2,2 a 4,0 volte la base, raffica a 0,42 con probabilità 0,34. Seme 20260812.",
- d:"framelocked-verdict.sh. Due render dello stesso frame devono dare gli stessi pixel. Con Math.random il video esce lo stesso e la riproducibilità no, che è il modo peggiore di rompersi."},
+{fam:"txt",code:"TXT-01",t:"Typing with human rhythm",demo:"type",src:"primitives/rhythm.ts",
+ a:"The text appears with a person pauses: thinking after punctuation, slowing before a long word, and bursts inside the words the fingers know.",
+ b:"A per-character frame schedule worked out once, then one lookup per frame. The randomness comes from mulberry32 with a fixed seed: Math.random would break the frame lock silently.",
+ c:"13 characters per second as the base, jitter 0.55 to 1.50, a pause after punctuation of 2.2 to 4.0 times the base, bursts at 0.42 with probability 0.34. Seed 20260812.",
+ d:"framelocked-verdict.sh. Two renders of the same frame have to give the same pixels. With Math.random the video still comes out and the reproducibility does not, which is the worst way to break."},
 
-{fam:"txt",code:"TXT-02",t:"Risposta in streaming",demo:"stream",src:"beats.sh",
- a:"La risposta si assembla a blocchi, con una stasi nel mezzo. E deve arrivare dentro l'area visibile, che è la parte che si dimentica.",
- b:"Il testo cresce per parole e non per caratteri, con la finestra di stasi scritta esplicitamente. La posizione è vincolata a stare sopra al composer, che è opaco.",
- c:"la crescita si ferma fra f110 e f130. Il blocco sta sopra al composer, che è alto 96 e parte a 36 dal fondo della lastra.",
- d:"beats.sh, il banco che si è ripagato da solo. Per un giorno intero il render prometteva quattro beat e ne consegnava tre: la risposta si assemblava sotto al composer opaco, e tutti i type check passavano. Ora il banco pretende che il conteggio parole CRESCA nella finestra, non che sia diverso da zero."},
+{fam:"txt",code:"TXT-02",t:"Streaming answer",demo:"stream",src:"beats.sh",
+ a:"The answer assembles in chunks, with a stall in the middle. And it has to arrive inside the visible area, which is the part everyone forgets.",
+ b:"The text grows by words rather than by characters, with the stall window written out explicitly. Its position is pinned above the composer, which is opaque.",
+ c:"Growth stops between f110 and f130. The block sits above the composer, which is 96 tall and starts 36 from the bottom of the slab.",
+ d:"beats.sh, the bench that paid for itself. For a full day the render promised four beats and delivered three: the answer was assembling under the opaque composer, and every type check passed. Now the bench requires the word count to GROW across the window, not merely to be non-zero."},
 
-{fam:"txt",code:"TXT-03",t:"Numero che si posa",demo:"metric",src:"tabular-nums",
- a:"Una metrica arriva sul suo valore con un piccolo sorpasso e si ferma, invece di scorrere come un contachilometri.",
- b:"Una curva back sul valore e cifre a passo fisso, così la larghezza non cambia mai. Un numero che cambia larghezza fa muovere tutto quello che ha intorno, e quel movimento non lo hai deciso tu.",
- c:"128 ms, sorpasso 7,5 per cento, 72 frame.",
- d:"Larghezza del blocco misurata frame per frame. Se cambia c'è un riflusso, e il riflusso è la cosa che fa sembrare finto un cruscotto."},
+{fam:"txt",code:"TXT-03",t:"A number that settles",demo:"metric",src:"tabular-nums",
+ a:"A metric arrives on its value with a small overshoot and stops, instead of scrolling like an odometer.",
+ b:"A back curve on the value and fixed-width digits, so the width never changes. A number that changes width moves everything around it, and you did not choose that movement.",
+ c:"128 ms, 7.5 per cent overshoot, 72 frames.",
+ d:"The block width measured frame by frame. If it changes there is a reflow, and reflow is what makes a dashboard look fake."},
 
-{fam:"txt",code:"TXT-04",t:"Riga che arriva in una lista ordinata",demo:"insert",src:"cardY · posizione assoluta",
- a:"Il varco si apre prima che la riga arrivi. La lista fa spazio, e la riga atterra dentro uno spazio già fatto.",
- b:"Le card stanno in posizione assoluta e la loro y è aritmetica pura, quindi se ne può inserire una senza che il layout collassi nello stesso frame. Con un flex, aggiungere è uno stacco travestito da animazione.",
- c:"varco a f20, atterraggio a f38, diciotto frame di anticipo. Lo spostamento è 108, cioè un'altezza di card più il gap.",
- d:"Confronto fra il frame in cui parte lo spostamento e quello in cui la riga diventa visibile. Se coincidono, la riga sembra incollata sopra al layout invece che dentro."},
+{fam:"txt",code:"TXT-04",t:"A row landing in an ordered list",demo:"insert",src:"cardY · absolute positioning",
+ a:"The gap opens before the row arrives. The list makes room, and the row lands in a space that is already there.",
+ b:"The cards are absolutely positioned and their y is pure arithmetic, so one can be inserted without the layout collapsing on the same frame. With a flex, adding is a cut wearing an animation costume.",
+ c:"Gap at f20, landing at f38, eighteen frames of lead. The shift is 108, a card height plus the gap.",
+ d:"The frame the shift starts on against the frame the row becomes visible. If they coincide the row looks stuck on top of the layout rather than in it."},
 
-{fam:"txt",code:"TXT-05",t:"La correzione",demo:"fix",src:"primitives/rhythm.ts",
- a:"Si scrive una cosa, ci si ferma, si cancella fino a un confine di parola e si riscrive. È il modo più economico che esista di far vedere che il prodotto perdona un ripensamento.",
- b:"Tre finestre: la battitura con lo schedule di rhythm.ts, la cancellazione a velocità costante e molto più rapida, la riscrittura con un secondo schedule e un altro seme. Cancellare con la stessa curva della scrittura è l'errore: nessuno cancella pensando.",
- c:"scrittura a 13 caratteri al secondo, cioè 0,43 per frame. Cancellazione a 1,6 per frame, la cadenza di un tasto tenuto premuto, quasi quattro volte più veloce. Si ferma a 22 caratteri, il confine di parola più vicino.",
- d:"Il rapporto fra la velocità di cancellazione e quella di scrittura. Se si avvicina a uno, la cancellazione legge come una seconda battitura al contrario, che nessuno ha mai visto fare."},
+{fam:"txt",code:"TXT-05",t:"The correction",demo:"fix",src:"primitives/rhythm.ts",
+ a:"Something gets typed, then a stop, then it is deleted back to a word boundary and retyped. It is the cheapest way to show the product forgives a change of mind.",
+ b:"Three windows: the typing on the rhythm.ts schedule, the deletion at a constant and much faster rate, the rewrite on a second schedule with another seed. Deleting on the same curve as typing is the mistake, because nobody deletes while thinking.",
+ c:"Typing at 13 characters per second, 0.43 per frame. Deletion at 1.6 per frame, the cadence of a held key, nearly four times faster. It stops at 22 characters, the nearest word boundary.",
+ d:"The ratio between deletion speed and typing speed. Near one, the deletion reads as a second typing pass in reverse, which nobody has ever watched happen."},
 
-{fam:"chr",code:"CHR-01",t:"Consegna",demo:"handoff",src:"scenes/CardHandoff.tsx",
- a:"Un elemento attraversa il layout e il layout lo assorbe. La parte difficile non è il volo: è che la colonna di arrivo apra il posto prima, e quella di partenza si richiuda dietro.",
- b:"La card si stacca dal piano, viaggia su un arco e si posa. Le due colonne si muovono su finestre proprie, sfalsate rispetto al volo, e tutte le posizioni vengono da cardY.",
- c:"varco a f30, volo da f40 a f126, chiusura a f56. Passo di 123, cioè l'altezza della card attiva più il gap.",
- d:"handoff-travel.sh, l'unico banco che guarda se il gesto succede: un fermo immagine passa seam.sh e fill-measure.sh a pieni voti. Traccia il centroide dei pixel cambiati e pretende moto orizzontale monotono per almeno mezza colonna."},
+{fam:"chr",code:"CHR-01",t:"Handoff",demo:"handoff",src:"scenes/CardHandoff.tsx",
+ a:"An element crosses the layout and the layout absorbs it. The hard part is not the flight: it is the destination column opening the slot first, and the source closing behind.",
+ b:"The card lifts off the plane, travels an arc and lands. The two columns move on their own windows, offset from the flight, and every position comes from cardY.",
+ c:"Gap at f30, flight f40 to f126, close at f56. A step of 123, the active card height plus the gap.",
+ d:"handoff-travel.sh, the only bench that looks at whether the gesture happens: a freeze frame passes seam.sh and fill-measure.sh with full marks. It tracks the centroid of changed pixels and requires monotonic horizontal motion across at least half a column."},
 
-{fam:"chr",code:"CHR-02",t:"Riorganizzazione per distanza",demo:"reflow",src:"scelta di sfalso",
- a:"Quando qualcosa cambia, il resto si riassesta con un ritardo proporzionale alla distanza dal punto del cambiamento, non al proprio indice nella lista.",
- b:"Per ogni elemento si calcola la distanza dal punto dove è successa la cosa, e quella diventa il ritardo. Costa una radice quadrata per elemento per frame, che a queste quantità non si sente.",
- c:"ritardo uguale a distanza diviso 1400, per 22 frame.",
- d:"Correlazione fra ritardo e distanza sui frame renderizzati. Se il ritardo cresce con l'indice invece che con la distanza il banco lo vede, e si vede anche a occhio: il layout legge come una lista che scorre invece che come uno spazio che reagisce."},
+{fam:"chr",code:"CHR-02",t:"Reflow by distance",demo:"reflow",src:"a stagger choice",
+ a:"When something changes, the rest settles with a delay proportional to its distance from where it happened, not to its index in the list.",
+ b:"For each element you take the distance from the point where the thing happened and that becomes the delay. It costs a square root per element per frame, which at these counts does not show.",
+ c:"Delay equals distance over 1400, times 22 frames.",
+ d:"The correlation between delay and distance on the rendered frames. If the delay grows with the index instead of the distance the bench sees it, and so does the eye: the layout reads as a list scrolling rather than a space reacting."},
 
-{fam:"chr",code:"CHR-03",t:"Stato che si propaga",demo:"prop",src:"conteggi e pannello",
- a:"Una modifica in un punto ne causa un'altra altrove, con un ritardo. È il ritardo a leggersi come causa.",
- b:"Tre finestre in cascata sulla stessa timeline. Nessun evento e nessuno stato: solo tre soglie di frame diverse, quindi resta funzione del frame.",
- c:"card a f30, conteggio di colonna a f35, pannello a f41. Cinque e sei frame di scarto.",
- d:"Ordine dei frame di cambiamento. Se due cadono sullo stesso frame la catena non c'è: sono tre cose scollegate che cambiano insieme."},
+{fam:"chr",code:"CHR-03",t:"State propagating",demo:"prop",src:"counts and panel",
+ a:"A change in one place causes another somewhere else, after a delay. It is the delay that reads as cause.",
+ b:"Three cascading windows on the same timeline. No events and no state: three different frame thresholds, so it stays a function of the frame.",
+ c:"Card at f30, column count at f35, panel at f41. Five and six frames apart.",
+ d:"The order of the changing frames. If two land on the same frame there is no chain: they are three unrelated things changing together."},
 
-{fam:"chr",code:"CHR-04",t:"Prima e dopo senza divisorio",demo:"ba",src:"build list · before-after",
- a:"Il confronto fra due stati si fa lasciando che lo stato cambi mentre la camera si muove. Niente slider da trascinare e niente wipe verticale: il prima e il dopo sono lo stesso piano in due istanti diversi.",
- b:"Le card cambiano colonna sfalsate fra loro, i conteggi seguono a metà tragitto e la metrica scende sulla sua curva. La camera fa un movimento lento e indipendente da tutto questo, così il cambiamento non cade mai su una pausa.",
- c:"prima card a f52, seconda a f88, metrica da 128 a 64 ms fra f120 e f200. La camera non è ferma in nessuno di quegli istanti.",
- d:"Il frame in cui cambia il conteggio non deve coincidere con un frame in cui la camera è ferma. Se coincidono, quello che hai fatto è uno stacco con la camera parcheggiata sopra."},
+{fam:"chr",code:"CHR-04",t:"Before and after without a divider",demo:"ba",src:"build list · before-after",
+ a:"You compare two states by letting the state change while the camera moves. No slider to drag and no vertical wipe: the before and the after are the same shot at two moments.",
+ b:"The cards change column offset from each other, the counts follow at the halfway point, and the metric comes down on its own curve. The camera does a slow move independent of all of it, so no change ever lands on a pause.",
+ c:"First card at f52, second at f88, metric from 128 to 64 ms between f120 and f200. The camera is not still at any of those.",
+ d:"The frame a count changes on must not coincide with a frame where the camera is still. If they coincide, what you made is a cut with the camera parked over it."},
 
-{fam:"mat",code:"MAT-01",t:"Spessore e ombra di contatto",demo:"thick",src:"il piano dietro il piano",
- a:"La lastra ha un bordo e appoggia su qualcosa. Nella seconda metà della demo lo spessore è spento, per vedere cosa si perde.",
- b:"Un secondo piano dietro il primo, appena più grande, con un'ombra profonda. Costa un div, e decide se l'oggetto legge come oggetto.",
- c:"spessore 30 dietro il piano, ombra 90 di offset e 180 di sfocatura al 75 per cento.",
- d:"Qui non serve un numero, serve il confronto: basta spegnerlo e guardare. È lo stesso motivo per cui ogni misura del repo stampa due colonne invece di un valore solo."},
+{fam:"mat",code:"MAT-01",t:"Edge and contact shadow",demo:"thick",src:"the plane behind the plane",
+ a:"The slab has an edge and it rests on something. In the second half of the demo the edge is switched off, to see what goes.",
+ b:"A second plane behind the first, slightly larger, with a deep shadow. It costs one div, and it decides whether the object reads as an object.",
+ c:"Edge 30 behind the plane, shadow 90 offset and 180 blur at 75 per cent.",
+ d:"No number needed here, a comparison is: switch it off and look. It is the same reason every measurement in the repo prints two columns instead of one value."},
 
-{fam:"mat",code:"MAT-02",t:"Luce dello schermo sul piano",demo:"spill",src:"l'alone sotto la lastra",
- a:"Il colore dominante dello schermo si versa sul piano sotto, e cambia quando cambia quello che c'è sullo schermo.",
- b:"Un gradiente radiale coricato dietro la lastra, con la tinta presa dal contenuto attivo. Se fosse una luce di scena decisa a mano resterebbe uguale mentre lo schermo cambia, e si vedrebbe.",
- c:"opacità fra 0,72 e 0,98, sfocatura 22, coricato a 76 gradi con origine sul bordo alto, agganciato al bordo basso della lastra.",
- d:"Confronto fra la tinta dell'alone e quella dominante del frame. Se non si muovono insieme, l'alone è decorazione."},
+{fam:"mat",code:"MAT-02",t:"Screen light on the floor",demo:"spill",src:"the glow under the slab",
+ a:"The screen dominant colour spills onto the plane below, and changes when what is on screen changes.",
+ b:"A radial gradient laid down behind the slab, tinted from the active content. A stage light chosen by hand would stay the same while the screen changed, and that shows.",
+ c:"Opacity between 0.72 and 0.98, blur 22, laid at 76 degrees with its origin on the top edge, pinned to the bottom edge of the slab.",
+ d:"The glow tint against the frame dominant tint. If they do not move together, the glow is decoration."},
 
-{fam:"mat",code:"MAT-03",t:"Il piano attenuato dietro",demo:"backdrop",src:"theme.ts · BACKDROP_OPACITY",
- a:"Dietro la lastra c'è una seconda copia, più piccola e più ruotata, a opacità ridotta. Spegnendola il fotogramma sotto la board resta vuoto e la lastra galleggia nel nero.",
- b:"È la stessa board disegnata una seconda volta, non una texture sfocata: un'immagine resterebbe indietro appena il contenuto cambia, e in un piano sequenza il contenuto cambia sempre. Costa un clone e un translateZ negativo.",
- c:"0,62 di opacità, arretrata di 60, otto gradi in più di yaw e quattro di pitch, in scala 0,92.",
- d:"Lo stesso controllo di contrasto di CAM-05. Il piano dietro deve restare sopra 3:1 da renderizzato: sotto quella soglia non è profondità, è sporco sul fondo."},
+{fam:"mat",code:"MAT-03",t:"The attenuated plane behind",demo:"backdrop",src:"the three slab scenes",
+ a:"Behind the slab sits a second copy, smaller and turned further, at reduced opacity. Switch it off and the frame under the board goes empty and the slab floats in black.",
+ b:"It is the same board drawn a second time, not a blurred image: an image falls behind the moment the content changes, and in a single take the content always changes. It costs a clone and a negative translateZ.",
+ c:"0.45 opacity with a 14 px blur, 60 back, eight more degrees of yaw and four of pitch, at 0.92 scale. The 0.62 in theme.ts is a different layer: BACKDROP_OPACITY drives the one in PromptInput, and UIMockup, CardHandoff and CardFocus each write 0.45 by hand. Three copies of a number nobody named.",
+ d:"The same contrast check as CAM-05. The plane behind has to stay over 3:1 once rendered: below that it is not depth, it is dirt on the background."},
 
-{fam:"giu",code:"GIU-01",t:"Entrare dalla posa finale",demo:"seam",src:"UI_MOCKUP_END_POSE",
- a:"La scena dopo comincia esattamente dove si è fermata quella prima. Al frame della giunta non succede niente, ed è precisamente quello il punto.",
- b:"La posa vive nel modulo condiviso e non dentro le due scene. Due copie della stessa posa restano uguali esattamente finché nessuno tocca una delle due.",
- c:"Prima giunta a f120: 552 pixel contro 18.019 del taglio di controllo, 33 volte. Seconda giunta, CardHandoff verso CardFocus: 7 pixel contro 22.901.",
- d:"seam.sh, e quello che lo rende onesto è il controllo accanto: lo stesso ultimo frame contro un frame preso in mezzo alla scena dopo, che è uno stacco vero. Se i due valori si avvicinano lo script esce 2 e dichiara che la misura non separa niente. Prende la coppia come argomenti, perché una giunta esiste per ogni coppia adiacente e cablare i percorsi voleva dire un secondo script uguale al primo tranne due righe."},
+{fam:"giu",code:"GIU-01",t:"Entering from the final pose",demo:"seam",src:"UI_MOCKUP_END_POSE",
+ a:"The next scene begins exactly where the previous one stopped. Nothing happens on the join frame, and that is precisely the point.",
+ b:"The pose lives in the shared module, not inside either scene. Two copies of the same pose stay equal exactly as long as nobody edits one.",
+ c:"First join at f120: 552 pixels against 18,019 for the control cut, 33 times. Second join, CardHandoff into CardFocus: 7 pixels against 22,901.",
+ d:"seam.sh, and what makes it honest is the control beside it: the same last frame against a frame from the middle of the next scene, which is a real cut. If the two readings converge the script exits 2 and says the measurement separates nothing. It takes the pair as arguments, because a join exists for every adjacent couple."},
 
-{fam:"giu",code:"GIU-02",t:"Il punto di riposo",demo:"rest",src:"proprietà della scena",
- a:"Una scena che comincia ferma e finisce ferma si può mettere in qualunque ordine, perché al bordo non c'è moto da spezzare.",
- b:"Curve che arrivano a derivata nulla agli estremi. Un ease out finisce fermo, un lineare no, ed è per questo che il lineare non si usa mai al confine di una scena.",
- c:"|v| uguale a zero a f000 e a f209. La velocità qui è la differenza fra due frame consecutivi, la stessa cosa che misurerebbe il banco.",
- d:"Derivata discreta sui primi e sugli ultimi frame renderizzati. Se non è zero quella scena ha un ordine obbligato, e va saputo prima del montaggio invece che scoperto durante."},
+{fam:"giu",code:"GIU-02",t:"The rest point",demo:"rest",src:"a property of the scene",
+ a:"A scene that begins at rest and ends at rest can go in any order, because there is no motion to break at the boundary.",
+ b:"Curves that reach zero derivative at both ends. An ease out finishes still, a linear one does not, which is why linear is never used at a scene boundary.",
+ c:"|v| equal to zero at f000 and at f209. Velocity here is the difference between two consecutive frames, the same thing the bench would measure.",
+ d:"The discrete derivative over the first and last rendered frames. If it is not zero that scene has a forced order, and that should be known before the edit rather than discovered during it."},
 
-{fam:"giu",code:"GIU-03",t:"Trasformazione continua al posto dello stacco",demo:"through",src:"la regola, dal README",
- a:"La camera attraversa il punto in cui un montaggio normale metterebbe il taglio, e non succede niente. Il film cambia argomento mentre si sta muovendo.",
- b:"Una sola curva lunga che copre il confine. Il contenuto cambia sotto, la camera no. È il vincolo architetturale da cui discende tutto il resto del repo.",
- c:"il taglio cadrebbe a f120 su 240. Lì la camera è a metà di una curva che dura tutti e 240 i frame.",
- d:"seam.sh applicato al confine, col controllo del taglio deliberato accanto. È l'unico modo di distinguere una giunta riuscita da una scena che semplicemente non si muove."},
+{fam:"giu",code:"GIU-03",t:"Continuous transformation instead of a cut",demo:"through",src:"the rule, from the README",
+ a:"The camera crosses the point where a normal edit would put the cut, and nothing happens. The film changes subject while it is moving.",
+ b:"One long curve covering the boundary. The content changes underneath, the camera does not. It is the architectural constraint everything else in the repo follows from.",
+ c:"The cut would fall at f120 of 240. The camera there is halfway through a curve that runs all 240.",
+ d:"seam.sh applied to the boundary, with the deliberate-cut control beside it. It is the only way to tell a working join from a scene that simply is not moving."},
 
-{fam:"giu",code:"GIU-04",t:"Monotonia della derivata",demo:"chain",src:"le tre pose di confine",
- a:"Lungo tutta la catena yaw, pitch e spinta si muovono sempre nello stesso verso. Non è pignoleria: l'occhio segue la derivata del movimento, e un'inversione a una giunta legge come uno stacco anche quando i pixel dei due fotogrammi coincidono.",
- b:"Le pose di confine stanno in un modulo solo, quindi la monotonia si verifica guardando tre costanti invece che aprire tre scene. Il grafico nell'angolo è esattamente quello: le tre grandezze su tutta la catena, con le due giunte marcate.",
- c:"yaw -18, -9, -4, 0. pitch 5, 2,5, 1,2, 0. spinta 0, 48, 96, 1493,6. Nessuna delle tre torna mai indietro.",
- d:"Il segno della differenza fra fotogrammi consecutivi attraverso ogni giunta. seam.sh dice che i pixel coincidono, questo dice che il movimento non si è rovesciato: sono due difetti diversi, e il primo banco non vede il secondo."}
+{fam:"giu",code:"GIU-04",t:"Monotonic derivative",demo:"chain",src:"the three boundary poses",
+ a:"Across the whole chain yaw, pitch and push always move the same way. Not fussiness: the eye follows the derivative of the movement, and a reversal at a join reads as a cut even when the pixels of the two frames match.",
+ b:"The boundary poses live in one module, so the monotonicity is checked by reading three constants instead of opening three scenes. The graph in the corner is exactly that: the three quantities across the chain, with the two joins marked.",
+ c:"yaw -18, -9, -4, 0. pitch 5, 2.5, 1.2, 0. push 0, 48, 96, 1493.6. None of the three ever goes back.",
+ d:"The sign of the difference between consecutive frames across each join. seam.sh says the pixels match; this says the movement did not reverse. They are different defects, and the first bench does not see the second."}
 ];
 
 /* ============================================================ costruzione */
@@ -1224,7 +1199,7 @@ FAMS.forEach(function(F){
     art.appendChild(stage);
 
     var spec=el("dl","spec");
-    [["Cosa fa",x.a,""],["Come si costruisce",x.b,""],["I numeri",x.c,""],["Il banco che la boccia",x.d,"bench"]].forEach(function(r){
+    [["What it does",x.a,""],["How it is built",x.b,""],["Numbers",x.c,""],["The bench that fails it",x.d,"bench"]].forEach(function(r){
       var d=el("div",r[2]||null);
       d.appendChild(el("dt",null,null,r[0]));
       d.appendChild(el("dd",null,null,r[1]));
@@ -1258,7 +1233,5 @@ if(RM){ paused=true; pb.textContent="Riparti"; pb.setAttribute("aria-pressed","t
 
 })();
 </script>
-
-
   </body>
 </html>
