@@ -144,13 +144,13 @@ jobs:
           # sopravvive a -e, ed e' il motivo per cui il controllo di
           # focus-sharpness qui sopra e' scritto come un `if`.
           ffmpeg -nostdin -v error -ss 2 -t 2 -i video/out/card-focus.mp4 -y /tmp/mosso.mp4
-          rc=0; ./scripts/rest-point.sh /tmp/mosso.mp4 >/dev/null 2>&1 || rc=$?
-          [ "$rc" = 1 ] || { echo "rest-point.sh su un ritaglio mosso: atteso 1, ottenuto $rc" >&2; exit 1; }
+          rc=0; ./scripts/rest-point.sh /tmp/mosso.mp4 > /tmp/rp1.log 2>&1 || rc=$?
+          [ "$rc" = 1 ] || { echo "rest-point.sh su un ritaglio mosso: atteso 1, ottenuto $rc" >&2; cat /tmp/rp1.log >&2; exit 1; }
 
           ffmpeg -nostdin -v error -i video/out/card-focus.mp4 -frames:v 1 -y /tmp/f.png
           ffmpeg -nostdin -v error -loop 1 -i /tmp/f.png -t 3 -r 30 -pix_fmt yuv420p -y /tmp/fermo.mp4
-          rc=0; ./scripts/rest-point.sh /tmp/fermo.mp4 >/dev/null 2>&1 || rc=$?
-          [ "$rc" = 2 ] || { echo "rest-point.sh su un fermo immagine: atteso 2, ottenuto $rc" >&2; exit 1; }
+          rc=0; ./scripts/rest-point.sh /tmp/fermo.mp4 > /tmp/rp2.log 2>&1 || rc=$?
+          [ "$rc" = 2 ] || { echo "rest-point.sh su un fermo immagine: atteso 2, ottenuto $rc" >&2; cat /tmp/rp2.log >&2; exit 1; }
           echo "rest-point.sh distingue una scena mossa da un fermo immagine."
 
           # click-gap.sh su una scena senza clic non deve trovare la coppia
@@ -160,10 +160,10 @@ jobs:
           [ "$rc" = 1 ] || { echo "click-gap.sh su card-handoff: atteso 1, ottenuto $rc" >&2; exit 1; }
 
           ffmpeg -nostdin -v error -i video/out/prompt-input.mp4 \
-            -vf "select='lt(n\,221)+gte(n\,225)',setpts=N/FRAME_RATE/TB" \
+            -vf "select='lt(n\,271)+gte(n\,276)',setpts=N/FRAME_RATE/TB" \
             -fps_mode passthrough -y /tmp/fuso.mp4
-          rc=0; ./scripts/click-gap.sh /tmp/fuso.mp4 >/dev/null 2>&1 || rc=$?
-          [ "$rc" = 1 ] || { echo "click-gap.sh sul ritaglio fuso: atteso 1, ottenuto $rc" >&2; exit 1; }
+          rc=0; ./scripts/click-gap.sh /tmp/fuso.mp4 > /tmp/cg.log 2>&1 || rc=$?
+          [ "$rc" = 1 ] || { echo "click-gap.sh sul ritaglio fuso: atteso 1, ottenuto $rc" >&2; cat /tmp/cg.log >&2; exit 1; }
           echo "click-gap.sh boccia sia una scena senza clic sia i due eventi fusi."
 
           # beats.sh senza OCR deve dire che non ha potuto misurare, e non
