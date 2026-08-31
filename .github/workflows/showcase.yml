@@ -114,6 +114,7 @@ jobs:
           sh -e /tmp/misure.sh < /dev/null
           ./scripts/handoff-travel.sh
           ./scripts/focus-sharpness.sh
+          ./scripts/rest-point.sh
 
       # Il banco nuovo va messo alla prova sul caso che deve bocciare, non solo
       # sul render che deve promuovere. Senza questo passo "verde" vorrebbe dire
@@ -128,6 +129,20 @@ jobs:
             exit 1
           fi
           echo "focus-sharpness.sh boccia la fixture, come deve."
+
+          # rest-point.sh ha due modi di fallire e li deve distinguere: un
+          # ritaglio preso dal mezzo di una scena si muove ai bordi (esce 1), un
+          # fermo immagine non si muove da nessuna parte (esce 2). Se li
+          # confondesse, o li promuovesse, non misurerebbe niente.
+          ffmpeg -v error -ss 2 -t 2 -i video/out/card-focus.mp4 -y /tmp/mosso.mp4
+          ./scripts/rest-point.sh /tmp/mosso.mp4 >/dev/null 2>&1; rc=$?
+          [ "$rc" = 1 ] || { echo "rest-point.sh su un ritaglio mosso: atteso 1, ottenuto $rc" >&2; exit 1; }
+
+          ffmpeg -v error -i video/out/card-focus.mp4 -frames:v 1 -y /tmp/f.png
+          ffmpeg -v error -loop 1 -i /tmp/f.png -t 3 -r 30 -pix_fmt yuv420p -y /tmp/fermo.mp4
+          ./scripts/rest-point.sh /tmp/fermo.mp4 >/dev/null 2>&1; rc=$?
+          [ "$rc" = 2 ] || { echo "rest-point.sh su un fermo immagine: atteso 2, ottenuto $rc" >&2; exit 1; }
+          echo "rest-point.sh distingue una scena mossa da un fermo immagine."
 
       # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa
       # run, o vengono da una che li aveva gia' misurati. Solo adesso si salvano.

@@ -264,3 +264,22 @@ export const CARD_FOCUS_END_POSE: CameraPose = (() => {
     slideY: c.slideY,
   };
 })();
+
+/**
+ * La posa in cui il film si ferma: larga, frontale, la board di nuovo leggibile.
+ *
+ * E' l'unica posa della catena che INVERTE il verso della spinta, e va detto
+ * perche' altrove questo documento sostiene il contrario. La monotonia serve
+ * dove la giunta e' in movimento: li' l'occhio segue la derivata e
+ * un'inversione la legge come stacco. Qui i due lati della giunta sono FERMI,
+ * CardFocus finisce a derivata nulla e CardRelease parte a derivata nulla,
+ * quindi non c'e' nessuna derivata da rovesciare. E' la stessa proprieta' per
+ * cui due scene ferme agli estremi si possono mettere in qualsiasi ordine.
+ */
+export const CARD_RELEASE_END_POSE: CameraPose = {
+  yaw: 0,
+  pitch: 0,
+  pushZ: -140,
+  slideX: 0,
+  slideY: 0,
+};
