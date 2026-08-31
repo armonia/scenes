@@ -191,7 +191,16 @@ while IFS= read -r slug; do
   # Bordi fermi: adesso serve sapere che lo strumento risponde. Se anche il
   # mezzo e' fermo, le tre letture concordi non provano niente e potrebbero
   # venire da un fermo immagine.
-  if ! python3 -c "exit(0 if $mid >= $MOTO_MIN and $mid >= max($ini,$fin,0.001) * $SEPARA else 1)"; then
+  #
+  # QUESTO CONTROLLO VALE SOLO SU CHI HA PROMESSO QUALCOSA. Poche righe sopra
+  # questo script dichiara che le scene senza restAtEdges si misurano e non si
+  # bocciano, e poi usciva 2 su una di quelle: PromptInput tiene la camera
+  # ferma per tutta la recita, quindi anche il suo campione di mezzo e' fermo,
+  # e il banco fermava la CI per una scena su cui non stava dando nessun
+  # verdetto. Uno strumento che dice una regola e ne applica un'altra e' un
+  # difetto dello strumento, non della scena.
+  if [ "$dichiara" = si ] &&
+     ! python3 -c "exit(0 if $mid >= $MOTO_MIN and $mid >= max($ini,$fin,0.001) * $SEPARA else 1)"; then
     echo >&2
     echo "MISURA INUTILE su $slug: i bordi sono fermi ma anche il mezzo ($mid%)," >&2
     echo "quindi le tre letture concordano e non distinguono una scena ferma agli" >&2

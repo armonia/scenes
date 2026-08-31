@@ -73,7 +73,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq imagemagick ffmpeg
+          sudo apt-get install -y -qq imagemagick ffmpeg tesseract-ocr
 
       - name: dipendenze
         if: steps.cache.outputs.cache-hit != 'true'
@@ -116,6 +116,7 @@ jobs:
           ./scripts/focus-sharpness.sh
           ./scripts/rest-point.sh
           ./scripts/click-gap.sh
+          ./scripts/beats.sh
 
       # Il banco nuovo va messo alla prova sul caso che deve bocciare, non solo
       # sul render che deve promuovere. Senza questo passo "verde" vorrebbe dire
@@ -164,6 +165,21 @@ jobs:
           rc=0; ./scripts/click-gap.sh /tmp/fuso.mp4 >/dev/null 2>&1 || rc=$?
           [ "$rc" = 1 ] || { echo "click-gap.sh sul ritaglio fuso: atteso 1, ottenuto $rc" >&2; exit 1; }
           echo "click-gap.sh boccia sia una scena senza clic sia i due eventi fusi."
+
+          # beats.sh senza OCR deve dire che non ha potuto misurare, e non
+          # bocciare la scena. Senza questa distinzione ha passato mesi a
+          # riportare "la risposta non si vede mai" su una macchina dove
+          # tesseract non era installato: una diagnosi sulla scena per un
+          # guasto dello strumento, lo stesso difetto di handoff-travel.sh.
+          # Si toglie di mezzo il solo tesseract, non tutto il PATH: svuotando
+          # il PATH sparirebbe anche bash e il verdetto sarebbe 127, cioe' un
+          # altro guasto, e il controllo non proverebbe la distinzione voluta.
+          TESS="$(command -v tesseract)"
+          sudo mv "$TESS" "$TESS.off"
+          rc=0; ./scripts/beats.sh >/dev/null 2>&1 || rc=$?
+          sudo mv "$TESS.off" "$TESS"
+          [ "$rc" = 3 ] || { echo "beats.sh senza tesseract: atteso 3 (non ho potuto misurare), ottenuto $rc" >&2; exit 1; }
+          echo "beats.sh distingue una scena rotta da uno strumento assente."
 
 
       # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa

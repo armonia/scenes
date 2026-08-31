@@ -6,7 +6,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { app, fontStack } from "../theme";
+import { SLAB_BACKDROP, app, fontStack } from "../theme";
 import {
   CARD_FOCUS_END_POSE,
   CARD_RELEASE_END_POSE,
@@ -96,10 +96,10 @@ export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
     <AbsoluteFill style={{ background: app.bg, fontFamily: fontStack }}>
       <AbsoluteFill
         style={{
-          perspective: 3200,
-          perspectiveOrigin: "50% 46%",
-          opacity: 0.45,
-          filter: "blur(14px)",
+          perspective: SLAB_BACKDROP.perspective,
+          perspectiveOrigin: SLAB_BACKDROP.perspectiveOrigin,
+          opacity: SLAB_BACKDROP.opacity,
+          filter: `blur(${SLAB_BACKDROP.blur}px)`,
         }}
       >
         <div

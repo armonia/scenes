@@ -130,6 +130,12 @@
       .take > div:nth-child(odd) { font-family: var(--mono); font-size: 13px; color: var(--faint); }
       .take > div:nth-child(even) { color: var(--muted); font-size: 15px; padding-left: 8px; }
       .take b { color: var(--text); font-weight: 600; }
+      /* Un piano e una cosa fatta non possono avere lo stesso aspetto: e' la
+         stessa regola dei banchi non scritti, applicata al film. */
+      .take > div.none, .take > div.none b { color: var(--faint); }
+      .take i.tag { font-style: normal; font-family: var(--mono); font-size: 11px;
+        letter-spacing: 0.4px; color: var(--faint); margin-left: 10px; white-space: nowrap; }
+      .take i.tag.off { color: var(--accent); }
       table { width: 100%; border-collapse: collapse; font-size: 15px; }
       th, td { text-align: left; padding: 13px 16px 13px 0; border-bottom: 1px solid var(--border);
         vertical-align: top; color: var(--muted); }
@@ -291,21 +297,41 @@
 
       <section>
         <p class="section-title">Forty-five seconds, one shot</p>
+        <p class="note" style="margin:0 0 20px">
+          This is the film the vocabulary is for, and it is now over half written.
+          Seven of the thirteen beats render and join end to end. The six in grey
+          exist only as the demonstrations above, and they are printed that way
+          on purpose: same rule as the benches, a plan and a thing are not
+          allowed to look alike. Four of those seven used to be greyed too, not
+          because they were missing but because <code>PromptInput</code> drew a
+          slab of its own — 2200 wide at perspective 2800, its own chrome, its
+          own sidebar. Between two different screens the passage is a cut
+          whatever you do with it. It is one screen now.
+        </p>
         <div class="take">
-          <div>f0000</div><div><b>CAM-01</b> the slab enters from off-frame and straightens, from <code>UI_MOCKUP_START_POSE</code> to <code>UI_MOCKUP_END_POSE</code></div>
-          <div>f0120</div><div><b>CAM-02</b> truck left: sidebar, board and panel separate because they sit at different depths</div>
-          <div>f0240</div><div><b>CUR-01</b> the cursor arrives on an arc, overshoots the active card slightly and settles on it</div>
-          <div>f0330</div><div><b>CUR-04</b> it picks the card up and drags: three frames of lag, tilting into the direction of travel</div>
-          <div>f0450</div><div><b>CHR-01</b> the destination column opens the slot before the card arrives, the source closes behind</div>
-          <div>f0570</div><div><b>CHR-03</b> the column count drops, then the panel changes state six frames later. The delay is what reads as cause</div>
-          <div>f0660</div><div><b>CAM-04</b> descent to macro onto the card just delivered. That is <code>CardFocus</code>, and it stays sharp because it is DOM</div>
-          <div>f0780</div><div><b>TXT-01</b> the cursor reaches the composer and types with a person's pauses</div>
-          <div>f0930</div><div><b>CUR-02</b> half a second of hesitation on the button, then <b>CUR-03</b> presses and the UI answers two frames later</div>
-          <div>f0990</div><div><b>TXT-02</b> the answer arrives in chunks, and inside the visible area rather than under the composer</div>
-          <div>f1140</div><div><b>CAM-05</b> everything that is not the answer drops to 0.62 opacity</div>
-          <div>f1230</div><div><b>CAM-03</b> a short orbit shows the edge of the slab and stops at rest</div>
+          <div>f0000</div><div><b>CAM-01</b> the slab enters from off-frame and straightens, from <code>UI_MOCKUP_START_POSE</code> to <code>UI_MOCKUP_END_POSE</code><i class="tag">UIMockup</i></div>
+          <div class="none">f0120</div><div class="none"><b>CAM-02</b> truck left: sidebar, board and panel separate because they sit at different depths<i class="tag">no scene gives its layers a translateZ</i></div>
+          <div class="none">f0240</div><div class="none"><b>CUR-01</b> the cursor arrives on an arc, overshoots the active card slightly and settles on it<i class="tag">Cursor.tsx exists, aimed at the composer</i></div>
+          <div class="none">f0330</div><div class="none"><b>CUR-04</b> it picks the card up and drags: three frames of lag, tilting into the direction of travel<i class="tag">not written</i></div>
+          <div>f0450</div><div><b>CHR-01</b> the destination column opens the slot before the card arrives, the source closes behind<i class="tag">CardHandoff</i></div>
+          <div class="none">f0570</div><div class="none"><b>CHR-03</b> the column count drops, then the panel changes state six frames later. The delay is what reads as cause<i class="tag">not written</i></div>
+          <div>f0660</div><div><b>CAM-04</b> descent to macro onto the card just delivered. That is <code>CardFocus</code>, and it stays sharp because it is DOM<i class="tag">CardFocus</i></div>
+          <div>f0780</div><div><b>TXT-01</b> the cursor reaches the composer and types with a person's pauses<i class="tag">PromptInput</i></div>
+          <div>f0930</div><div><b>CUR-02</b> half a second of hesitation on the button, then <b>CUR-03</b> presses and the UI answers five frames later<i class="tag">PromptInput</i></div>
+          <div>f0990</div><div><b>TXT-02</b> the answer arrives in chunks, and inside the visible area rather than under the composer<i class="tag">PromptInput</i></div>
+          <div class="none">f1140</div><div class="none"><b>CAM-05</b> everything that is not the answer drops to 0.62 opacity<i class="tag">not written</i></div>
+          <div class="none">f1230</div><div class="none"><b>CAM-03</b> a short orbit shows the edge of the slab and stops at rest<i class="tag">not written</i></div>
           <div>f1350</div><div>End. At rest, so another scene can attach here without it showing</div>
         </div>
+        <p class="note" style="margin-top:18px">
+          What renders today is five scenes joined end to end, every join
+          measured by <code>seam.sh</code>: UIMockup, CardHandoff, CardFocus,
+          CardRelease, PromptInput. 1310 frames, 43.7 seconds, no cut anywhere in
+          them. The newest join is the cleanest of the four at 29 pixels, which
+          is what happens when both sides read the same geometry from the same
+          module instead of agreeing by hand. CardRelease is not a beat in this
+          list because this list is the plan and not the inventory.
+        </p>
       </section>
 
       <section>
@@ -314,15 +340,15 @@
           <table>
             <thead><tr><th>Bench</th><th>The failure it catches</th><th>Reading on the repo</th></tr></thead>
             <tbody>
-              <tr><td>seam.sh</td><td>A join that is really a cut in costume</td><td class="n">552 px against 18,019, 33×</td></tr>
-              <tr><td>handoff-travel.sh</td><td>A card that does not actually cross. A freeze frame passes the other checks with full marks, and for months this one did not run at all on macOS, printing a diagnosis about the scene for a fault in itself</td><td class="n">154 px, monotonic centroid</td></tr>
-              <tr><td>beats.sh</td><td>A promised beat that is not on screen. The answer was assembling under the composer</td><td class="n">the word count must grow</td></tr>
+              <tr><td>seam.sh</td><td>A join that is really a cut in costume</td><td class="n">29 px against 59,842, 2064×</td></tr>
+              <tr><td>handoff-travel.sh</td><td>A card that does not actually cross. A freeze frame passes the other checks with full marks, and for months this one did not run at all on macOS, printing a diagnosis about the scene for a fault in itself</td><td class="n">153 px, monotonic centroid</td></tr>
+              <tr><td>beats.sh</td><td>A promised beat that is not on screen. The answer was assembling under the composer</td><td class="n">2 → 8 → 10 words streamed</td></tr>
               <tr><td>fill-measure.sh</td><td>A frame that lets its edges die</td><td class="n">20 of 20 samples, four sides alive</td></tr>
               <tr><td>legibility.sh</td><td>Text that does not survive being scaled down</td><td class="n">holds under 640 px wide</td></tr>
               <tr><td>framelocked-verdict.sh</td><td>A scene that is not reproducible: it still renders, with different pixels</td><td class="n">same pixels every render</td></tr>
               <tr><td>focus-sharpness.sh</td><td>A slab that stopped being DOM: the text falls apart once the camera is on top of it</td><td class="n">2.09× against 1.03× on the fixture</td></tr>
               <tr><td>rest-point.sh</td><td>A scene still moving where the next one has to attach. Its thresholds were absolute to begin with, tuned on this machine, and every one of them failed the move to Linux</td><td class="n">edges under 30% of mid-scene</td></tr>
-              <tr><td>click-gap.sh</td><td>A press and its consequence fused onto one frame, or so far apart that it stops reading as a consequence and starts reading as lag</td><td class="n">f221 and f225, four frames</td></tr>
+              <tr><td>click-gap.sh</td><td>A press and its consequence fused onto one frame, or so far apart that it stops reading as a consequence and starts reading as lag</td><td class="n">f271 and f276, five frames</td></tr>
               <tr><td>demo-check.py</td><td>A demonstration on this page that has stopped demonstrating its own entry. The difference between showing a thesis and not showing it is almost always temporal, and a screenshot cannot see it, so this one scrubs</td><td class="n">15 entries, frame by frame</td></tr>
               <tr><td>fixture-screenshot.sh</td><td>Measures nothing. It builds the scene the bench above has to fail, and without it that bench is a promise</td><td class="n">first frame magnified 2.26×</td></tr>
             </tbody>
@@ -957,7 +983,7 @@ M.seam={dur:240,draw:function(f,S){
               :mix(END,{yaw:-9,pitch:2.5,z:440,x:-170,y:70},E.inout(cl((f-120)/112)));
   pose(S,p);
   var at=f>=117&&f<=123;
-  S.hud((f<120?"UIMockup":"CardHandoff")+"   join at f120"+(at?"  ← now":"")+"   seam.sh: 552 px against 18,019 for the control cut, 33×");
+  S.hud((f<120?"UIMockup":"CardHandoff")+"   join at f120"+(at?"  ← now":"")+"   seam.sh: 559 px against 38,983 for the control cut, 70×");
 }};
 
 M.rest={dur:260,draw:function(f,S){
@@ -1151,9 +1177,9 @@ var CAT=[
  c:"In the repo: pushZ 96 to 1493.6 over 169 frames of inOut cubic, 2.35 times, with the translation coming out of centreOn. The demo above takes its translation from the same formula measured on its own stage, and it has to: with the repo numbers hardcoded on a stage of a different width the camera goes past the card and the frame ends black.",
  d:"focus-sharpness.sh. It compares the high-frequency energy of the card crop against the same content magnified from the wide shot: 2.09× on the real render, 1.03× on the fixture. Its first version compared the crop to a blurred copy of itself, scored the fixture 4.14× and passed it."},
 
-{fam:"cam",code:"CAM-05",p:1,t:"Attention by opacity",demo:"attn",src:"theme.ts · BACKDROP_OPACITY",
+{fam:"cam",code:"CAM-05",p:1,t:"Attention by opacity",demo:"attn",src:"nothing in the repo does this yet",
  a:"Instead of blurring the rest, the rest drops in opacity. The eye goes where the contrast is full and no pixel becomes unreadable.",
- b:"One value applied to every layer that is not the subject. It lives in theme.ts because it is a measurement and not a taste.",
+ b:"One value applied to every layer that is not the subject. It used to live in theme.ts as BACKDROP_OPACITY, and that constant has been deleted: it was read by exactly one scene, which has since moved onto the shared slab and stopped reading it. A number no scene uses is a proposal wearing the clothes of a fact, which is the thing this page exists to refuse. The 0.62 lives here now, where the rest of the unwritten work lives.",
  c:"0.62. The demo goes down to it and then carries on to 0.25, because a floor you never touch is a number somebody wrote down: at 0.25 the attenuated content is under 3:1 and reads as dirt on the background rather than as a plane behind.",
  d:"A contrast check on the rendered frame, and that one is still missing: demo-check.py only holds the demonstration to the floor, verifying that it touches 0.62 and then goes under it. What nobody has measured yet is the ratio the attenuated layer actually lands on once rendered, which is the number the 0.62 is supposed to come from."},
 
@@ -1178,8 +1204,8 @@ var CAT=[
 {fam:"cur",code:"CUR-03",t:"The click the UI answers",demo:"click",src:"the pressed state",
  a:"The pressed state exists and it arrives before the consequence. Two frames of gap are enough for the gesture to look like it caused something.",
  b:"Button state and consequence on two different windows. The temptation is to put them on the same frame because it is shorter to write, and that is exactly what makes the click fake.",
- c:"In the repo: the send lands at f220 and the bubble at f224, four frames apart. Under one the link disappears, over eight it stops reading as a consequence and starts reading as lag.",
- d:"click-gap.sh, and it is not told the answer: it finds both events in the render. The send is the first frame whose changed-pixel count blows past the window median, because the composer empties and the text leaves; the consequence is the first frame that climbs back above the quiet following it. Every threshold is a ratio inside that window, since the same renders read five to ten times higher on Linux. Measured f221 and f225, which is the f220 and f224 the source declares. It exits 1 on the four scenes with no click at all, and on a clip with the frames between the two events removed."},
+ c:"In the repo: the send lands at f271 and the bubble at f276, five frames apart. Under one the link disappears, over eight it stops reading as a consequence and starts reading as lag.",
+ d:"click-gap.sh, and it is not told the answer: it finds both events in the render. The send is the first frame whose changed-pixel count blows past the window baseline, because the composer empties and the text leaves; the consequence is the first frame that climbs back above the quiet following it. Every threshold is a ratio inside that window, since the same renders read five to ten times higher on Linux. Measured f271 and f276, which is the f271 and f275 the source declares. It exits 1 on the four scenes with no click at all, and on a clip with the frames between the two events removed. That baseline used to be the median, and the median was wrong: once the camera stops during the performance — which is how it should be shot, nobody moves the camera while someone is typing — half the frames change nothing at all, the median is zero, and five times zero is any flicker. It reported a click at f181, with confidence, ninety frames before the real one. The baseline is the ninetieth percentile now."},
 
 {fam:"cur",code:"CUR-04",t:"Drag with weight",demo:"drag",src:"CardBox · lifted",
  a:"The dragged object lags the pointer and tilts into the direction of travel. Without the lag the card looks welded to the cursor.",
@@ -1253,16 +1279,16 @@ var CAT=[
  c:"Opacity between 0.72 and 0.98, blur 22, laid at 76 degrees with its origin on the top edge, pinned to the bottom edge of the slab.",
  d:"The glow tint against the frame dominant tint. If they do not move together, the glow is decoration."},
 
-{fam:"mat",code:"MAT-03",p:1,t:"The attenuated plane behind",demo:"backdrop",src:"the three slab scenes",
+{fam:"mat",code:"MAT-03",p:1,t:"The attenuated plane behind",demo:"backdrop",src:"theme.ts · SLAB_BACKDROP",
  a:"Behind the slab sits a second copy, smaller and turned further, at reduced opacity. Switch it off and the frame under the board goes empty and the slab floats in black.",
  b:"It is the same board drawn a second time, not a blurred image: an image falls behind the moment the content changes, and in a single take the content always changes. It costs a clone and a negative translateZ.",
- c:"0.45 opacity with a 14 px blur, 60 back, eight more degrees of yaw and four of pitch, at 0.92 scale. The 0.62 in theme.ts is a different layer: BACKDROP_OPACITY drives the one in PromptInput, and UIMockup, CardHandoff and CardFocus each write 0.45 by hand. Three copies of a number nobody named.",
+ c:"0.45 opacity with a 14 px blur, 60 back, eight more degrees of yaw and four of pitch, at 0.92 scale. All five scenes read it from SLAB_BACKDROP now. They did not always: three wrote the four numbers out by hand and a fourth read a different constant called BACKDROP_OPACITY, worth 0.62, which described a backdrop only PromptInput had. Copies of a number nobody named stay equal exactly as long as nobody touches one of them.",
  d:"The same contrast check as CAM-05. The plane behind has to stay over 3:1 once rendered: below that it is not depth, it is dirt on the background."},
 
 {fam:"giu",code:"GIU-01",t:"Entering from the final pose",demo:"seam",src:"UI_MOCKUP_END_POSE",
  a:"The next scene begins exactly where the previous one stopped. Nothing happens on the join frame, and that is precisely the point.",
  b:"The pose lives in the shared module, not inside either scene. Two copies of the same pose stay equal exactly as long as nobody edits one.",
- c:"First join at f120: 552 pixels against 18,019 for the control cut, 33 times. Second join, CardHandoff into CardFocus: 7 pixels against 22,901.",
+ c:"Four joins, all measured. UIMockup into CardHandoff: 559 pixels against 38,983 for the control cut, 70 times. CardHandoff into CardFocus: 32 against 45,071. CardFocus into CardRelease: 55 against 37,037. CardRelease into PromptInput: 29 against 59,842, which is 2064 times, and it is the cleanest of the four because it was the last one built and nothing about it was agreed by hand.",
  d:"seam.sh, and what makes it honest is the control beside it: the same last frame against a frame from the middle of the next scene, which is a real cut. If the two readings converge the script exits 2 and says the measurement separates nothing. It takes the pair as arguments, because a join exists for every adjacent couple."},
 
 {fam:"giu",code:"GIU-02",t:"The rest point",demo:"rest",src:"scripts/rest-point.sh",

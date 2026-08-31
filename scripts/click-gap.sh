@@ -47,7 +47,8 @@ export LC_NUMERIC=C
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="${1:-$ROOT/video/out/prompt-input.mp4}"
 
-# Quante volte la mediana deve superare il conteggio perche' sia "il colpo".
+# Quante volte la base della finestra deve superare il conteggio perche' sia
+# "il colpo". La base e' il novantesimo percentile, non la mediana: vedi sotto.
 COLPO=5
 # Quante volte la quiete dopo il colpo deve superare il conteggio perche' sia
 # "la conseguenza". Misurato su prompt-input: 1,9.
@@ -88,10 +89,26 @@ vals = [float(x) for x in open(sys.argv[1]) if x.strip()]
 base, colpo, risalita = int(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4])
 if len(vals) < 20:
     print("0 0 0 0 0"); raise SystemExit
-srt = sorted(vals); mediana = srt[len(srt) // 2]
+srt = sorted(vals)
+# LA BASE NON PUO' ESSERE LA MEDIANA, e questo l'ha insegnato un falso positivo.
+# Quando la camera sta ferma durante la recita - che e' come va girata, perche'
+# non si muove la macchina mentre qualcuno scrive - meta' dei fotogrammi non
+# cambia NIENTE. La mediana e' zero, "cinque volte la mediana" diventa "piu' di
+# zero", e il primo carattere battuto sfonda la soglia: il banco riportava con
+# sicurezza un clic a f181 mentre quello vero stava a f271. Un banco che sbaglia
+# in silenzio e' peggio di uno che fallisce.
+#
+# La base e' il novantesimo percentile della finestra. Resta un rapporto interno
+# alla finestra, come tutte le soglie qui, ma non degenera su una scena immobile.
+mediana = srt[len(srt) // 2]
+base_px = srt[int(len(srt) * 0.90)]
+if base_px <= 0:
+    # Finestra senza movimento: non c'e' niente contro cui misurare un colpo, e
+    # dichiararne uno vorrebbe dire inventarlo.
+    print(f"0 0 0 {mediana:.0f} 0"); raise SystemExit
 # Il colpo: il primo che sfonda, non il piu' grande. Piu' avanti ce n'e' un
 # altro altrettanto violento ed e' un evento diverso.
-hit = next((i for i, v in enumerate(vals) if v >= mediana * colpo), -1)
+hit = next((i for i, v in enumerate(vals) if v >= base_px * colpo), -1)
 if hit < 0 or hit + 5 >= len(vals):
     print(f"0 0 0 {mediana:.0f} 0"); raise SystemExit
 # La quiete subito dopo il colpo, e il primo fotogramma che ci risale sopra.
@@ -110,7 +127,7 @@ echo "Scarto fra il clic e la sua conseguenza, misurato su $(basename "$SRC")."
 echo "Finestra dal fotogramma $DA al $A. Mediana dei pixel cambiati: ${MEDIANA}."
 echo "Le soglie sono rapporti dentro questa finestra, non numeri assoluti."
 echo
-printf '  %-34s %s\n' "il colpo (>= ${COLPO}x la mediana)" "${COLPO_F:-nessuno}"
+printf '  %-34s %s\n' "il colpo (>= ${COLPO}x il p90)" "${COLPO_F:-nessuno}"
 printf '  %-34s %s\n' "la conseguenza (>= ${RISALITA}x la quiete)" "${CONS_F:-nessuna}"
 printf '  %-34s %s\n' "quiete fra i due" "${QUIETE} pixel"
 printf '  %-34s %s frame\n' "scarto" "$GAP"

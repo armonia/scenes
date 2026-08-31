@@ -38,13 +38,31 @@ it enters from the pose `CardHandoff` stops in and descends onto the card that
 scene has just delivered, magnifying it 2.35 times. `seam.sh` now takes the pair
 as arguments, because a join exists for every adjacent couple and hardcoding the
 paths meant a second script identical to the first but for two lines. Across the
-four scenes yaw runs -18, -9, -4, 0 and pitch 5, 2.5, 1.2, 0 without ever
+five scenes yaw runs -18, -9, -4, 0, 0 and pitch 5, 2.5, 1.2, 0, 0 without ever
 reversing: a join reads as a cut when the derivative flips, even when the pixels
 match.
 
-That is one verified join out of three scenes. `PromptInput` still stands on its
-own: it does not enter from anything and nothing enters from it, so the rule
-holds for the `UIMockup → CardHandoff` pair and is untested everywhere else.
+`PromptInput` used to stand on its own, and the reason is worth keeping because
+it was not laziness. It drew a slab of its own — 2200 wide at perspective 2800
+and scale 1.045, with its own chrome and its own sidebar — which made it a
+second screen, and between two different screens the passage is a cut whatever
+you do with it. So the thirteen seconds that hold half the film's performance,
+the typing, the pause, the click, the streaming answer, sat outside the chain
+while the other twenty-eight were joined.
+
+Putting it in was not a swap of constants. The board only ever used the top half
+of the slab; the bottom half was empty, which is also why the frames read as a
+mockup rather than as a screen in use. The assistant thread and the composer now
+live down there, in `primitives/Assistant.tsx`, drawn by every scene — if only
+one scene drew them, the join before it would show half a screen appearing out
+of nothing, and `seam.sh` would call that a cut, correctly. With one screen the
+move from the board to the composer stops being a change of screen and becomes a
+camera descending, which is a movement the catalogue already has a name for.
+
+Five scenes now, 1310 frames, 43.7 seconds, and four measured joins: 559 pixels,
+32, 55, and 29. The last one is `CardRelease → PromptInput` and it is the
+cleanest of the four, at 2064 times better than its control cut, because it was
+built last and nothing about it was agreed by hand.
 
 **Real UI, not a drawing of UI.** Slabs of the actual product on inclined
 planes, with the product's own tokens, radii and system font stack. A mockup
@@ -148,9 +166,9 @@ the fixture, threshold at the geometric mean of the two.
 
 `rest-point.sh` turns the rest-point rule into a number, and finding the right
 number took two wrong ones. Consecutive frames measure nothing here: these
-cameras move fractions of a degree per frame, and mid-way through `PromptInput`,
-where somebody is typing, 0.076% of pixels change, which is barely more than the
-edges. Five frames apart the signal separates. Its first control was wrong too:
+cameras move fractions of a degree per frame, and mid-way through a scene where
+somebody is typing, well under a tenth of a per cent of pixels change, which is
+barely more than the edges. Five frames apart the signal separates. Its first control was wrong too:
 `CardHandoff` is documented as the scene that does not start at rest, and that is
 true of its *pose* and false of its *velocity* — it eases in and out, so it
 starts still like everything else. The control that works is the one `seam.sh`
@@ -170,7 +188,10 @@ enough to call the hold "still" also calls the settle still. Pointed at
 40-frame pause. It promoted its own worst case, the same way the first
 `focus-sharpness.sh` did, and unlike that one it could not be repaired by
 changing the control. Measuring this needs the pointer's position, not the whole
-frame.
+frame. On the catalogue page the pointer does have a position, so
+`demo-check.py` measures the pause there: 20 frames between the hand landing on
+the button and the button going down, against 0 in the half of the loop that
+shows the same press with no wait at all. On the render it is still unmeasured.
 
 `demo-check.py` measures the catalogue page rather than a render. Every entry on
 `grammatica.html` states a thesis and runs a demonstration next to it, and the
@@ -198,6 +219,50 @@ Its own negative control is a copy of the built page with one line changed, so
 that `CHR-03` fires its three events on separate frames in both halves and the
 contrast disappears. The script has to exit non-zero on that copy and name the
 entry, or its green means only that it reached the end.
+
+`beats.sh` was not running anywhere, and had not been for months. It is not in
+the workflow's measurement step, and on the machine these scenes are written on
+`tesseract` was never installed — so every OCR read came back empty, every count
+came back zero, and the verdict came back "the answer is never visible". A
+diagnosis about the scene for a missing tool, which is the same shape as the
+`handoff-travel.sh` failure below and the reason that one is described at
+length. It now refuses to give a verdict without the OCR: exit 3 means it could
+not measure, which is a different thing from exit 1, which means it measured and
+the scene is wrong. It runs in CI, and CI proves both halves — that it passes
+with `tesseract` present, and that it exits 3 with only `tesseract` taken away.
+Taking the whole `PATH` away instead would have proved nothing: the script would
+have died at 127 for want of a shell.
+
+`click-gap.sh` was repaired after it reported a click, with confidence, ninety
+frames before the real one. Its rule was "the hit is the first frame whose
+changed-pixel count is at least five times the window median", which held while
+the camera drifted through the whole scene. Once the camera settles before the
+performance — which is how it should be shot; nobody moves the camera while
+somebody is typing — half the frames in the window change nothing at all, the
+median is zero, and five times zero is any flicker at all. It promoted the first
+typed character. The baseline is the ninetieth percentile now: still a ratio
+inside the window, which is the rule every threshold here follows, but it does
+not collapse on a locked-off shot. On a window with no motion at all it reports
+no click rather than inventing one. All five negative controls still fail.
+
+`rest-point.sh` said one thing and did another. It prints, correctly, that its
+verdict applies only to scenes declaring `restAtEdges` and that the others are
+measured rather than judged — and then exited 2 on a scene that declared
+nothing, because `PromptInput` holds the camera still through the performance,
+so its middle control sample is as still as its edges and the instrument cannot
+tell a locked shot from a freeze frame. That check now runs only against scenes
+that promised something. A file passed as an argument still counts as a promise,
+which is what keeps the freeze-frame control failing.
+
+`handoff-travel.sh` needed a crop it did not need before, and this is the cost of
+putting the assistant on the slab. It isolates the travelling card by diffing
+whole frames, which worked while the bottom half of the slab was empty. With a
+thread down there — static relative to the slab, but moving with the camera like
+everything else — thousands of high-contrast text pixels drag the centroid down.
+The reading fell from 154px to 83 and invented a backward step: the scene blamed
+for a change in the instrument's surroundings. It now diffs only the board's half
+of the frame, and where that half ends is read from `slab.ts` rather than picked
+by eye, so it follows if the assistant moves.
 
 `handoff-travel.sh` had never run on macOS. Its centroid step was a heredoc
 inside a process substitution, which bash 3.2 cannot parse, so the script died
@@ -227,9 +292,10 @@ npx remotion render <CompositionId> out/<name>.mp4
 `showcase/index.template.html` is the public page, and it is a template: the
 scene section is generated from `catalog.json` by `showcase-build.sh`, so a
 render that exists and a page that shows it cannot drift apart. Open
-`showcase/dist/index.html` after a build to see it. It carries the four scenes
+`showcase/dist/index.html` after a build to see it. It carries the five scenes
 playing
-(`PromptInput`, `UIMockup`, `CardHandoff`, `CardFocus`), the four rules, the
+(`UIMockup`, `CardHandoff`, `CardFocus`, `CardRelease`, `PromptInput`, in the
+order they join), the four rules, the
 license note. Beside it, `showcase/grammatica.html` is the catalogue: twenty-six
 movements with a live demo each, the numbers they start from, and the bench that
 can fail them. The demos are browser re-creations of the slab, not the renders,

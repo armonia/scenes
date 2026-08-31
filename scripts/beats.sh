@@ -37,15 +37,28 @@ WORK="$ROOT/out/.beats"
 rm -rf "$WORK"; mkdir -p "$WORK"
 trap 'rm -rf "$WORK"' EXIT
 
+# SENZA L'OCR QUESTO BANCO NON MISURA NIENTE, e deve dirlo invece di bocciare.
+# Con tesseract assente ogni lettura torna vuota, ogni conteggio torna zero, e
+# il verdetto diventa "la risposta non si vede mai": una diagnosi sulla scena
+# per un guasto dello strumento. E' lo stesso difetto per cui handoff-travel.sh
+# ha accusato CardHandoff per mesi su macOS. Esce 3, che vuol dire "non ho
+# potuto misurare", e non 1, che vorrebbe dire "ho misurato e non va".
+command -v tesseract >/dev/null 2>&1 || {
+  echo "manca tesseract: senza OCR questo banco non puo' leggere niente." >&2
+  echo "  macOS:  brew install tesseract" >&2
+  echo "  debian: sudo apt-get install -y tesseract-ocr" >&2
+  exit 3
+}
+
 FPS=30
 FAIL=0
 
 # Le parole della risposta che l'OCR regge bene: niente punteggiatura attaccata,
 # niente parole di tre lettere che l'OCR pesca ovunque.
-RESPONSE_WORDS="found three call sites pulling token refresh single guard opening"
+RESPONSE_WORDS="trovati punti chiamata server sposto refresh token dentro guard solo"
 
 # Il prompt, che deve comparire prima nel campo e poi come messaggio inviato.
-PROMPT_WORDS="refactor auth flow open"
+PROMPT_WORDS="rifai flusso auth apri"
 
 ocr_at() {
   local frame="$1"
@@ -68,18 +81,18 @@ hits() {
 echo "I quattro tempi di $(basename "$SRC")"
 echo
 
-# TEMPO 1 e 2: il campo si riempie. A 110 il prompt e' cominciato ma non
-# finito, a 200 c'e' tutto: se i due conteggi coincidono, non sta digitando.
-t1=$(hits "$(ocr_at 110)" "$PROMPT_WORDS")
-t2=$(hits "$(ocr_at 200)" "$PROMPT_WORDS")
-printf '  digita        frame 110: %s parole   frame 200: %s parole' "$t1" "$t2"
+# TEMPO 1 e 2: il campo si riempie. A 170 il prompt e' cominciato ma non
+# finito, a 210 c'e' tutto: se i due conteggi coincidono, non sta digitando.
+t1=$(hits "$(ocr_at 170)" "$PROMPT_WORDS")
+t2=$(hits "$(ocr_at 210)" "$PROMPT_WORDS")
+printf '  digita        frame 170: %s parole   frame 210: %s parole' "$t1" "$t2"
 if [ "$t2" -gt "$t1" ]; then echo "   ok"; else echo "   FERMO"; FAIL=1; fi
 
 # TEMPO 3: l'invio. Dopo il click il prompt e' ancora in quadro, ma come
 # messaggio, e il campo torna al segnaposto.
-sent=$(ocr_at 240)
+sent=$(ocr_at 300)
 t3=$(hits "$sent" "$PROMPT_WORDS")
-printf '  invia         frame 240: %s parole del prompt in quadro' "$t3"
+printf '  invia         frame 300: %s parole del prompt in quadro' "$t3"
 if [ "$t3" -ge 3 ]; then echo "   ok"; else echo "   IL MESSAGGIO NON C'E'"; FAIL=1; fi
 case "$sent" in
   *"chiedi qualcosa"*) echo "                il campo e' tornato al segnaposto   ok";;
@@ -87,10 +100,10 @@ case "$sent" in
 esac
 
 # TEMPO 4: lo streaming. Tre momenti, e devono crescere.
-s1=$(hits "$(ocr_at 290)" "$RESPONSE_WORDS")
-s2=$(hits "$(ocr_at 330)" "$RESPONSE_WORDS")
-s3=$(hits "$(ocr_at 371)" "$RESPONSE_WORDS")
-printf '  streaming     frame 290: %s   frame 330: %s   frame 371: %s' "$s1" "$s2" "$s3"
+s1=$(hits "$(ocr_at 340)" "$RESPONSE_WORDS")
+s2=$(hits "$(ocr_at 385)" "$RESPONSE_WORDS")
+s3=$(hits "$(ocr_at 430)" "$RESPONSE_WORDS")
+printf '  streaming     frame 340: %s   frame 385: %s   frame 430: %s' "$s1" "$s2" "$s3"
 if [ "$s3" -gt "$s2" ] && [ "$s2" -gt "$s1" ]; then
   echo "   ok"
 elif [ "$s3" -eq 0 ]; then

@@ -46,6 +46,22 @@ SAMPLES="1.40 1.80 2.20 2.60 3.00 3.40 3.80"
 # almeno mezza colonna, altrimenti non ha cambiato posto.
 MIN_TRAVEL_PX=120
 
+# LA DIFFERENZA SI PRENDE SOLO SULLA META' DELLA BOARD, e questo pezzo e' nato
+# da un fallimento. Da quando la lastra porta il pannello assistente nella meta'
+# bassa, differenziare il fotogramma intero non isola piu' la card: il pannello
+# e' fermo rispetto alla lastra ma si sposta insieme alla camera, e sono
+# migliaia di pixel di testo ad alto contrasto che tirano il centroide verso il
+# basso. La misura passava da 154px a 83 e inventava un passo all'indietro,
+# cioe' dava la colpa alla scena per un difetto dello strumento.
+#
+# Il taglio non e' un numero a occhio: e' dove comincia il pannello sulla
+# lastra, letto da slab.ts. Se il pannello si sposta, il taglio lo segue.
+read -r BAND < <(node --input-type=module -e '
+const m = await import("'"$ROOT"'/video/src/primitives/slab.ts");
+console.log(Math.round((m.THREAD_TOP / m.SLAB_H) * 100) - 4);
+')
+[ -n "${BAND:-}" ] || { echo "non riesco a leggere la geometria da slab.ts" >&2; exit 3; }
+
 prev=""
 xs=()
 
@@ -58,7 +74,8 @@ for t in $SAMPLES; do
     # I pixel cambiati fra due campioni. La soglia toglie il rumore di encoding
     # e le micro-variazioni della camera, che si muove pianissimo.
     "${IM_CONVERT[@]}" "$prev" "$f" -compose difference -composite \
-      -colorspace Gray -threshold 12% "$WORK/d$t.png"
+      -colorspace Gray -threshold 12% -gravity North -crop "100x${BAND}%+0+0" +repage \
+      "$WORK/d$t.png"
 
     # Il centroide dei pixel accesi, e quanti sono.
     # Il baricentro dei pixel accesi, e quanti sono. Il blocco stava qui come
