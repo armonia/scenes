@@ -196,6 +196,49 @@ export const handoffLandedRect = (): {
 };
 
 /* ------------------------------------------------------------------ */
+/* La zona assistente                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Sta nella meta' bassa della lastra, che il kanban non usa.
+ *
+ * DUE MOTIVI, e nessuno dei due e' decorativo. Il primo: nei render delle
+ * prime quattro scene quello spazio era vuoto, e una lastra con un buco in
+ * mezzo legge come un mockup e non come uno schermo in uso. Il secondo, che
+ * conta di piu': il film ha bisogno che la board e il composer siano LO STESSO
+ * schermo. Finche' erano due schermi diversi - ed e' cosi' che PromptInput era
+ * scritta, su una lastra sua da 2200 a prospettiva 2800 - passare dall'uno
+ * all'altro era per forza uno stacco, e la regola dice che stacchi non ce ne
+ * sono. Con una lastra sola il passaggio e' una camera che scende, che e'
+ * esattamente il movimento che il catalogo chiama CAM-04.
+ */
+export const COMPOSER_H = 96;
+export const COMPOSER_GAP_BOTTOM = 36;
+export const COMPOSER_X = BOARD_LEFT;
+export const COMPOSER_W = SLAB_W - PANEL_W - BOARD_PAD_X - COMPOSER_X;
+export const COMPOSER_Y = SLAB_H - COMPOSER_GAP_BOTTOM - COMPOSER_H;
+
+export const SEND_W = 116;
+export const SEND_H = 52;
+export const SEND_X = COMPOSER_X + COMPOSER_W - 18 - SEND_W;
+export const SEND_Y = COMPOSER_Y + (COMPOSER_H - SEND_H) / 2;
+
+/** Dove comincia il thread: sotto le colonne, sopra il composer. */
+export const THREAD_TOP = 616;
+
+/**
+ * Quanto il thread si tiene alla larga dal composer.
+ *
+ * DERIVATO, non scritto a mano, e il motivo e' un difetto gia' pagato: il
+ * composer e' opaco e disegnato dopo, i messaggi sono ancorati in basso, e con
+ * un margine costante l'ultimo messaggio finiva sotto di lui. La scena
+ * prometteva quattro tempi e ne mostrava tre, con tutti i type check verdi.
+ * L'ha trovato beats.sh. Un numero costante tornerebbe sbagliato al primo
+ * ritocco del layout, quindi questo segue il composer.
+ */
+export const THREAD_PAD_BOTTOM = SLAB_H - COMPOSER_Y + 24;
+
+/* ------------------------------------------------------------------ */
 /* Come la lastra finisce sullo schermo                                 */
 /* ------------------------------------------------------------------ */
 
@@ -260,6 +303,36 @@ export const CARD_FOCUS_END_POSE: CameraPose = (() => {
     yaw: 0,
     pitch: 0,
     pushZ: pushForZoom(CARD_FOCUS_ZOOM),
+    slideX: c.slideX,
+    slideY: c.slideY,
+  };
+})();
+
+/** Quanto stringe la discesa sul composer. Oltre 1,2 il pulsante invia esce dal quadro. */
+export const PROMPT_INPUT_ZOOM = 1.12;
+
+/**
+ * La posa in cui PromptInput si ferma: addosso al composer, frontale.
+ *
+ * Il centro ORIZZONTALE e' il composer. Quello VERTICALE non e': e' il punto
+ * che porta il bordo basso della lastra sul bordo basso del quadro, cosi' sotto
+ * il composer non si apre fondo. Con l'origine della prospettiva al 46%
+ * l'altezza visibile si spartisce 0,46 sopra e 0,54 sotto, e il conto lo fa
+ * questo blocco invece di uno che sposta numeri finche' sembra giusto.
+ *
+ * Resta a yaw e pitch zero come CARD_FOCUS_END_POSE, e per la stessa ragione:
+ * centreOn calcola dove cade un punto con gli angoli a zero, quindi una posa
+ * finale inclinata renderebbe il centraggio approssimato invece che esatto.
+ */
+export const PROMPT_INPUT_END_POSE: CameraPose = (() => {
+  const k = PROMPT_INPUT_ZOOM;
+  const visibleH = COMP_H / (k * SLAB_SCALE);
+  const cy = SLAB_H - visibleH * (1 - PERSPECTIVE_ORIGIN_Y);
+  const c = centreOn(COMPOSER_X + COMPOSER_W / 2, cy);
+  return {
+    yaw: 0,
+    pitch: 0,
+    pushZ: pushForZoom(k),
     slideX: c.slideX,
     slideY: c.slideY,
   };
