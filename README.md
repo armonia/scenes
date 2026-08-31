@@ -82,6 +82,7 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/rest-point.sh [scene.mp4]                     # is the scene still at both edges
 ./scripts/click-gap.sh [scene.mp4]                      # does the UI answer the click, or fire with it
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
+./scripts/demo-check.py [page.html]                     # do the catalogue demos still show their thesis
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 
 node scripts/catalog.mjs render                          # the render command for every scene
@@ -170,6 +171,33 @@ enough to call the hold "still" also calls the settle still. Pointed at
 `focus-sharpness.sh` did, and unlike that one it could not be repaired by
 changing the control. Measuring this needs the pointer's position, not the whole
 frame.
+
+`demo-check.py` measures the catalogue page rather than a render. Every entry on
+`grammatica.html` states a thesis and runs a demonstration next to it, and the
+difference between a demonstration that shows its thesis and one that only sits
+there is almost always temporal: two events five frames apart instead of on the
+same frame, a delay that follows distance instead of index. Screenshots cannot
+see that, so the script drives each demonstration frame by frame in a headless
+browser and reads the elements' own rectangles and computed styles. It does not
+read the on-screen readout: that line is the demonstration's own claim, and
+having a claim confirm itself is not a measurement.
+
+It found two entries that were not demonstrating anything. `CAM-02` promised that
+the layers come apart under a truck, and at the wide pose the repo's z offsets
+buy four pixels of shear over the whole move — real, and invisible. The truck now
+runs pushed in at 780, where the same offsets, unexaggerated, are worth nineteen,
+and the demonstration measures them on the rendering instead of asserting them.
+`CHR-02` promised a stagger that follows distance rather than index, and
+demonstrated it by removing a card from a column so that its one neighbour moved
+up: in a single column the two orderings are the same ordering, so the entry
+could not have shown its own point. It now settles the whole board outward from
+the change, where the correlation between delay and distance is 1.00 against 0.43
+for the same spread staggered by reading order.
+
+Its own negative control is a copy of the built page with one line changed, so
+that `CHR-03` fires its three events on separate frames in both halves and the
+contrast disappears. The script has to exit non-zero on that copy and name the
+entry, or its green means only that it reached the end.
 
 `handoff-travel.sh` had never run on macOS. Its centroid step was a heredoc
 inside a process substitution, which bash 3.2 cannot parse, so the script died
