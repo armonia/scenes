@@ -6,7 +6,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { app, fontStack } from "../theme";
+import { SLAB_BACKDROP, app, fontStack } from "../theme";
 import {
   COLUMNS,
   SLAB_H,
@@ -123,10 +123,10 @@ export const UIMockup: React.FC<UIMockupProps> = ({ progress }) => {
       {/* Layer di sfondo: un'altra istanza della stessa UI, sfocata e attenuata. */}
       <AbsoluteFill
         style={{
-          perspective: 3200,
-          perspectiveOrigin: "50% 46%",
-          opacity: 0.45,
-          filter: "blur(14px)",
+          perspective: SLAB_BACKDROP.perspective,
+          perspectiveOrigin: SLAB_BACKDROP.perspectiveOrigin,
+          opacity: SLAB_BACKDROP.opacity,
+          filter: `blur(${SLAB_BACKDROP.blur}px)`,
         }}
       >
         <div

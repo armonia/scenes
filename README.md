@@ -80,6 +80,7 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/handoff-travel.sh                             # does the card actually cross
 ./scripts/focus-sharpness.sh                            # does the text survive the push-in
 ./scripts/rest-point.sh [scene.mp4]                     # is the scene still at both edges
+./scripts/hesitation.sh [scene.mp4] [from] [to]         # is the pause before the send real
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 
@@ -155,6 +156,13 @@ starts still like everything else. The control that works is the one `seam.sh`
 already uses: a pair taken from the middle of the same scene. Measured, every
 scene in the catalogue is at rest at both edges, so nothing in the chain has a
 forced order yet.
+
+`hesitation.sh` measures the beat `PromptInput` promises before the send.
+Declared 24 frames in `T.pauseAfterTyping`, measured 16: the caret goes on
+blinking through the pause and splits the still run, so what the bench reports is
+the *visible* stillness rather than the constant. Its control is the window next
+door — over the typing there is no still run longer than 4 frames, and pointed
+there it exits 1.
 
 `handoff-travel.sh` had never run on macOS. Its centroid step was a heredoc
 inside a process substitution, which bash 3.2 cannot parse, so the script died
