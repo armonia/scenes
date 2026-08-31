@@ -46,20 +46,20 @@ export const monoStack =
  * Misurato: sotto quella soglia non legge come profondita', legge come rumore,
  * perche' il contenuto attenuato scende sotto 3:1 da renderizzato.
  */
-export const BACKDROP_OPACITY = 0.62;
-
 /**
- * Il piano attenuato dietro la lastra, nelle tre scene che la mostrano.
+ * Il piano attenuato dietro la lastra, in tutte e cinque le scene.
  *
  * Erano quattro numeri scritti a mano in UIMockup, CardHandoff e CardFocus,
  * identici in tutti e tre i file e senza un nome. Tre copie di una costante
  * restano uguali finche' nessuno tocca una delle tre, che e' lo stesso motivo
  * per cui le pose di camera vivono in slab.ts.
  *
- * NON E' `BACKDROP_OPACITY`, e la differenza e' costata una riga sbagliata sul
- * sito. Quella costante vale 0,62 e la usa solo PromptInput, che ha un altro
- * fondo e un'altra prospettiva. Le tre scene della lastra stanno a 0,45 con 14
- * di sfocatura. Due valori diversi per due cose diverse: adesso hanno due nomi.
+ * C'ERA ANCHE UN `BACKDROP_OPACITY` a 0,62, e non c'e' piu'. Serviva a
+ * PromptInput, che aveva un fondo suo dietro una lastra sua; da quando anche
+ * quella scena sta sulla lastra condivisa non la legge piu' nessuno. Una
+ * costante che nessuna scena usa e' una proposta travestita da fatto, e il
+ * numero 0,62 vive adesso dove e' sempre stato davvero: nel catalogo, come
+ * misura di una cosa che nessuna scena fa ancora.
  */
 export const SLAB_BACKDROP = {
   perspective: 3200,

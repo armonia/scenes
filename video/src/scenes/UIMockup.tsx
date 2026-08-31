@@ -1,4 +1,5 @@
 import React from "react";
+import { Assistant } from "../primitives/Assistant";
 import {
   AbsoluteFill,
   Easing,
@@ -237,5 +238,6 @@ const SlabBody: React.FC<{
     ))}
 
     <DetailPanel />
+    <Assistant />
   </>
 );

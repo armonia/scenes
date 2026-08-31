@@ -22,17 +22,6 @@
   ],
   "scenes": [
     {
-      "id": "PromptInput",
-      "slug": "prompt-input",
-      "title": "Prompt input",
-      "durationInFrames": 390,
-      "fps": 30,
-      "width": 1920,
-      "height": 1080,
-      "fill": false,
-      "blurb": "Four beats in one unbroken shot: the cursor arrives, the prompt is typed with uneven human rhythm, it is sent, and the answer streams back word by word. The app behind it is real product UI — its own tokens, its own radii, the system font stack — not a drawing of it."
-    },
-    {
       "id": "UIMockup",
       "slug": "ui-mockup",
       "title": "UI mockup",
@@ -77,8 +66,20 @@
       "height": 1080,
       "fill": true,
       "seamAfter": "CardFocus",
-      "blurb": "The end of the film. The camera lets go of the card and comes back wide and frontal, with the board readable again, because a single take has to finish somewhere and finishing on a detail leaves the piece open. It is the one scene in the chain that reverses the push, and it is allowed to: a reversal reads as a cut where the join is <em>moving</em>, and both sides of this one are at rest. <code>rest-point.sh</code> measures that instead of taking it on trust, and it fails on <code>CardHandoff</code>, which deliberately does not start at rest.",
+      "blurb": "The camera lets go of the card and comes back wide and frontal, with the board readable again, because the shot has to breathe before it goes anywhere else, and finishing on a detail leaves the piece open. It is the one scene in the chain that reverses the push, and it is allowed to: a reversal reads as a cut where the join is <em>moving</em>, and both sides of this one are at rest. <code>rest-point.sh</code> measures that instead of taking it on trust, and it fails on <code>CardHandoff</code>, which deliberately does not start at rest.",
       "restAtEdges": true
+    },
+    {
+      "id": "PromptInput",
+      "slug": "prompt-input",
+      "title": "Prompt input",
+      "durationInFrames": 450,
+      "fps": 30,
+      "width": 1920,
+      "height": 1080,
+      "fill": true,
+      "blurb": "The fifth link, and the one that used to be homeless. Four beats in one unbroken shot: the cursor comes down onto the composer, the prompt is typed with uneven human rhythm, it is sent after a pause, and the answer streams back word by word. It used to draw a slab of its own — 2200 wide at perspective 2800, its own chrome, its own sidebar — which made it a second screen, and between two screens the passage is a cut whatever you do with it. Now it is the same slab as the other four, with the assistant living in the bottom half the board never used, and the move from the board to the composer is a camera descending. <code>seam.sh</code> measures the join.",
+      "seamAfter": "CardRelease"
     }
   ]
 }

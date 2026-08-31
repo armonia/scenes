@@ -177,7 +177,22 @@ while IFS= read -r slug; do
   printf '  %-16s %9s%% %9s%% %11s%%   %s\n' "$slug" "$ini" "$fin" "$mid" \
     "$([ "$dichiara" = si ] && echo "dichiarata ferma" || echo "")"
 
-  # PRIMA il verdetto sui bordi. La versione precedente controllava per prima
+  # PRIMA DI TUTTO: se il mezzo non si muove, non c'e' controllo. La soglia dei
+  # bordi e' "sotto FERMA_REL volte il mezzo", e con il mezzo a zero quella
+  # soglia e' zero: qualunque granello di rumore sui bordi la sfonda, e il
+  # banco dichiara mossa una scena che sta ferma. E' la stessa degenerazione
+  # che click-gap.sh aveva sulla mediana, e va intercettata prima di dare
+  # verdetti, non dopo. Un fermo immagine cade esattamente qui.
+  if [ "$dichiara" = si ] &&
+     python3 -c "exit(0 if $mid < $MOTO_MIN else 1)"; then
+    echo >&2
+    echo "MISURA INUTILE su $slug: il mezzo non si muove ($mid%), quindi non c'e'" >&2
+    echo "nessun controllo contro cui misurare i bordi. Una scena ferma dappertutto" >&2
+    echo "e un fermo immagine da qui si leggono uguali. Nessun verdetto." >&2
+    exit 2
+  fi
+
+  # POI il verdetto sui bordi. La versione precedente controllava per prima
   # la separazione, e su un ritaglio che si muove ovunque usciva 2 dicendo "non
   # so" invece di 1 dicendo "non e' ferma": la risposta giusta c'era e la
   # buttava via. La separazione serve a intercettare un fermo immagine, che e'
@@ -191,7 +206,16 @@ while IFS= read -r slug; do
   # Bordi fermi: adesso serve sapere che lo strumento risponde. Se anche il
   # mezzo e' fermo, le tre letture concordi non provano niente e potrebbero
   # venire da un fermo immagine.
-  if ! python3 -c "exit(0 if $mid >= $MOTO_MIN and $mid >= max($ini,$fin,0.001) * $SEPARA else 1)"; then
+  #
+  # QUESTO CONTROLLO VALE SOLO SU CHI HA PROMESSO QUALCOSA. Poche righe sopra
+  # questo script dichiara che le scene senza restAtEdges si misurano e non si
+  # bocciano, e poi usciva 2 su una di quelle: PromptInput tiene la camera
+  # ferma per tutta la recita, quindi anche il suo campione di mezzo e' fermo,
+  # e il banco fermava la CI per una scena su cui non stava dando nessun
+  # verdetto. Uno strumento che dice una regola e ne applica un'altra e' un
+  # difetto dello strumento, non della scena.
+  if [ "$dichiara" = si ] &&
+     ! python3 -c "exit(0 if $mid >= $MOTO_MIN and $mid >= max($ini,$fin,0.001) * $SEPARA else 1)"; then
     echo >&2
     echo "MISURA INUTILE su $slug: i bordi sono fermi ma anche il mezzo ($mid%)," >&2
     echo "quindi le tre letture concordano e non distinguono una scena ferma agli" >&2

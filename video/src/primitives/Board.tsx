@@ -1,4 +1,5 @@
 import React from "react";
+import { Assistant, type AssistantProps } from "./Assistant";
 import { interpolate } from "remotion";
 import {
   COLUMNS,
@@ -43,6 +44,8 @@ export type BoardProps = {
   moving: Card;
   fromRest: Card[];
   dimmed?: boolean;
+  /** Lo stato del pannello assistente. Assente = a riposo, campo vuoto. */
+  assistant?: AssistantProps;
 };
 
 export const Board: React.FC<BoardProps> = ({
@@ -54,6 +57,7 @@ export const Board: React.FC<BoardProps> = ({
   moving,
   fromRest,
   dimmed = false,
+  assistant,
 }) => {
   const op = dimmed ? 0.5 : 1;
 
@@ -61,6 +65,9 @@ export const Board: React.FC<BoardProps> = ({
     <>
       <AppChrome />
       <AppSidebar activeIdx={1} />
+      {/* La meta' bassa della lastra. La disegnano tutte le scene, se no la
+          giunta con PromptInput mostra meta' schermo che compare dal niente. */}
+      <Assistant {...assistant} dimmed={dimmed} />
 
       {COLUMNS.map((col, colIdx) => {
         // I contatori cambiano a meta' tragitto, quando la card ha "lasciato"

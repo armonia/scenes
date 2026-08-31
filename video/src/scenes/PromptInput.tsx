@@ -6,43 +6,55 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { SLAB_BACKDROP, app, fontStack } from "../theme";
+import { Board } from "../primitives/Board";
+import { bubbleCurve } from "../primitives/Assistant";
 import { Cursor, type Waypoint } from "../primitives/Cursor";
 import { typedCount, typingSchedule } from "../primitives/rhythm";
+import { SlabLighting } from "../primitives/SlabChrome";
 import {
-  BACKDROP_OPACITY,
-  app,
-  fontStack,
-  monoStack,
-  radius,
-} from "../theme";
+  CARD_RELEASE_END_POSE,
+  COLUMNS,
+  COMPOSER_H,
+  COMPOSER_X,
+  COMPOSER_Y,
+  HANDOFF_FROM_COL,
+  HANDOFF_FROM_IDX,
+  PROMPT_INPUT_END_POSE,
+  SEND_H,
+  SEND_W,
+  SEND_X,
+  SEND_Y,
+  SLAB_H,
+  SLAB_W,
+  handoffCard,
+  handoffLandedRect,
+} from "../primitives/slab";
 
 /**
- * prompt-input: il cursore entra, digita, invia, la risposta arriva in streaming.
+ * PromptInput: il quinto anello. Il cursore scende sul composer, scrive, invia,
+ * e la risposta arriva a blocchi di parole.
  *
- * Grammatica A di Linear (`Introducing Linear Diffs`): una lastra di UI VERA su
- * un piano inclinato, spessore sul bordo, profondita' di campo che stacca il
- * primo piano, camera che scivola senza mai tagliare.
+ * ERA FUORI CATENA, e non per distrazione. Si disegnava una lastra sua, larga
+ * 2200 a prospettiva 2800 e scala 1,045, con un'altra chrome e un'altra
+ * sidebar: un secondo schermo. Fra due schermi diversi il passaggio e' per
+ * forza uno stacco, quindi la scena non aveva `seamAfter` e i tredici secondi
+ * che contengono meta' della recita del film - la digitazione, l'esitazione, il
+ * clic, lo streaming - restavano staccati dagli altri ventotto.
  *
- * Tre decisioni che vengono da errori gia' misurati, non dal gusto.
+ * Adesso la lastra e' quella di tutti, e il composer sta nella meta' bassa che
+ * il kanban non usa. Il passaggio dalla board al composer non e' piu' un
+ * cambio di schermo: e' una camera che scende, cioe' il movimento che il
+ * catalogo chiama CAM-04, applicato a un altro soggetto.
  *
- * LA LASTRA BORDA FUORI DALL'INQUADRATURA. E' il difetto per cui OrbitLoop non
- * reggeva il confronto: il meccanismo occupava il terzo centrale mentre il
- * riferimento riempie il quadro. La stessa misura era uscita sulle scene della
- * landing, dove tre su cinque stavano sotto il 45% di riempimento e leggevano
- * come scatole vuote. L'unica che funzionava mostrava un pezzo INTERO di UI.
- * Da qui una lastra di 2200 per 1080 dentro un quadro di 1920 per 1080: i bordi
- * laterali escono, e il pannello si legge come una finestra vera continuata
- * oltre lo schermo invece che come un rettangolo che galleggia.
+ * LA CAMERA NON RUOTA. Parte dalla posa finale di CardRelease, che e' frontale,
+ * e arriva frontale sul composer: solo spinta e scorrimento. La vita della
+ * scena sta nel cursore e nel testo, che e' quello di cui parla questo pezzo
+ * del film; una camera che gira mentre qualcuno scrive toglie leggibilita' a
+ * un'inquadratura che serve leggibile. La spinta e' monotona in avanti, da
+ * -140 a +278, quindi la giunta non rovescia nessuna derivata.
  *
- * IL CURSORE STA SUL PIANO. E' dentro il contenitore trasformato, non sopra,
- * quindi eredita la stessa prospettiva della UI e appoggia sulla lastra. Un
- * cursore disegnato sopra il quadro, dritto, tradisce subito che la lastra e'
- * un'immagine e non una superficie.
- *
- * LA CAMERA NON TAGLIA MAI. I due spot Linear che contano sono 52 e 41 secondi
- * in un'unica inquadratura. Qui rotateY scivola da -15 a -8,5 gradi lungo tutta
- * la scena con un easing in-out: e' un movimento solo, e finisce piu' frontale
- * di come comincia, cosi' la scena successiva puo' entrare da questo stato.
+ * Frame-locked: ogni valore viene da useCurrentFrame().
  */
 
 export type PromptInputProps = {
@@ -53,51 +65,24 @@ export type PromptInputProps = {
   progress?: number;
 };
 
-// La lastra e' piu' larga del quadro di proposito. Vedi sopra.
-const SLAB_W = 2200;
-const SLAB_H = 1080;
-
-const COMPOSER = { x: 372, y: 838, w: 1700, h: 84 };
-const SEND = { x: 1988, y: 856, r: 24 };
-
-// Quanto la pane sta sopra il fondo della lastra. Il thread arriva fin qui.
-const PANE_BOTTOM = 158;
-
-/**
- * Il margine che tiene il thread SOPRA il composer, ed e' il difetto che ha
- * fatto sembrare finita una scena che non lo era.
- *
- * Il thread finisce a 922 (1080 meno 158) e il composer, disegnato dopo e
- * opaco, comincia a 838. I messaggi sono ancorati in basso, quindi l'ULTIMO
- * finiva nei quattro quinti coperti: il prompt partiva, la risposta si
- * componeva parola per parola e nessuno la vedeva mai. La scena mostrava tre
- * dei quattro tempi chiesti, e la contro-prova e' che la fascia fra la bolla e
- * il composer restava alla stessa luminanza dal frame 260 alla fine.
- *
- * Il numero e' derivato e non scritto a mano di proposito: se il composer si
- * sposta, questo lo segue. Un 108 costante sarebbe tornato sbagliato al primo
- * ritocco del layout.
- */
-const THREAD_PAD_BOTTOM = SLAB_H - PANE_BOTTOM - COMPOSER.y + 24;
-
 // I frame della recita. La pausa prima dell'invio e' la parte che la rende
 // credibile: senza, l'invio parte insieme all'ultimo tasto e legge come uno
 // script che esegue, non come qualcuno che rilegge.
 const T = {
-  travelStart: 40,
-  travelEnd: 78,
-  clickField: 80,
-  typeStart: 88,
+  travelStart: 56,
+  travelEnd: 114,
+  clickField: 116,
+  typeStart: 132,
   pauseAfterTyping: 24,
   travelToSend: 32,
   bubble: 14,
   thinking: 26,
 } as const;
 
-const DEFAULT_PROMPT = "Refactor the auth flow and open a PR";
+const DEFAULT_PROMPT = "Rifai il flusso di auth e apri la PR";
 
 const DEFAULT_RESPONSE =
-  "Found three call sites in server/auth.ts. Pulling the token refresh into a single guard, then opening the PR on topics/auth-refactor.";
+  "Trovati tre punti di chiamata in server/auth.ts. Sposto il refresh del token dentro un guard solo, poi apro la PR su topics/auth-refresh.";
 
 export const PromptInput: React.FC<PromptInputProps> = ({
   prompt = DEFAULT_PROMPT,
@@ -109,6 +94,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   const { durationInFrames, fps } = useVideoConfig();
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
+  const last = durationInFrames - 1;
 
   const schedule = typingSchedule({
     text: prompt,
@@ -129,6 +115,22 @@ export const PromptInput: React.FC<PromptInputProps> = ({
 
   const sent = frame >= sendClick;
 
+  /**
+   * LA CAMERA SI FERMA A f132, e non alla fine della scena.
+   *
+   * Non e' una scelta di gusto, e' venuta da un banco. `click-gap.sh` trova il
+   * colpo e la conseguenza nel render cercando il fotogramma il cui conto di
+   * pixel cambiati sfonda la mediana della finestra. Con la camera che scivola
+   * per tutti i 450 frame, ogni fotogramma cambia molto e il clic non sfonda
+   * piu' niente: il banco smetteva di trovare i due eventi, e aveva ragione,
+   * perche' se non li trova una misura non li vede nemmeno l'occhio.
+   *
+   * Ed e' anche film migliore. Si scende sul composer mentre la mano arriva,
+   * poi ci si ferma: nessuno muove la macchina mentre qualcuno scrive e legge,
+   * perche' l'inquadratura in cui si legge deve stare ferma.
+   */
+  const CAM_SETTLE = 132;
+
   // Lo streaming va a blocchi di parole, non a caratteri. Un LLM non scrive
   // lettera per lettera: arriva a token, e l'occhio lo riconosce.
   const words = response.split(" ");
@@ -137,7 +139,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     Math.min(
       words.length,
       Math.floor(
-        interpolate(frame, [streamAt, durationInFrames - 18], [0, words.length], {
+        interpolate(frame, [streamAt, last - 18], [0, words.length], {
           extrapolateLeft: "clamp",
           extrapolateRight: "clamp",
         }),
@@ -146,593 +148,143 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   );
   const answer = words.slice(0, streamed).join(" ");
 
-  // La camera. Un movimento solo, in-out, per tutta la scena.
-  const yaw = interpolate(frame, [0, durationInFrames - 1], [-15, -8.5], {
-    easing: Easing.inOut(Easing.quad),
-    extrapolateRight: "clamp",
-  });
-  const push = interpolate(frame, [0, durationInFrames - 1], [0, 62], {
-    easing: Easing.inOut(Easing.quad),
-    extrapolateRight: "clamp",
-  });
+  // La camera: una curva sola, inOut, derivata nulla ai due capi. A sinistra
+  // per agganciarsi alla fine di CardRelease, a destra perche' la scena si
+  // ferma e un'altra ci si possa attaccare.
+  const at = (from: number, to: number): number =>
+    interpolate(frame, [0, CAM_SETTLE], [from, to], {
+      easing: Easing.inOut(Easing.cubic),
+      extrapolateRight: "clamp",
+    });
+
+  const yaw = at(CARD_RELEASE_END_POSE.yaw, PROMPT_INPUT_END_POSE.yaw);
+  const pitch = at(CARD_RELEASE_END_POSE.pitch, PROMPT_INPUT_END_POSE.pitch);
+  const pushZ = at(CARD_RELEASE_END_POSE.pushZ, PROMPT_INPUT_END_POSE.pushZ);
+  const slideX = at(CARD_RELEASE_END_POSE.slideX, PROMPT_INPUT_END_POSE.slideX);
+  const slideY = at(
+    CARD_RELEASE_END_POSE.slideY ?? 0,
+    PROMPT_INPUT_END_POSE.slideY ?? 0,
+  );
+
+  const bgYaw = yaw * 0.6;
+  const bgSlideX = slideX * 0.45;
+  const bgSlideY = slideY * 0.45;
 
   const focused = frame >= T.clickField;
   // Il caret lampeggia a 15 frame, e il calcolo e' sul frame: nessun keyframe CSS.
   const caretOn = focused && !sent && Math.floor(frame / 15) % 2 === 0;
 
+  const press = interpolate(
+    frame,
+    [sendClick, sendClick + 5, sendClick + 12],
+    [1, 0.9, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+
+  // Il percorso del cursore, in coordinate della lastra condivisa. Le mire sono
+  // le costanti di slab.ts, non due numeri copiati dal layout: se il composer
+  // si sposta il puntatore lo segue.
   const path: Waypoint[] = [
-    { x: 2540, y: 1290, at: 0 },
-    { x: 2540, y: 1290, at: T.travelStart },
-    { x: 1500, y: 1010, at: T.travelStart + 22 },
-    { x: COMPOSER.x + 96, y: COMPOSER.y + 46, at: T.travelEnd },
-    { x: COMPOSER.x + 96, y: COMPOSER.y + 46, at: sendTravelStart },
-    { x: SEND.x - 4, y: SEND.y + 4, at: sendClick },
-    { x: SEND.x - 4, y: SEND.y + 4, at: durationInFrames },
+    { x: 2620, y: 1330, at: 0 },
+    { x: 2620, y: 1330, at: T.travelStart },
+    { x: 1760, y: 1214, at: T.travelStart + 22 },
+    { x: COMPOSER_X + 110, y: COMPOSER_Y + COMPOSER_H / 2, at: T.travelEnd },
+    { x: COMPOSER_X + 110, y: COMPOSER_Y + COMPOSER_H / 2, at: sendTravelStart },
+    { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: sendClick },
+    { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: durationInFrames },
   ];
+
+  // La board sta come l'ha lasciata CardRelease: consegna avvenuta, niente in
+  // volo. E' lo stesso componente con gli stessi valori, quindi il primo frame
+  // di questa scena e' l'ultimo di quella per costruzione.
+  const moving = handoffCard();
+  const fromRest = COLUMNS[HANDOFF_FROM_COL]!.cards.filter(
+    (_, i) => i !== HANDOFF_FROM_IDX,
+  );
+  const landed = handoffLandedRect();
+
+  const board = {
+    closeGap: 1,
+    travel: 1,
+    lift: 0,
+    cardX: landed.x,
+    cardY: landed.y,
+    moving,
+    fromRest,
+  };
+
+  const assistant = {
+    typed,
+    focused,
+    caretOn,
+    sent,
+    sentPrompt: prompt,
+    bubbleIn: bubbleCurve(frame, bubbleAt),
+    thinking: frame >= thinkAt && frame < streamAt + 2,
+    answer,
+    press,
+    frame,
+    branch,
+  };
 
   return (
     <AbsoluteFill style={{ background: app.bg, fontFamily: fontStack }}>
-      {/* Il piano attenuato dietro. Sta a 0,62 e non a 0,40: sotto quella
-          soglia non e' profondita', e' rumore. */}
       <AbsoluteFill
         style={{
-          perspective: 3000,
-          opacity: BACKDROP_OPACITY,
-          filter: "blur(13px)",
+          perspective: SLAB_BACKDROP.perspective,
+          perspectiveOrigin: SLAB_BACKDROP.perspectiveOrigin,
+          opacity: SLAB_BACKDROP.opacity,
+          filter: `blur(${SLAB_BACKDROP.blur}px)`,
         }}
       >
         <div
           style={{
             position: "absolute",
-            left: -260,
-            top: -190,
-            width: 1500,
-            height: 1000,
-            transform: `rotateY(${yaw + 6}deg) rotateX(6deg)`,
+            left: (1920 - SLAB_W) / 2 - 180 + bgSlideX,
+            top: (1080 - SLAB_H) / 2 - 80 + bgSlideY,
+            width: SLAB_W,
+            height: SLAB_H,
+            transform: `rotateY(${bgYaw + 8}deg) rotateX(${pitch + 4}deg) scale(0.92)`,
             transformOrigin: "50% 50%",
             background: app.surface,
             border: `1px solid ${app.border}`,
-            borderRadius: radius.md * 2,
+            borderRadius: 20,
+            overflow: "hidden",
           }}
         >
-          <Backdrop />
+          <Board {...board} assistant={assistant} dimmed />
         </div>
       </AbsoluteFill>
 
-      <AbsoluteFill
-        style={{
-          perspective: 2800,
-          perspectiveOrigin: "50% 46%",
-        }}
-      >
+      <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
         <div
           style={{
             position: "absolute",
-            left: (1920 - SLAB_W) / 2,
-            top: (1080 - SLAB_H) / 2,
+            left: (1920 - SLAB_W) / 2 + slideX,
+            top: (1080 - SLAB_H) / 2 + slideY,
             width: SLAB_W,
             height: SLAB_H,
-            transform: `translateZ(${push}px) rotateY(${yaw}deg) rotateX(3.2deg) scale(1.045)`,
+            transform: `translateZ(${pushZ}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(1.04)`,
             transformOrigin: "50% 50%",
             transformStyle: "preserve-3d",
             background: app.bg,
             borderRadius: 18,
-            // Lo spessore sul bordo: un filo chiaro sopra, l'ombra lunga sotto.
             border: `1px solid ${app.borderLight}`,
             boxShadow:
-              "0 70px 150px rgba(0,0,0,0.72), 0 0 0 1px rgba(255,255,255,0.04) inset",
+              "0 80px 160px rgba(0,0,0,0.78), 0 0 0 1px rgba(255,255,255,0.05) inset",
             overflow: "hidden",
           }}
         >
-          <Chrome />
-          <Sidebar />
-          <Thread
-            branch={branch}
-            prompt={prompt}
-            sent={sent}
-            bubbleAt={bubbleAt}
-            thinkAt={thinkAt}
-            streamAt={streamAt}
-            answer={answer}
-            frame={frame}
-          />
-          <Composer
-            typed={typed}
-            focused={focused}
-            caretOn={caretOn}
-            sent={sent}
-            frame={frame}
-            sendClick={sendClick}
-          />
+          <Board {...board} assistant={assistant} />
 
           {/* Il cursore sta DENTRO la lastra, quindi prende la stessa
-              prospettiva e appoggia sul piano. */}
+              prospettiva e appoggia sul piano. Uno disegnato sopra il quadro,
+              dritto, tradisce subito che la lastra e' un'immagine. */}
           <Cursor path={path} clicks={[T.clickField, sendClick]} />
         </div>
       </AbsoluteFill>
 
-      {/* Vignettatura: chiude gli angoli e tiene l'occhio al centro basso,
-          dove succede tutto. */}
-      <AbsoluteFill
-        style={{
-          background:
-            "radial-gradient(120% 85% at 50% 52%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.55) 100%)",
-          pointerEvents: "none",
-        }}
-      />
+      <SlabLighting />
     </AbsoluteFill>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-
-const Backdrop: React.FC = () => (
-  <div style={{ position: "absolute", inset: 0, padding: 34 }}>
-    <div style={{ display: "flex", gap: 22 }}>
-      {["Backlog", "In corso", "In review"].map((col) => (
-        <div key={col} style={{ flex: 1 }}>
-          <div
-            style={{
-              color: app.textMuted,
-              fontSize: 19,
-              letterSpacing: 0.4,
-              marginBottom: 14,
-            }}
-          >
-            {col}
-          </div>
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              style={{
-                height: 92,
-                marginBottom: 14,
-                background: app.elevated,
-                border: `1px solid ${app.border}`,
-                borderRadius: radius.md,
-              }}
-            />
-          ))}
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const Chrome: React.FC = () => (
-  <div
-    style={{
-      height: 66,
-      display: "flex",
-      alignItems: "center",
-      gap: 14,
-      padding: "0 22px",
-      background: app.inset,
-      borderBottom: `1px solid ${app.border}`,
-    }}
-  >
-    <div style={{ display: "flex", gap: 9, marginRight: 12 }}>
-      {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
-        <div
-          key={c}
-          style={{ width: 14, height: 14, borderRadius: 7, background: c }}
-        />
-      ))}
-    </div>
-    {[
-      { name: "Scene motion", active: true },
-      { name: "landing", active: false },
-      { name: "billing", active: false },
-    ].map((t) => (
-      <div
-        key={t.name}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          height: 42,
-          padding: "0 18px",
-          fontSize: 20,
-          color: t.active ? app.text : app.textMuted,
-          background: t.active ? app.elevated : "transparent",
-          border: `1px solid ${t.active ? app.border : "transparent"}`,
-          borderRadius: radius.sm,
-        }}
-      >
-        <div
-          style={{
-            width: 9,
-            height: 9,
-            borderRadius: 5,
-            background: t.active ? app.claude : app.textFaint,
-          }}
-        />
-        {t.name}
-      </div>
-    ))}
-    <div
-      style={{
-        marginLeft: "auto",
-        fontFamily: monoStack,
-        fontSize: 18,
-        color: app.textFaint,
-      }}
-    >
-      Topics
-    </div>
-  </div>
-);
-
-const SIDEBAR_W = 340;
-
-const Sidebar: React.FC = () => (
-  <div
-    style={{
-      position: "absolute",
-      left: 0,
-      top: 66,
-      bottom: 0,
-      width: SIDEBAR_W,
-      background: app.surface,
-      borderRight: `1px solid ${app.border}`,
-      padding: "22px 0",
-    }}
-  >
-    <div
-      style={{
-        padding: "0 22px 14px",
-        fontSize: 16,
-        letterSpacing: 1,
-        color: app.textFaint,
-      }}
-    >
-      PROGETTI
-    </div>
-    {[
-      { n: "acme-app", d: 0, on: true },
-      { n: "client", d: 1, on: false },
-      { n: "server", d: 1, on: false },
-      { n: "landing", d: 0, on: false },
-      { n: "billing", d: 0, on: false },
-      { n: "growth-board", d: 0, on: false },
-      { n: "atlas", d: 0, on: false },
-    ].map((r) => (
-      <div
-        key={r.n + r.d}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          height: 46,
-          margin: "0 12px",
-          padding: `0 14px 0 ${14 + r.d * 22}px`,
-          fontSize: 21,
-          color: r.on ? app.text : app.textSecondary,
-          background: r.on ? app.hover : "transparent",
-          borderRadius: radius.sm,
-        }}
-      >
-        <div
-          style={{
-            width: 18,
-            height: 18,
-            borderRadius: radius.xs,
-            background: r.on ? app.primary : app.borderLight,
-          }}
-        />
-        {r.n}
-      </div>
-    ))}
-  </div>
-);
-
-type ThreadProps = {
-  branch: string;
-  prompt: string;
-  sent: boolean;
-  bubbleAt: number;
-  thinkAt: number;
-  streamAt: number;
-  answer: string;
-  frame: number;
-};
-
-const Thread: React.FC<ThreadProps> = ({
-  branch,
-  prompt,
-  sent,
-  bubbleAt,
-  thinkAt,
-  streamAt,
-  answer,
-  frame,
-}) => {
-  const bubbleIn = interpolate(frame, [bubbleAt, bubbleAt + 12], [0, 1], {
-    easing: Easing.out(Easing.cubic),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  // La riga dei tre puntini vive solo fra la spedizione e il primo token.
-  const thinking = frame >= thinkAt && frame < streamAt + 2;
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: SIDEBAR_W,
-        right: 0,
-        top: 66,
-        bottom: PANE_BOTTOM,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Intestazione della pane. La riga h-10 del chrome, e il ramo del
-          worktree, che si chiama topics/<nome>. */}
-      <div
-        style={{
-          height: 62,
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          padding: "0 34px",
-          borderBottom: `1px solid ${app.border}`,
-        }}
-      >
-        <div style={{ fontSize: 22, color: app.textHeading }}>Scene motion</div>
-        <div
-          style={{
-            fontFamily: monoStack,
-            fontSize: 17,
-            color: app.textMuted,
-            padding: "5px 12px",
-            border: `1px solid ${app.border}`,
-            borderRadius: radius.xs,
-          }}
-        >
-          {branch}
-        </div>
-        <div
-          style={{
-            marginLeft: "auto",
-            fontSize: 17,
-            color: app.ok,
-          }}
-        >
-          Opus 5
-        </div>
-      </div>
-
-      <div
-        style={{
-          flex: 1,
-          padding: `26px 34px ${THREAD_PAD_BOTTOM}px`,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          gap: 20,
-          overflow: "hidden",
-        }}
-      >
-        {/* La conversazione precedente riempie il pannello dall'alto.
-            Non e' riempitivo: un thread ancorato in basso con tre righe che
-            galleggiano sopra il vuoto legge come una scatola, non come un'app
-            in uso, ed e' lo stesso difetto misurato sulle scene della landing.
-            Quello che esce dal bordo alto e' tagliato dall'overflow, che e'
-            esattamente come si legge una conversazione gia' scorsa. */}
-        <Msg who="user" text="Prendi i quattro commercial e dimmi cosa fanno davvero." />
-        <Msg
-          who="assistant"
-          text="Su quattro, solo i due Linear sono motion graphics. Cursor e Raycast sono girati con una camera: attore, luce calda, mani vere. Quelli non si replicano in codice."
-        />
-        <ToolRow file="ref/sheet_ovxL42LkKNg.jpg" />
-        <Msg who="user" text="Guarda il render di OrbitLoop accanto al riferimento." />
-        <Msg
-          who="assistant"
-          text="Il meccanismo copre il terzo centrale, il riferimento riempie il quadro. Le etichette a quella scala non si leggono."
-        />
-        <ToolRow file="ref/sheet_7gZBxBTapDQ.jpg" />
-
-        {/* Il messaggio spedito. Compare solo dopo il click su invia. */}
-        {sent ? (
-          <div
-            style={{
-              opacity: bubbleIn,
-              transform: `translateY(${(1 - bubbleIn) * 14}px)`,
-            }}
-          >
-            <Msg who="user" text={prompt} />
-          </div>
-        ) : null}
-
-        {thinking ? <Dots frame={frame} /> : null}
-
-        {answer.length > 0 ? <Msg who="assistant" text={answer} streaming /> : null}
-      </div>
-    </div>
-  );
-};
-
-const Msg: React.FC<{
-  who: "user" | "assistant";
-  text: string;
-  streaming?: boolean;
-}> = ({ who, text, streaming }) => {
-  const isUser = who === "user";
-  return (
-    <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-      <div
-        style={{
-          width: 30,
-          height: 30,
-          marginTop: 4,
-          flex: "none",
-          borderRadius: radius.xs,
-          background: isUser ? app.borderLight : app.claude,
-        }}
-      />
-      <div
-        style={{
-          // La bolla dell'utente e' NEUTRA, non blu. Nel prodotto e' cosi', e
-          // una bolla blu qui sarebbe un disegno DELLA app, non la app.
-          background: isUser ? app.elevated : "transparent",
-          border: isUser ? `1px solid ${app.border}` : "1px solid transparent",
-          borderRadius: radius.md,
-          padding: isUser ? "14px 20px" : "14px 0",
-          fontSize: 24,
-          lineHeight: 1.45,
-          color: isUser ? app.text : app.textSecondary,
-          maxWidth: 1240,
-        }}
-      >
-        {text}
-        {streaming ? (
-          <span
-            style={{
-              display: "inline-block",
-              width: 11,
-              height: 24,
-              marginLeft: 5,
-              verticalAlign: "-4px",
-              background: app.textSecondary,
-            }}
-          />
-        ) : null}
-      </div>
-    </div>
-  );
-};
-
-const ToolRow: React.FC<{ file: string }> = ({ file }) => (
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 14,
-      marginLeft: 46,
-      padding: "12px 18px",
-      background: app.inset,
-      border: `1px solid ${app.border}`,
-      borderRadius: radius.sm,
-      maxWidth: 900,
-    }}
-  >
-    <div
-      style={{ width: 8, height: 8, borderRadius: 4, background: app.ok, flex: "none" }}
-    />
-    <div style={{ fontFamily: monoStack, fontSize: 19, color: app.primary }}>
-      Read
-    </div>
-    <div style={{ fontSize: 19, color: app.textMuted }}>{file}</div>
-  </div>
-);
-
-const Dots: React.FC<{ frame: number }> = ({ frame }) => (
-  <div style={{ display: "flex", gap: 10, marginLeft: 46, height: 30, alignItems: "center" }}>
-    {[0, 1, 2].map((i) => {
-      // Il ciclo si calcola dal frame. Nessun @keyframes, nessun rAF.
-      const phase = ((frame - i * 5) % 30) / 30;
-      const o = 0.25 + 0.75 * (0.5 - 0.5 * Math.cos(phase * Math.PI * 2));
-      return (
-        <div
-          key={i}
-          style={{
-            width: 11,
-            height: 11,
-            borderRadius: 6,
-            background: app.textSecondary,
-            opacity: o,
-          }}
-        />
-      );
-    })}
-  </div>
-);
-
-const Composer: React.FC<{
-  typed: string;
-  focused: boolean;
-  caretOn: boolean;
-  sent: boolean;
-  frame: number;
-  sendClick: number;
-}> = ({ typed, focused, caretOn, sent, frame, sendClick }) => {
-  const armed = typed.length > 0 && !sent;
-
-  const press = interpolate(frame, [sendClick, sendClick + 5, sendClick + 12], [1, 0.9, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: COMPOSER.x,
-        top: COMPOSER.y,
-        width: COMPOSER.w,
-        height: COMPOSER.h,
-        display: "flex",
-        alignItems: "center",
-        gap: 18,
-        padding: "0 18px 0 26px",
-        background: app.elevated,
-        // Il campo che prende il fuoco: il bordo cambia, e basta quello.
-        border: `1px solid ${focused && !sent ? app.primary : app.border}`,
-        borderRadius: radius.md,
-        boxShadow:
-          focused && !sent ? `0 0 0 3px rgba(77,148,255,0.16)` : "none",
-      }}
-    >
-      <div
-        style={{
-          flex: 1,
-          fontSize: 26,
-          color: sent || typed.length === 0 ? app.textFaint : app.text,
-          whiteSpace: "pre",
-          overflow: "hidden",
-        }}
-      >
-        {sent || typed.length === 0 ? "Chiedi qualcosa" : typed}
-        {caretOn ? (
-          <span
-            style={{
-              display: "inline-block",
-              width: 2,
-              height: 30,
-              marginLeft: 2,
-              verticalAlign: "-6px",
-              background: app.primary,
-            }}
-          />
-        ) : null}
-      </div>
-
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          flex: "none",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: radius.sm,
-          background: armed ? app.primary : app.hover,
-          transform: `scale(${press})`,
-        }}
-      >
-        <svg width={22} height={22} viewBox="0 0 24 24">
-          <path
-            d="M12 19V5 M5 12l7-7 7 7"
-            fill="none"
-            stroke={armed ? "#0b1220" : app.textFaint}
-            strokeWidth={2.4}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-    </div>
   );
 };
