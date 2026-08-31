@@ -80,6 +80,7 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/handoff-travel.sh                             # does the card actually cross
 ./scripts/focus-sharpness.sh                            # does the text survive the push-in
 ./scripts/rest-point.sh [scene.mp4]                     # is the scene still at both edges
+./scripts/click-gap.sh [scene.mp4]                      # does the UI answer the click, or fire with it
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 
