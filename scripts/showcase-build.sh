@@ -16,13 +16,14 @@ src="$root/video/out"
 dist="$root/showcase/dist"
 
 missing=0
-for f in prompt-input.mp4 ui-mockup.mp4 card-handoff.mp4; do
+for f in prompt-input.mp4 ui-mockup.mp4 card-handoff.mp4 card-focus.mp4; do
   if [ ! -f "$src/$f" ]; then
     echo "missing render: video/out/$f" >&2
     case "$f" in
       prompt-input.mp4) id=PromptInput ;;
       ui-mockup.mp4)    id=UIMockup ;;
       card-handoff.mp4) id=CardHandoff ;;
+      card-focus.mp4)   id=CardFocus ;;
     esac
     echo "  cd video && npx remotion render $id out/$f" >&2
     missing=1
@@ -33,7 +34,12 @@ done
 rm -rf "$dist"
 mkdir -p "$dist"
 cp "$root/showcase/index.html" "$dist/index.html"
-cp "$src/prompt-input.mp4" "$src/ui-mockup.mp4" "$src/card-handoff.mp4" "$dist/"
+# La seconda pagina: il catalogo dei movimenti. Sta qui e non in un artifact
+# perche' cosi' vive dove vive il resto, si versiona con le scene che descrive
+# e si apre in locale identica a come esce online.
+cp "$root/showcase/grammatica.html" "$dist/grammatica.html"
+cp "$src/prompt-input.mp4" "$src/ui-mockup.mp4" "$src/card-handoff.mp4" \
+   "$src/card-focus.mp4" "$dist/"
 
 echo "showcase/dist ready:"
 du -h "$dist"/* | sed 's|'"$root"'/||'
