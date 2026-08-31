@@ -64,6 +64,33 @@ Five scenes now, 1310 frames, 43.7 seconds, and four measured joins: 559 pixels,
 cleanest of the four, at 2064 times better than its control cut, because it was
 built last and nothing about it was agreed by hand.
 
+Four more of the catalogue's movements went into the film after that, and they
+are all one gesture. `CardHandoff` used to fly the card across on an
+interpolation with nobody touching it, which reads as an animation; now the
+cursor arrives on an arc with a small overshoot, presses, and the card follows
+the hand three frames behind, tilting into the direction of travel. Getting that
+into a scene needed the pointer's *position* and not just its drawing, so
+`Cursor.tsx` exports `pointOnPath` and keeps the arrow to itself — the
+alternative was a second copy of the trajectory inside the scene, equal to the
+first exactly as long as nobody touched one of them. The extraction was checked
+by re-rendering `PromptInput` against its previous file: five of six sampled
+frames identical, one off by a single pixel.
+
+Then the board answers in a chain rather than all at once. The card lands, the
+destination count moves five frames later, and six frames after that the card
+rewrites its own age from `12h` to `ora`. The third link was supposed to be the
+detail panel — the catalogue said so — and looking at the render said otherwise:
+at that pose the camera is close enough that the panel runs off the right edge,
+labels visible and values not. A link of the chain outside the frame is not a
+link. Before this, the count and the panel both flipped on the same frame at
+mid-travel, which is precisely the defect the entry describes: three things
+changing together read as three unrelated things, and it is the delay that reads
+as cause.
+
+And while the answer streams in `PromptInput`, everything that is not the answer
+drops to 0.62 — the board above, the earlier messages, the composer. Not a blur:
+nothing becomes unreadable, only the place where the contrast is full moves.
+
 **Real UI, not a drawing of UI.** Slabs of the actual product on inclined
 planes, with the product's own tokens, radii and system font stack. A mockup
 that is 3px off reads as a mockup.
