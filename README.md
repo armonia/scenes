@@ -79,6 +79,7 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/seam.sh [A.mp4] [B.mp4]                       # is the join really cutless
 ./scripts/handoff-travel.sh                             # does the card actually cross
 ./scripts/focus-sharpness.sh                            # does the text survive the push-in
+./scripts/rest-point.sh [scene.mp4]                     # is the scene still at both edges
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 
@@ -142,6 +143,18 @@ counterfactual from the render's own first frame instead, so both readings are
 the same content at the same pixel size and the only remaining difference is the
 scale the pixels were rasterised at. Measured: 2.09x on the real render, 1.03x on
 the fixture, threshold at the geometric mean of the two.
+
+`rest-point.sh` turns the rest-point rule into a number, and finding the right
+number took two wrong ones. Consecutive frames measure nothing here: these
+cameras move fractions of a degree per frame, and mid-way through `PromptInput`,
+where somebody is typing, 0.076% of pixels change, which is barely more than the
+edges. Five frames apart the signal separates. Its first control was wrong too:
+`CardHandoff` is documented as the scene that does not start at rest, and that is
+true of its *pose* and false of its *velocity* — it eases in and out, so it
+starts still like everything else. The control that works is the one `seam.sh`
+already uses: a pair taken from the middle of the same scene. Measured, every
+scene in the catalogue is at rest at both edges, so nothing in the chain has a
+forced order yet.
 
 `handoff-travel.sh` had never run on macOS. Its centroid step was a heredoc
 inside a process substitution, which bash 3.2 cannot parse, so the script died

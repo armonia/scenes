@@ -118,6 +118,10 @@
         color: var(--faint); margin: 0 0 7px; }
       .spec dd { margin: 0; color: var(--muted); font-size: 15px; }
       .spec .bench dt { color: var(--accent); }
+      /* Un banco che esiste e uno che serve non sono la stessa cosa, e la
+         pagina non deve farli sembrare tali. */
+      .spec .bench.prop dt { color: var(--faint); }
+      .spec .bench.prop dd { color: var(--faint); }
       code { font-family: var(--mono); font-size: 0.92em; color: var(--text); }
 
       /* the sequence and the two tables */
@@ -254,6 +258,12 @@
           from one state to the next with no join to hide</strong>. Every entry
           here runs a live demo of the slab, states the numbers it starts from,
           and names the bench that can fail it.
+        </p>
+        <p class="lede" style="margin-top:18px;font-size:16px">
+          Ten of the twenty-six name a bench that exists and runs in CI. The
+          other sixteen name one that does not exist yet, and those are printed
+          in grey: a measurement nobody has written is a proposal, and this page
+          would be doing the thing it warns against if it let the two look alike.
         </p>
         <div class="cta">
           <a class="btn primary" href="index.html">Back to the scenes</a>
@@ -1025,7 +1035,7 @@ var CAT=[
  c:"yaw -18 to -9, pitch 5 to 2.5, pushZ 0 to 48, slideX 900 to 0. 108 frames of inOut cubic, then 42 at rest.",
  d:"fill-measure.sh. A push-in that starts too tight lets an edge die: on the repo the reading is 20 samples out of 20 with all four sides alive."},
 
-{fam:"cam",code:"CAM-02",t:"Truck with parallax",demo:"truck",src:"translateZ per layer",
+{fam:"cam",code:"CAM-02",p:1,t:"Truck with parallax",demo:"truck",src:"translateZ per layer",
  a:"The camera slides sideways and sidebar, board and panel separate because they sit at different depths. It is what tells a slab apart from a photograph being panned.",
  b:"Every part of the UI takes a translateZ inside a preserve-3d container. The parallax is not animated: it falls out of the perspective while the camera moves.",
  c:"header 6, sidebar 10, panel 18, board 26, active card 40. slideX -360 to 360 in inOut sine.",
@@ -1043,37 +1053,37 @@ var CAT=[
  c:"In the repo: pushZ 96 to 1493.6 over 169 frames of inOut cubic, 2.35 times, with the translation coming out of centreOn. The demo above runs at the stage own scale, so its numbers are smaller.",
  d:"focus-sharpness.sh. It compares the high-frequency energy of the card crop against the same content magnified from the wide shot: 2.09× on the real render, 1.03× on the fixture. Its first version compared the crop to a blurred copy of itself, scored the fixture 4.14× and passed it."},
 
-{fam:"cam",code:"CAM-05",t:"Attention by opacity",demo:"attn",src:"theme.ts · BACKDROP_OPACITY",
+{fam:"cam",code:"CAM-05",p:1,t:"Attention by opacity",demo:"attn",src:"theme.ts · BACKDROP_OPACITY",
  a:"Instead of blurring the rest, the rest drops in opacity. The eye goes where the contrast is full and no pixel becomes unreadable.",
  b:"One value applied to every layer that is not the subject. It lives in theme.ts because it is a measurement and not a taste.",
  c:"0.62. Below that the attenuated content falls under 3:1 once rendered, and at that point it reads as noise rather than as depth.",
  d:"A contrast check on the rendered frame. If the attenuated layer goes under 3:1 the bench fails, and the number to raise is that one, not the subject opacity."},
 
-{fam:"cam",code:"CAM-06",t:"The point that does not run",demo:"centre",src:"slab.ts · centreOn",
+{fam:"cam",code:"CAM-06",p:1,t:"The point that does not run",demo:"centre",src:"slab.ts · centreOn",
  a:"Under a push in Z there is exactly one point of the frame that stays put, the perspective origin. Everything else runs for the edge, faster the further out it sits.",
  b:"Work out where the subject centre lands on screen with yaw and pitch at zero, then translate the slab by enough to put it on the origin. From there the push magnifies it without moving it. In slab.ts that is slabPointOnScreen and centreOn, and the final pose of CardFocus comes out of them instead of out of numbers nudged by eye.",
  c:"Origin at (960, 496.8), that is 50% and 46% of 1920 by 1080. The 46 is the term people drop: centring vertically is not half the slab minus the subject, and with the wrong formula the subject sits forty pixels off. The demo measures the drift on the rendering every frame: at the same push it is 386 px without compensation and 0 with.",
  d:"The distance between the subject centre and the origin on the last frame. If it is not within a couple of pixels the descent is sliding past the subject rather than into it, and you only notice at the end."},
 
-{fam:"cur",code:"CUR-01",t:"Arc and overshoot",demo:"arc",src:"primitives/Cursor.tsx",
+{fam:"cur",code:"CUR-01",p:1,t:"Arc and overshoot",demo:"arc",src:"primitives/Cursor.tsx",
  a:"The pointer arrives on a curve, overshoots the target slightly and settles on it. In red, over the same time, the straight line at constant speed.",
  b:"A quadratic bezier with the control point off the axis, and a back curve on the parameter rather than on the position. That way the overshoot happens along the tangent and stays on the path.",
  c:"Control at (1520, 790), 7.5 per cent maximum overshoot, 78 frames of travel and 12 of settling.",
  d:"Curvature and velocity profile on the rendered frames. Zero curvature or constant speed means that is not a hand, it is a tween."},
 
-{fam:"cur",code:"CUR-02",t:"The hesitation before the click",demo:"hesit",src:"dramaturgy, not code",
+{fam:"cur",code:"CUR-02",p:1,t:"The hesitation before the click",demo:"hesit",src:"dramaturgy, not code",
  a:"The cursor reaches the button and does not press. That pause is the whole story: it says this is a decision and not a formality.",
  b:"Three separate windows on the timeline: approach, wait, press. The wait is not a slow ease, it is real dead time, or it reads as the software being slow.",
  c:"Arrival at f54, 16 frames of wait, press at f70. Under ten frames it does not register, over twenty-five something looks stuck.",
  d:"A zero-velocity window between arrival and press. If the bench cannot find one, the hesitation is in the script and not in the render."},
 
-{fam:"cur",code:"CUR-03",t:"The click the UI answers",demo:"click",src:"the pressed state",
+{fam:"cur",code:"CUR-03",p:1,t:"The click the UI answers",demo:"click",src:"the pressed state",
  a:"The pressed state exists and it arrives before the consequence. Two frames of gap are enough for the gesture to look like it caused something.",
  b:"Button state and consequence on two different windows. The temptation is to put them on the same frame because it is shorter to write, and that is exactly what makes the click fake.",
  c:"Press at f48, consequence at f50. Under a frame of gap the link disappears, over five it becomes lag.",
  d:"The frame the button changes on against the frame the content changes on. Same frame, fail."},
 
-{fam:"cur",code:"CUR-04",t:"Drag with weight",demo:"drag",src:"CardBox · lifted",
+{fam:"cur",code:"CUR-04",p:1,t:"Drag with weight",demo:"drag",src:"CardBox · lifted",
  a:"The dragged object lags the pointer and tilts into the direction of travel. Without the lag the card looks welded to the cursor.",
  b:"The card position is the cursor position three frames earlier: arithmetic on the frame, no stored state. The tilt comes from the difference between two samples.",
  c:"3 frames of lag, 0.11 degrees per pixel of speed, shadow from 18/30 to 44/74, border lit from the lift onward.",
@@ -1091,19 +1101,19 @@ var CAT=[
  c:"Growth stops between f110 and f130. The block sits above the composer, which is 96 tall and starts 36 from the bottom of the slab.",
  d:"beats.sh, the bench that paid for itself. For a full day the render promised four beats and delivered three: the answer was assembling under the opaque composer, and every type check passed. Now the bench requires the word count to GROW across the window, not merely to be non-zero."},
 
-{fam:"txt",code:"TXT-03",t:"A number that settles",demo:"metric",src:"tabular-nums",
+{fam:"txt",code:"TXT-03",p:1,t:"A number that settles",demo:"metric",src:"tabular-nums",
  a:"A metric arrives on its value with a small overshoot and stops, instead of scrolling like an odometer.",
  b:"A back curve on the value and fixed-width digits, so the width never changes. A number that changes width moves everything around it, and you did not choose that movement.",
  c:"128 ms, 7.5 per cent overshoot, 72 frames.",
  d:"The block width measured frame by frame. If it changes there is a reflow, and reflow is what makes a dashboard look fake."},
 
-{fam:"txt",code:"TXT-04",t:"A row landing in an ordered list",demo:"insert",src:"cardY · absolute positioning",
+{fam:"txt",code:"TXT-04",p:1,t:"A row landing in an ordered list",demo:"insert",src:"cardY · absolute positioning",
  a:"The gap opens before the row arrives. The list makes room, and the row lands in a space that is already there.",
  b:"The cards are absolutely positioned and their y is pure arithmetic, so one can be inserted without the layout collapsing on the same frame. With a flex, adding is a cut wearing an animation costume.",
  c:"Gap at f20, landing at f38, eighteen frames of lead. The shift is 108, a card height plus the gap.",
  d:"The frame the shift starts on against the frame the row becomes visible. If they coincide the row looks stuck on top of the layout rather than in it."},
 
-{fam:"txt",code:"TXT-05",t:"The correction",demo:"fix",src:"primitives/rhythm.ts",
+{fam:"txt",code:"TXT-05",p:1,t:"The correction",demo:"fix",src:"primitives/rhythm.ts",
  a:"Something gets typed, then a stop, then it is deleted back to a word boundary and retyped. It is the cheapest way to show the product forgives a change of mind.",
  b:"Three windows: the typing on the rhythm.ts schedule, the deletion at a constant and much faster rate, the rewrite on a second schedule with another seed. Deleting on the same curve as typing is the mistake, because nobody deletes while thinking.",
  c:"Typing at 13 characters per second, 0.43 per frame. Deletion at 1.6 per frame, the cadence of a held key, nearly four times faster. It stops at 22 characters, the nearest word boundary.",
@@ -1115,37 +1125,37 @@ var CAT=[
  c:"Gap at f30, flight f40 to f126, close at f56. A step of 123, the active card height plus the gap.",
  d:"handoff-travel.sh, the only bench that looks at whether the gesture happens: a freeze frame passes seam.sh and fill-measure.sh with full marks. It tracks the centroid of changed pixels and requires monotonic horizontal motion across at least half a column."},
 
-{fam:"chr",code:"CHR-02",t:"Reflow by distance",demo:"reflow",src:"a stagger choice",
+{fam:"chr",code:"CHR-02",p:1,t:"Reflow by distance",demo:"reflow",src:"a stagger choice",
  a:"When something changes, the rest settles with a delay proportional to its distance from where it happened, not to its index in the list.",
  b:"For each element you take the distance from the point where the thing happened and that becomes the delay. It costs a square root per element per frame, which at these counts does not show.",
  c:"Delay equals distance over 1400, times 22 frames.",
  d:"The correlation between delay and distance on the rendered frames. If the delay grows with the index instead of the distance the bench sees it, and so does the eye: the layout reads as a list scrolling rather than a space reacting."},
 
-{fam:"chr",code:"CHR-03",t:"State propagating",demo:"prop",src:"counts and panel",
+{fam:"chr",code:"CHR-03",p:1,t:"State propagating",demo:"prop",src:"counts and panel",
  a:"A change in one place causes another somewhere else, after a delay. It is the delay that reads as cause.",
  b:"Three cascading windows on the same timeline. No events and no state: three different frame thresholds, so it stays a function of the frame.",
  c:"Card at f30, column count at f35, panel at f41. Five and six frames apart.",
  d:"The order of the changing frames. If two land on the same frame there is no chain: they are three unrelated things changing together."},
 
-{fam:"chr",code:"CHR-04",t:"Before and after without a divider",demo:"ba",src:"build list · before-after",
+{fam:"chr",code:"CHR-04",p:1,t:"Before and after without a divider",demo:"ba",src:"build list · before-after",
  a:"You compare two states by letting the state change while the camera moves. No slider to drag and no vertical wipe: the before and the after are the same shot at two moments.",
  b:"The cards change column offset from each other, the counts follow at the halfway point, and the metric comes down on its own curve. The camera does a slow move independent of all of it, so no change ever lands on a pause.",
  c:"First card at f52, second at f88, metric from 128 to 64 ms between f120 and f200. The camera is not still at any of those.",
  d:"The frame a count changes on must not coincide with a frame where the camera is still. If they coincide, what you made is a cut with the camera parked over it."},
 
-{fam:"mat",code:"MAT-01",t:"Edge and contact shadow",demo:"thick",src:"the plane behind the plane",
+{fam:"mat",code:"MAT-01",p:1,t:"Edge and contact shadow",demo:"thick",src:"the plane behind the plane",
  a:"The slab has an edge and it rests on something. In the second half of the demo the edge is switched off, to see what goes.",
  b:"A second plane behind the first, slightly larger, with a deep shadow. It costs one div, and it decides whether the object reads as an object.",
  c:"Edge 30 behind the plane, shadow 90 offset and 180 blur at 75 per cent.",
  d:"No number needed here, a comparison is: switch it off and look. It is the same reason every measurement in the repo prints two columns instead of one value."},
 
-{fam:"mat",code:"MAT-02",t:"Screen light on the floor",demo:"spill",src:"the glow under the slab",
+{fam:"mat",code:"MAT-02",p:1,t:"Screen light on the floor",demo:"spill",src:"the glow under the slab",
  a:"The screen dominant colour spills onto the plane below, and changes when what is on screen changes.",
  b:"A radial gradient laid down behind the slab, tinted from the active content. A stage light chosen by hand would stay the same while the screen changed, and that shows.",
  c:"Opacity between 0.72 and 0.98, blur 22, laid at 76 degrees with its origin on the top edge, pinned to the bottom edge of the slab.",
  d:"The glow tint against the frame dominant tint. If they do not move together, the glow is decoration."},
 
-{fam:"mat",code:"MAT-03",t:"The attenuated plane behind",demo:"backdrop",src:"the three slab scenes",
+{fam:"mat",code:"MAT-03",p:1,t:"The attenuated plane behind",demo:"backdrop",src:"the three slab scenes",
  a:"Behind the slab sits a second copy, smaller and turned further, at reduced opacity. Switch it off and the frame under the board goes empty and the slab floats in black.",
  b:"It is the same board drawn a second time, not a blurred image: an image falls behind the moment the content changes, and in a single take the content always changes. It costs a clone and a negative translateZ.",
  c:"0.45 opacity with a 14 px blur, 60 back, eight more degrees of yaw and four of pitch, at 0.92 scale. The 0.62 in theme.ts is a different layer: BACKDROP_OPACITY drives the one in PromptInput, and UIMockup, CardHandoff and CardFocus each write 0.45 by hand. Three copies of a number nobody named.",
@@ -1157,11 +1167,11 @@ var CAT=[
  c:"First join at f120: 552 pixels against 18,019 for the control cut, 33 times. Second join, CardHandoff into CardFocus: 7 pixels against 22,901.",
  d:"seam.sh, and what makes it honest is the control beside it: the same last frame against a frame from the middle of the next scene, which is a real cut. If the two readings converge the script exits 2 and says the measurement separates nothing. It takes the pair as arguments, because a join exists for every adjacent couple."},
 
-{fam:"giu",code:"GIU-02",t:"The rest point",demo:"rest",src:"a property of the scene",
+{fam:"giu",code:"GIU-02",t:"The rest point",demo:"rest",src:"scripts/rest-point.sh",
  a:"A scene that begins at rest and ends at rest can go in any order, because there is no motion to break at the boundary.",
  b:"Curves that reach zero derivative at both ends. An ease out finishes still, a linear one does not, which is why linear is never used at a scene boundary.",
  c:"|v| equal to zero at f000 and at f209. Velocity here is the difference between two consecutive frames, the same thing the bench would measure.",
- d:"The discrete derivative over the first and last rendered frames. If it is not zero that scene has a forced order, and that should be known before the edit rather than discovered during it."},
+ d:"rest-point.sh. It compares frames five apart, not consecutive ones: at one frame these cameras move fractions of a degree and the signal sits under the encoder noise. Measured across the five scenes, edge against mid-scene: 0.000/0.434, 0.041/0.218, 0.000/0.329, 0.000/1.019, 0.118/0.952. Every scene is at rest at both ends, so the order is not forced by motion anywhere yet. It exits 1 on a clip cut from the middle of a scene and 2 on a freeze frame, which are different failures and it says so."},
 
 {fam:"giu",code:"GIU-03",t:"Continuous transformation instead of a cut",demo:"through",src:"the rule, from the README",
  a:"The camera crosses the point where a normal edit would put the cut, and nothing happens. The film changes subject while it is moving.",
@@ -1199,7 +1209,8 @@ FAMS.forEach(function(F){
     art.appendChild(stage);
 
     var spec=el("dl","spec");
-    [["What it does",x.a,""],["How it is built",x.b,""],["Numbers",x.c,""],["The bench that fails it",x.d,"bench"]].forEach(function(r){
+    [["What it does",x.a,""],["How it is built",x.b,""],["Numbers",x.c,""],
+     [x.p?"The bench it needs, not written yet":"The bench that fails it",x.d,x.p?"bench prop":"bench"]].forEach(function(r){
       var d=el("div",r[2]||null);
       d.appendChild(el("dt",null,null,r[0]));
       d.appendChild(el("dd",null,null,r[1]));
