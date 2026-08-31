@@ -174,6 +174,24 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   // Il caret lampeggia a 15 frame, e il calcolo e' sul frame: nessun keyframe CSS.
   const caretOn = focused && !sent && Math.floor(frame / 15) % 2 === 0;
 
+  /**
+   * CAM-05: mentre la risposta arriva, tutto quello che non e' la risposta
+   * scende a 0,62 e ci resta.
+   *
+   * NON E' UNA SFOCATURA, ed e' la differenza che vale la voce: sfocando, il
+   * fondo smette di essere leggibile e il quadro perde meta' del suo contenuto.
+   * Abbassando l'opacita' nessun pixel diventa illeggibile, cambia solo dove
+   * sta il contrasto pieno, e l'occhio ci va da solo. Il numero e' un
+   * pavimento: sotto, il contenuto attenuato scende sotto 3:1 una volta
+   * renderizzato e legge come sporco sul fondo invece che come un piano dietro.
+   */
+  const ATTN_FLOOR = 0.62;
+  const attn = interpolate(frame, [streamAt - 6, streamAt + 26], [1, ATTN_FLOOR], {
+    easing: Easing.inOut(Easing.cubic),
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
   const press = interpolate(
     frame,
     [sendClick, sendClick + 5, sendClick + 12],
@@ -225,6 +243,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     press,
     frame,
     branch,
+    attn,
   };
 
   return (
@@ -252,7 +271,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
             overflow: "hidden",
           }}
         >
-          <Board {...board} assistant={assistant} dimmed />
+          <Board {...board} assistant={assistant} boardOpacity={attn} dimmed />
         </div>
       </AbsoluteFill>
 
@@ -275,7 +294,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
             overflow: "hidden",
           }}
         >
-          <Board {...board} assistant={assistant} />
+          <Board {...board} assistant={assistant} boardOpacity={attn} />
 
           {/* Il cursore sta DENTRO la lastra, quindi prende la stessa
               prospettiva e appoggia sul piano. Uno disegnato sopra il quadro,

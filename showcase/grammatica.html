@@ -298,28 +298,27 @@
       <section>
         <p class="section-title">Forty-five seconds, one shot</p>
         <p class="note" style="margin:0 0 20px">
-          This is the film the vocabulary is for, and it is now over half written.
-          Seven of the thirteen beats render and join end to end. The six in grey
-          exist only as the demonstrations above, and they are printed that way
-          on purpose: same rule as the benches, a plan and a thing are not
-          allowed to look alike. Four of those seven used to be greyed too, not
-          because they were missing but because <code>PromptInput</code> drew a
-          slab of its own — 2200 wide at perspective 2800, its own chrome, its
-          own sidebar. Between two different screens the passage is a cut
-          whatever you do with it. It is one screen now.
+          This is the film the vocabulary is for. Eleven of the thirteen beats
+          render and join end to end; the two in grey exist only as the
+          demonstrations above, and they are printed that way on purpose — same
+          rule as the benches, a plan and a thing are not allowed to look alike.
+          The four that went in last are the hand: the cursor arrives on an arc,
+          grabs the card, drags it with weight, and the board answers in a chain
+          rather than all at once. A card that crosses on its own is an
+          animation; a card somebody picks up is a piece of software.
         </p>
         <div class="take">
           <div>f0000</div><div><b>CAM-01</b> the slab enters from off-frame and straightens, from <code>UI_MOCKUP_START_POSE</code> to <code>UI_MOCKUP_END_POSE</code><i class="tag">UIMockup</i></div>
           <div class="none">f0120</div><div class="none"><b>CAM-02</b> truck left: sidebar, board and panel separate because they sit at different depths<i class="tag">no scene gives its layers a translateZ</i></div>
-          <div class="none">f0240</div><div class="none"><b>CUR-01</b> the cursor arrives on an arc, overshoots the active card slightly and settles on it<i class="tag">Cursor.tsx exists, aimed at the composer</i></div>
-          <div class="none">f0330</div><div class="none"><b>CUR-04</b> it picks the card up and drags: three frames of lag, tilting into the direction of travel<i class="tag">not written</i></div>
+          <div>f0240</div><div><b>CUR-01</b> the cursor arrives on an arc, overshoots the active card slightly and settles on it<i class="tag">CardHandoff</i></div>
+          <div>f0330</div><div><b>CUR-04</b> it picks the card up and drags: three frames of lag, tilting into the direction of travel<i class="tag">CardHandoff</i></div>
           <div>f0450</div><div><b>CHR-01</b> the destination column opens the slot before the card arrives, the source closes behind<i class="tag">CardHandoff</i></div>
-          <div class="none">f0570</div><div class="none"><b>CHR-03</b> the column count drops, then the panel changes state six frames later. The delay is what reads as cause<i class="tag">not written</i></div>
+          <div>f0570</div><div><b>CHR-03</b> the card lands, then the count moves five frames later, then the card rewrites its own age. The delays are what read as cause<i class="tag">CardHandoff</i></div>
           <div>f0660</div><div><b>CAM-04</b> descent to macro onto the card just delivered. That is <code>CardFocus</code>, and it stays sharp because it is DOM<i class="tag">CardFocus</i></div>
           <div>f0780</div><div><b>TXT-01</b> the cursor reaches the composer and types with a person's pauses<i class="tag">PromptInput</i></div>
           <div>f0930</div><div><b>CUR-02</b> half a second of hesitation on the button, then <b>CUR-03</b> presses and the UI answers five frames later<i class="tag">PromptInput</i></div>
           <div>f0990</div><div><b>TXT-02</b> the answer arrives in chunks, and inside the visible area rather than under the composer<i class="tag">PromptInput</i></div>
-          <div class="none">f1140</div><div class="none"><b>CAM-05</b> everything that is not the answer drops to 0.62 opacity<i class="tag">not written</i></div>
+          <div>f1140</div><div><b>CAM-05</b> everything that is not the answer drops to 0.62 opacity<i class="tag">PromptInput</i></div>
           <div class="none">f1230</div><div class="none"><b>CAM-03</b> a short orbit shows the edge of the slab and stops at rest<i class="tag">not written</i></div>
           <div>f1350</div><div>End. At rest, so another scene can attach here without it showing</div>
         </div>
@@ -327,10 +326,11 @@
           What renders today is five scenes joined end to end, every join
           measured by <code>seam.sh</code>: UIMockup, CardHandoff, CardFocus,
           CardRelease, PromptInput. 1310 frames, 43.7 seconds, no cut anywhere in
-          them. The newest join is the cleanest of the four at 29 pixels, which
-          is what happens when both sides read the same geometry from the same
-          module instead of agreeing by hand. CardRelease is not a beat in this
-          list because this list is the plan and not the inventory.
+          them, and the four joins read 557, 64, 55 and 29 pixels. The last is
+          the cleanest, which is what happens when both sides take the same
+          geometry from the same module instead of agreeing by hand. CardRelease
+          is not a beat in this list because this list is the plan and not the
+          inventory.
         </p>
       </section>
 
@@ -340,8 +340,8 @@
           <table>
             <thead><tr><th>Bench</th><th>The failure it catches</th><th>Reading on the repo</th></tr></thead>
             <tbody>
-              <tr><td>seam.sh</td><td>A join that is really a cut in costume</td><td class="n">29 px against 59,842, 2064×</td></tr>
-              <tr><td>handoff-travel.sh</td><td>A card that does not actually cross. A freeze frame passes the other checks with full marks, and for months this one did not run at all on macOS, printing a diagnosis about the scene for a fault in itself</td><td class="n">153 px, monotonic centroid</td></tr>
+              <tr><td>seam.sh</td><td>A join that is really a cut in costume</td><td class="n">29 px against 59,895, 2065×</td></tr>
+              <tr><td>handoff-travel.sh</td><td>A card that does not actually cross. A freeze frame passes the other checks with full marks, and for months this one did not run at all on macOS, printing a diagnosis about the scene for a fault in itself</td><td class="n">210 px, monotonic centroid</td></tr>
               <tr><td>beats.sh</td><td>A promised beat that is not on screen. The answer was assembling under the composer</td><td class="n">2 → 8 → 10 words streamed</td></tr>
               <tr><td>fill-measure.sh</td><td>A frame that lets its edges die</td><td class="n">20 of 20 samples, four sides alive</td></tr>
               <tr><td>legibility.sh</td><td>Text that does not survive being scaled down</td><td class="n">holds under 640 px wide</td></tr>
@@ -983,7 +983,7 @@ M.seam={dur:240,draw:function(f,S){
               :mix(END,{yaw:-9,pitch:2.5,z:440,x:-170,y:70},E.inout(cl((f-120)/112)));
   pose(S,p);
   var at=f>=117&&f<=123;
-  S.hud((f<120?"UIMockup":"CardHandoff")+"   join at f120"+(at?"  ← now":"")+"   seam.sh: 559 px against 38,983 for the control cut, 70×");
+  S.hud((f<120?"UIMockup":"CardHandoff")+"   join at f120"+(at?"  ← now":"")+"   seam.sh: 557 px against 37,103 for the control cut, 67×");
 }};
 
 M.rest={dur:260,draw:function(f,S){
@@ -1177,9 +1177,9 @@ var CAT=[
  c:"In the repo: pushZ 96 to 1493.6 over 169 frames of inOut cubic, 2.35 times, with the translation coming out of centreOn. The demo above takes its translation from the same formula measured on its own stage, and it has to: with the repo numbers hardcoded on a stage of a different width the camera goes past the card and the frame ends black.",
  d:"focus-sharpness.sh. It compares the high-frequency energy of the card crop against the same content magnified from the wide shot: 2.09× on the real render, 1.03× on the fixture. Its first version compared the crop to a blurred copy of itself, scored the fixture 4.14× and passed it."},
 
-{fam:"cam",code:"CAM-05",p:1,t:"Attention by opacity",demo:"attn",src:"nothing in the repo does this yet",
+{fam:"cam",code:"CAM-05",p:1,t:"Attention by opacity",demo:"attn",src:"scenes/PromptInput.tsx",
  a:"Instead of blurring the rest, the rest drops in opacity. The eye goes where the contrast is full and no pixel becomes unreadable.",
- b:"One value applied to every layer that is not the subject. It used to live in theme.ts as BACKDROP_OPACITY, and that constant has been deleted: it was read by exactly one scene, which has since moved onto the shared slab and stopped reading it. A number no scene uses is a proposal wearing the clothes of a fact, which is the thing this page exists to refuse. The 0.62 lives here now, where the rest of the unwritten work lives.",
+ b:"One value applied to every layer that is not the subject. It used to live in theme.ts as BACKDROP_OPACITY and go unread by every scene, so it was deleted; a number no scene uses is a proposal wearing the clothes of a fact. It is back now because a scene finally does the thing: while the answer streams, the board above it, the earlier messages and the composer all go to 0.62, and the answer alone keeps full contrast.",
  c:"0.62. The demo goes down to it and then carries on to 0.25, because a floor you never touch is a number somebody wrote down: at 0.25 the attenuated content is under 3:1 and reads as dirt on the background rather than as a plane behind.",
  d:"A contrast check on the rendered frame, and that one is still missing: demo-check.py only holds the demonstration to the floor, verifying that it touches 0.62 and then goes under it. What nobody has measured yet is the ratio the attenuated layer actually lands on once rendered, which is the number the 0.62 is supposed to come from."},
 
@@ -1207,10 +1207,10 @@ var CAT=[
  c:"In the repo: the send lands at f271 and the bubble at f276, five frames apart. Under one the link disappears, over eight it stops reading as a consequence and starts reading as lag.",
  d:"click-gap.sh, and it is not told the answer: it finds both events in the render. The send is the first frame whose changed-pixel count blows past the window baseline, because the composer empties and the text leaves; the consequence is the first frame that climbs back above the quiet following it. Every threshold is a ratio inside that window, since the same renders read five to ten times higher on Linux. Measured f271 and f276, which is the f271 and f275 the source declares. It exits 1 on the four scenes with no click at all, and on a clip with the frames between the two events removed. That baseline used to be the median, and the median was wrong: once the camera stops during the performance — which is how it should be shot, nobody moves the camera while someone is typing — half the frames change nothing at all, the median is zero, and five times zero is any flicker. It reported a click at f181, with confidence, ninety frames before the real one. The baseline is the ninetieth percentile now."},
 
-{fam:"cur",code:"CUR-04",t:"Drag with weight",demo:"drag",src:"CardBox · lifted",
+{fam:"cur",code:"CUR-04",t:"Drag with weight",demo:"drag",src:"scenes/CardHandoff.tsx",
  a:"The dragged object lags the pointer and tilts into the direction of travel. Without the lag the card looks welded to the cursor.",
- b:"The card position is the cursor position three frames earlier: arithmetic on the frame, no stored state. The tilt comes from the difference between two samples.",
- c:"3 frames of lag, 0.11 degrees per pixel of speed, shadow from 18/30 to 44/74, border lit from the lift onward.",
+ b:"The card position is the cursor position three frames earlier: arithmetic on the frame, no stored state. The tilt comes from the difference between two samples. Getting this into a scene needed the pointer's position, not just its drawing, so Cursor.tsx now exports pointOnPath and keeps the drawing to itself — otherwise the scene would carry a second copy of the trajectory, equal to the first exactly as long as nobody touched one of them.",
+ c:"3 frames of lag, 0.11 degrees per pixel of speed, shadow from 18/30 to 44/74, border lit from the lift onward. In the film the grab is at f78 and the release at f178, and the card is not on a scripted path: it sits where the hand was three frames ago, so the trajectory belongs to the pointer and the card only follows it.",
  d:"demo-check.py: 0.00° at both ends against 5.50° mid-travel, and 51 px of lag behind the pointer at speed. A constant tilt is not a card in a hand, it is a crooked card."},
 
 {fam:"txt",code:"TXT-01",t:"Typing with human rhythm",demo:"type",src:"primitives/rhythm.ts",
@@ -1255,10 +1255,10 @@ var CAT=[
  c:"Delay equals distance over 1400, times 22 frames.",
  d:"demo-check.py ranks the cards by the frame they start on and by their distance from the change: the correlation is 1.00 in the first half and 0.43 in the second, over the same 24 frames of spread. Same duration, same easing, only the order changes, and the eye reads one as a space reacting and the other as a list scrolling."},
 
-{fam:"chr",code:"CHR-03",t:"State propagating",demo:"prop",src:"counts and panel",
+{fam:"chr",code:"CHR-03",t:"State propagating",demo:"prop",src:"scenes/CardHandoff.tsx",
  a:"A change in one place causes another somewhere else, after a delay. It is the delay that reads as cause.",
  b:"Three cascading windows on the same timeline. No events and no state: three different frame thresholds, so it stays a function of the frame.",
- c:"Card at f30, column count at f35, panel at f41. Five and six frames apart.",
+ c:"In the demo: card at f30, count at f35, panel at f41. In the film the third link is not the panel, and the reason came from looking at the render rather than at the source. At CardHandoff's pose the camera is already close enough that the detail panel runs off the right edge — the labels read and the values do not — and a link of the chain outside the frame is not a link. So the card lands at f178, the destination count moves at f183, and at f189 the card rewrites its own age from 12h to ora, which is what a real board does to something that just moved. Five and six frames, on an element that sits in the middle of the shot.",
  d:"demo-check.py reads the three changes off the DOM rather than off the source: f30, f35, f41 in the first half, and all three on f160 in the second. If two land on the same frame there is no chain, only three unrelated things changing together."},
 
 {fam:"chr",code:"CHR-04",p:1,t:"Before and after without a divider",demo:"ba",src:"build list · before-after",
@@ -1288,7 +1288,7 @@ var CAT=[
 {fam:"giu",code:"GIU-01",t:"Entering from the final pose",demo:"seam",src:"UI_MOCKUP_END_POSE",
  a:"The next scene begins exactly where the previous one stopped. Nothing happens on the join frame, and that is precisely the point.",
  b:"The pose lives in the shared module, not inside either scene. Two copies of the same pose stay equal exactly as long as nobody edits one.",
- c:"Four joins, all measured. UIMockup into CardHandoff: 559 pixels against 38,983 for the control cut, 70 times. CardHandoff into CardFocus: 32 against 45,071. CardFocus into CardRelease: 55 against 37,037. CardRelease into PromptInput: 29 against 59,842, which is 2064 times, and it is the cleanest of the four because it was the last one built and nothing about it was agreed by hand.",
+ c:"Four joins, all measured. UIMockup into CardHandoff: 557 pixels against 37,103 for the control cut, 67 times. CardHandoff into CardFocus: 64 against 45,082. CardFocus into CardRelease: 55 against 37,037. CardRelease into PromptInput: 29 against 59,895, which is 2065 times, and it is the cleanest of the four because it was the last one built and nothing about it was agreed by hand.",
  d:"seam.sh, and what makes it honest is the control beside it: the same last frame against a frame from the middle of the next scene, which is a real cut. If the two readings converge the script exits 2 and says the measurement separates nothing. It takes the pair as arguments, because a join exists for every adjacent couple."},
 
 {fam:"giu",code:"GIU-02",t:"The rest point",demo:"rest",src:"scripts/rest-point.sh",
