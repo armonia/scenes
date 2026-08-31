@@ -13,7 +13,12 @@
     "CAMPI. id = composition Remotion. slug = nome del file .mp4 e sorgente del",
     "<video> nella pagina. blurb = HTML, finisce nella pagina cosi' com'e'.",
     "fill = passa fill-measure. seamAfter = id della scena precedente nella",
-    "catena, e genera la misura della giunta fra le due."
+    "catena, e genera la misura della giunta fra le due.",
+    "",
+    "restAtEdges = la scena dichiara di stare ferma su tutti e due i bordi, e",
+    "rest-point.sh la boccia se non lo fa. Le altre le misura e le stampa senza",
+    "dare verdetti: UIMockup all'inizio NON e' ferma, la board si popola, e non",
+    "promette di esserlo."
   ],
   "scenes": [
     {
@@ -72,7 +77,8 @@
       "height": 1080,
       "fill": true,
       "seamAfter": "CardFocus",
-      "blurb": "The end of the film. The camera lets go of the card and comes back wide and frontal, with the board readable again, because a single take has to finish somewhere and finishing on a detail leaves the piece open. It is the one scene in the chain that reverses the push, and it is allowed to: a reversal reads as a cut where the join is <em>moving</em>, and both sides of this one are at rest. <code>rest-point.sh</code> measures that instead of taking it on trust, and it fails on <code>CardHandoff</code>, which deliberately does not start at rest."
+      "blurb": "The end of the film. The camera lets go of the card and comes back wide and frontal, with the board readable again, because a single take has to finish somewhere and finishing on a detail leaves the piece open. It is the one scene in the chain that reverses the push, and it is allowed to: a reversal reads as a cut where the join is <em>moving</em>, and both sides of this one are at rest. <code>rest-point.sh</code> measures that instead of taking it on trust, and it fails on <code>CardHandoff</code>, which deliberately does not start at rest.",
+      "restAtEdges": true
     }
   ]
 }

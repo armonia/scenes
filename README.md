@@ -152,9 +152,12 @@ edges. Five frames apart the signal separates. Its first control was wrong too:
 `CardHandoff` is documented as the scene that does not start at rest, and that is
 true of its *pose* and false of its *velocity* — it eases in and out, so it
 starts still like everything else. The control that works is the one `seam.sh`
-already uses: a pair taken from the middle of the same scene. Measured, every
-scene in the catalogue is at rest at both edges, so nothing in the chain has a
-forced order yet.
+already uses: a pair taken from the middle of the same scene. It asserts only on scenes that declare `restAtEdges` in
+`catalog.json`, and what counts as still is a ratio rather than a number: the
+same renders read five to ten times higher on Linux than on macOS, so a threshold
+tuned on one platform fails three scenes out of five on the other. An earlier
+version appeared to pass everything only because ffmpeg was consuming the loop's
+input and it was measuring a single scene.
 
 A bench for the pause before the send was written and then deleted, which is
 worth recording because the reason generalises. Measuring stillness by
