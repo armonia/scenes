@@ -1,0 +1,66 @@
+{
+  "_comment": [
+    "L'ELENCO DELLE SCENE, UNA VOLTA SOLA. Prima di questo file una scena nuova",
+    "andava dichiarata in cinque posti: Root.tsx, il passo di render del",
+    "workflow, i suoi banchi, showcase-build.sh e la pagina. Dimenticarne uno",
+    "non rompeva niente: la scena semplicemente non compariva online, e il verde",
+    "della CI diceva che era tutto a posto. Ora si aggiunge qui e negli altri",
+    "posti arriva da sola.",
+    "",
+    "E' JSON e non TypeScript perche' lo leggono anche gli script di shell e il",
+    "workflow, che non hanno un compilatore: JSON.parse esiste ovunque.",
+    "",
+    "CAMPI. id = composition Remotion. slug = nome del file .mp4 e sorgente del",
+    "<video> nella pagina. blurb = HTML, finisce nella pagina cosi' com'e'.",
+    "fill = passa fill-measure. seamAfter = id della scena precedente nella",
+    "catena, e genera la misura della giunta fra le due."
+  ],
+  "scenes": [
+    {
+      "id": "PromptInput",
+      "slug": "prompt-input",
+      "title": "Prompt input",
+      "durationInFrames": 390,
+      "fps": 30,
+      "width": 1920,
+      "height": 1080,
+      "fill": false,
+      "blurb": "Four beats in one unbroken shot: the cursor arrives, the prompt is typed with uneven human rhythm, it is sent, and the answer streams back word by word. The app behind it is real product UI — its own tokens, its own radii, the system font stack — not a drawing of it."
+    },
+    {
+      "id": "UIMockup",
+      "slug": "ui-mockup",
+      "title": "UI mockup",
+      "durationInFrames": 300,
+      "fps": 30,
+      "width": 1920,
+      "height": 1080,
+      "fill": true,
+      "blurb": "A slab of real product UI enters from off-frame onto an inclined 3D plane, and the camera rotates toward frontal while the board fills in. It ends more frontal than it started, so the next scene can enter from this final state instead of cutting to it."
+    },
+    {
+      "id": "CardHandoff",
+      "slug": "card-handoff",
+      "title": "Card handoff",
+      "durationInFrames": 240,
+      "fps": 30,
+      "width": 1920,
+      "height": 1080,
+      "fill": true,
+      "seamAfter": "UIMockup",
+      "blurb": "This one starts where the last one stopped. Not roughly: both scenes read the same camera pose from the same module, so the first frame here <em>is</em> the last frame above, and <code>seam.sh</code> proves it by diffing the two — the join comes out 32× closer than a deliberate cut taken from the middle of this same scene, which is the control that stops the number from being decoration. The card lifts, crosses in an arc and lands, and the column below only closes up while it is landing. Snapping the gap shut on the frame it leaves would be a cut wearing an animation costume."
+    },
+    {
+      "id": "CardFocus",
+      "slug": "card-focus",
+      "title": "Card focus",
+      "durationInFrames": 170,
+      "fps": 30,
+      "width": 1920,
+      "height": 1080,
+      "fill": true,
+      "seamAfter": "CardHandoff",
+      "blurb": "The third link. It enters from the pose <code>CardHandoff</code> stops in and descends onto the card that scene has just delivered, magnifying it 2.35 times. One measured join made the no-cuts rule true of a pair; two make it a property of the sequence, and <code>seam.sh</code> now takes the pair as arguments because a join exists for every adjacent couple. Across the four scenes yaw runs -18, -9, -4, 0 and pitch 5, 2.5, 1.2, 0 without ever reversing: a join reads as a cut when the derivative flips, even when the pixels match. The text holds up under the push-in because the slab is DOM and gets rasterised at the final size, and <code>focus-sharpness.sh</code> measures that at 2.09× against the same content magnified from the wide shot, 1.03× on a fixture built to be exactly the defect it looks for."
+    }
+  ]
+}
