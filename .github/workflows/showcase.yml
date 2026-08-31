@@ -151,8 +151,13 @@ jobs:
           # pausa che certifica sarebbe solo il fondo.
           ./scripts/hesitation.sh video/out/prompt-input.mp4 95 215 >/dev/null 2>&1; rc=$?
           [ "$rc" = 1 ] || { echo "hesitation.sh sulla battitura: atteso 1, ottenuto $rc" >&2; exit 1; }
+          # Su un fermo immagine esce 1 e non 2, e va bene cosi': per questo banco
+          # una scena immobile non e' "misura impossibile", e' una scena senza
+          # pausa, perche' la pausa e' definita rispetto al movimento che le sta
+          # intorno e li' non ce n'e'. Quello che il controllo fissa e' che non
+          # passi, e con quale codice.
           ./scripts/hesitation.sh /tmp/fermo.mp4 30 120 >/dev/null 2>&1; rc=$?
-          [ "$rc" = 2 ] || { echo "hesitation.sh su un fermo immagine: atteso 2, ottenuto $rc" >&2; exit 1; }
+          [ "$rc" = 1 ] || { echo "hesitation.sh su un fermo immagine: atteso 1, ottenuto $rc" >&2; exit 1; }
           echo "hesitation.sh non trova pause dove non ce ne sono."
 
       # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa

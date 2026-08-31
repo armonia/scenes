@@ -47,8 +47,16 @@ SRC="${1:-$ROOT/video/out/prompt-input.mp4}"
 # finisce poco prima di 200; l'invio cade attorno a 250.
 DA="${2:-150}"
 A="${3:-270}"
-# Sotto questa frazione di pixel diversi due fotogrammi consecutivi sono fermi.
-QUIETE=0.02
+# QUANTO E' "FERMO" NON SI PUO' SCRIVERE QUI, e averci provato ha fatto uscire
+# rossa la CI. Con una soglia assoluta tarata su macOS (0,02%) su Linux non
+# passava un fotogramma: lo stesso render, letto da ImageMagick 6 invece che 7,
+# ha un fondo piu' alto. rest-point.sh sullo stesso video legge 0,000% qui e
+# 0,016% li', e a meta' scena 0,434% contro 3,201%. Le due scale non sono
+# confrontabili, i rapporti si'.
+#
+# Quindi la soglia si ricava dalla finestra stessa, e va messa FRA i due gruppi:
+# media geometrica fra decimo e cinquantesimo percentile. Una frazione fissa
+# della mediana non basta, l'ho provata e mancava il bersaglio dall'altra parte.
 # La pausa dichiarata e' 24 frame. Sotto i dieci non si sente, e sotto questa
 # soglia il banco boccia.
 MINIMO=10
@@ -96,10 +104,19 @@ righe=$(grep -c '' "$TMP/diff.txt")
 # La sostituzione di comando `$(...)` regge un heredoc; la sostituzione di
 # processo `< <(...)` no, in bash 3.2. E' lo stesso inciampo di
 # handoff-travel.sh, e ci sono ricascato scrivendo questo file.
-RES=$(python3 - "$TMP/diff.txt" "$QUIETE" "$DA" <<'PYEND'
+RES=$(python3 - "$TMP/diff.txt" "$DA" <<'PYEND'
 import sys
 vals = [float(x) for x in open(sys.argv[1])]
-q = float(sys.argv[2]); base = int(sys.argv[3])
+base = int(sys.argv[2])
+srt = sorted(vals); n = len(srt)
+def pc(p): return srt[min(n - 1, int(n * p / 100))] if n else 0.0
+# La soglia sta FRA i due gruppi, non a una frazione fissa di uno dei due.
+# Misurato su prompt-input: la pausa sta a 0,02%, la battitura a 0,04-0,08%, e
+# il fondo non e' mai zero (0,0149%). Il decimo percentile cade nel gruppo
+# fermo, il cinquantesimo in quello che si muove: la loro media geometrica cade
+# in mezzo, e ci cade anche quando l'intera scala si sposta, come succede su
+# Linux dove le stesse letture sono circa sette volte piu' alte.
+q = (pc(10) * pc(50)) ** 0.5
 runs, start = [], None
 for i, v in enumerate(vals):
     if v <= q:
@@ -110,16 +127,16 @@ if start is not None: runs.append((len(vals) - start, start))
 runs.sort(reverse=True)
 best = runs[0] if runs else (0, 0)
 second = runs[1][0] if len(runs) > 1 else 0
-print(best[0], base + best[1], second)
+print(best[0], base + best[1], second, f"{q:.4f}", f"{pc(50):.4f}")
 PYEND
 )
 set -- $RES
-LUNGA="${1:-}"; INIZIO="${2:-}"; SECONDA="${3:-}"
+LUNGA="${1:-}"; INIZIO="${2:-}"; SECONDA="${3:-}"; SOGLIA="${4:-}"; MEDIANA="${5:-}"
 case "${LUNGA:-}" in ''|*[!0-9]*) echo "analisi delle corse fallita" >&2; exit 3 ;; esac
 
 echo "Pausa prima dell'invio, misurata su $(basename "$SRC")."
-echo "Finestra dal fotogramma $DA al $A. Fermo vuol dire sotto ${QUIETE}% di pixel"
-echo "cambiati fra due fotogrammi consecutivi."
+echo "Finestra dal fotogramma $DA al $A. Mediana ${MEDIANA}%, soglia del fermo"
+echo "${SOGLIA}%: esce dai percentili della finestra, non e' scritta nello script."
 echo
 printf '  %-38s %s\n' "corsa ferma piu' lunga" "$LUNGA frame, da f$INIZIO"
 printf '  %-38s %s\n' "seconda corsa ferma (controllo)" "$SECONDA frame"
