@@ -56,7 +56,7 @@ that is 3px off reads as a mockup.
 |---|---|
 | `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/` |
 | `scripts/` | Six things, all run by hand. Four measurements, one review page, one showcase build. See below |
-| `showcase/` | The public page. `index.html` is committed, the renders beside it are not: `showcase-build.sh` puts them there |
+| `showcase/` | The public pages. `index.html` and `grammatica.html` are committed, the renders beside them are not: `showcase-build.sh` puts them there |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
 | `ref/` | Reference commercials and their contact sheets. **Not in git**, see below |
 
@@ -159,9 +159,14 @@ npx remotion render <CompositionId> out/<name>.mp4
 
 ## The showcase page
 
-`showcase/index.html` is the public page: the three scenes playing
-(`PromptInput`, `UIMockup`, `CardHandoff`), the four rules, the license note. It
-carries no build step and no dependency, so what you open locally is what ships.
+`showcase/index.html` is the public page: the four scenes playing
+(`PromptInput`, `UIMockup`, `CardHandoff`, `CardFocus`), the four rules, the
+license note. Beside it, `showcase/grammatica.html` is the catalogue: twenty-six
+movements with a live demo each, the numbers they start from, and the bench that
+can fail them. The demos are browser re-creations of the slab, not the renders,
+which is the point of keeping them next to the renders rather than instead of
+them. Neither page carries a build step or a dependency, so what you open
+locally is what ships.
 
 Live at <https://scenes.armonia.io>.
 

@@ -1,0 +1,1264 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Grammatica della lastra — scenes</title>
+    <meta
+      name="description"
+      content="Ventisei movimenti per un commercial di prodotto girato in una sola inquadratura. Ogni voce ha una demo che gira la lastra vera, i numeri con cui parte e il banco che la puo' bocciare."
+    />
+    <meta property="og:title" content="Grammatica della lastra" />
+    <meta
+      property="og:description"
+      content="Il vocabolario delle scene di armonia/scenes: movimenti continui su UI vera, niente stacchi, ognuno con la misura che lo smentisce."
+    />
+  </head>
+  <body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+/* ---------------- token: la stanza (chiara o scura). La lastra no: quella
+   e' uno schermo e resta scura in tutti e due i temi. ---------------- */
+:root{
+  --ground:#07080B; --ground-2:#0B0D12; --raise:#10131A;
+  --ink:#E6E8EC; --ink-2:#A8AEB8; --ink-3:#787E88;
+  --line:rgba(230,232,236,.12); --line-2:rgba(230,232,236,.24);
+  --accent:#4D94FF; --warn:#D97757; --ok:#34D399;
+  --floor:#0A0C11;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Instrument Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1200px;margin:0 auto;padding:0 26px}
+@media (max-width:680px){.wrap{padding:0 16px}}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.lab{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+
+/* ---------------- testata ---------------- */
+.top{padding:34px 0 0}
+.topbar{display:flex;gap:16px;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line-2);padding-bottom:9px;flex-wrap:wrap}
+.topbar strong{font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"wdth" 88,"wght" 700;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+h1{
+  font-family:"Bricolage Grotesque",sans-serif;
+  font-variation-settings:"opsz" 96,"wdth" 82,"wght" 750;
+  font-size:clamp(40px,7.4vw,92px); line-height:.92; letter-spacing:-.028em;
+  margin:30px 0 0; text-wrap:balance; max-width:15ch;
+}
+h1 b{font-weight:inherit;color:var(--accent)}
+.lede{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:36px;margin-top:28px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+@media (max-width:860px){.lede{grid-template-columns:1fr;gap:20px}}
+.lede p{margin:0 0 13px;max-width:62ch;font-size:17px;color:var(--ink-2)}
+.lede p b{color:var(--ink);font-weight:600}
+.card-note{border:1px solid var(--line);background:var(--ground-2);padding:18px 20px;align-self:start}
+.card-note h4{margin:0 0 10px;font-size:12px;font-family:"JetBrains Mono",monospace;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
+.card-note ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.card-note li{font-size:14px;line-height:1.45;color:var(--ink-2);padding-left:16px;position:relative}
+.card-note li::before{content:"";position:absolute;left:0;top:.65em;width:7px;height:1px;background:var(--warn)}
+
+/* ---------------- rifiutato ---------------- */
+.reject{margin-top:34px;border:1px solid var(--line);border-left:2px solid var(--warn);background:var(--ground-2);padding:20px 24px}
+.reject h3{margin:0 0 6px;font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"wdth" 86,"wght" 700;font-size:17px}
+.reject p{margin:0 0 12px;font-size:14.5px;color:var(--ink-2);max-width:78ch}
+.reject-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:14px}
+@media (max-width:760px){.reject-grid{grid-template-columns:1fr}}
+.reject-grid div{background:var(--ground-2);padding:11px 14px}
+.reject-grid b{display:block;font-family:"JetBrains Mono",monospace;font-size:19px;color:var(--warn);font-weight:500}
+.reject-grid span{display:block;font-size:12.5px;color:var(--ink-3);margin-top:3px;line-height:1.4}
+
+/* ---------------- barra famiglie ---------------- */
+.rail{position:sticky;top:0;z-index:40;background:var(--ground);border-bottom:1px solid var(--line-2);margin-top:40px}
+.railin{display:flex;gap:7px;align-items:center;padding:10px 0;overflow-x:auto;scrollbar-width:none}
+.railin::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;appearance:none;background:transparent;border:1px solid var(--line-2);color:var(--ink);
+  font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;padding:7px 11px;cursor:pointer}
+.chip:hover{background:var(--ground-2)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.chip b{font-weight:400;opacity:.5;margin-left:5px}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.railin .gap{flex:1 1 auto;min-width:6px}
+
+/* ---------------- famiglia ---------------- */
+.fam{padding-top:56px}
+.famhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line-2);padding-bottom:8px}
+.famhead h2{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"opsz" 72,"wdth" 84,"wght" 720;font-size:clamp(23px,3.2vw,34px);letter-spacing:-.02em}
+.famhead .k{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--accent);letter-spacing:.1em}
+.famhead p{margin:0 0 0 auto;max-width:52ch;font-size:14px;color:var(--ink-3);text-align:right}
+@media (max-width:900px){.famhead p{margin-left:0;text-align:left}}
+
+/* ---------------- la voce ---------------- */
+.mv{padding:30px 0 6px;border-bottom:1px solid var(--line)}
+.mvhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.mvhead .code{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);letter-spacing:.06em}
+.mvhead h3{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"wdth" 90,"wght" 660;font-size:21px;letter-spacing:-.012em}
+.mvhead .from{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;color:var(--ink-3);border:1px solid var(--line);padding:3px 8px;white-space:nowrap}
+
+/* palco */
+.stage{position:relative;aspect-ratio:16/9;background:var(--floor);overflow:hidden;border:1px solid var(--line-2);container-type:inline-size}
+.room{position:absolute;inset:0;perspective:2400px;perspective-origin:50% 46%}
+.rig{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
+.hud{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding:7px 10px;
+  font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.06em;color:rgba(232,236,244,.5);
+  background:linear-gradient(to top,rgba(0,0,0,.62),rgba(0,0,0,0));pointer-events:none;z-index:6}
+.hud .f{color:var(--accent);flex:0 0 auto}
+.hud>span{flex:0 0 auto;white-space:nowrap}
+.hud .rd{flex:1 1 auto;text-align:right;color:rgba(232,236,244,.66);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scrub{position:absolute;left:0;right:0;bottom:0;height:16px;z-index:7;cursor:ew-resize;touch-action:none}
+.scrub::before{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.14)}
+.scrub i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent);width:0}
+.stage.rm .scrub{cursor:pointer}
+
+/* spec */
+.spec{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--line);border-top:0}
+@media (max-width:1000px){.spec{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.spec{grid-template-columns:1fr}}
+.spec>div{padding:14px 16px;border-right:1px solid var(--line)}
+.spec>div:last-child{border-right:0}
+@media (max-width:1000px){.spec>div:nth-child(2n){border-right:0}.spec>div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+@media (max-width:600px){.spec>div{border-right:0;border-bottom:1px solid var(--line)}.spec>div:last-child{border-bottom:0}}
+.spec dt{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px}
+.spec dd{margin:0;font-size:14px;line-height:1.5;color:var(--ink-2)}
+.spec .bench dt{color:var(--ok)}
+.spec code{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--ink);background:var(--ground-2);padding:1px 4px;border:1px solid var(--line)}
+
+/* ---------------- sezioni finali ---------------- */
+.sec{padding-top:62px}
+.sechead{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line-2);padding-bottom:8px;flex-wrap:wrap}
+.sechead h2{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-variation-settings:"opsz" 72,"wdth" 84,"wght" 720;font-size:clamp(23px,3.2vw,34px);letter-spacing:-.02em}
+.sechead .k{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--accent);letter-spacing:.1em}
+.tbl{width:100%;border-collapse:collapse;border:1px solid var(--line);border-top:0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.tbl td:first-child{color:var(--ink);font-weight:500}
+.tbl td.n{font-family:"JetBrains Mono",monospace;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tblwrap{overflow-x:auto}
+.take{display:grid;grid-template-columns:88px 1fr;border:1px solid var(--line);border-top:0}
+.take>div{padding:12px 15px;border-bottom:1px solid var(--line)}
+.take>div:nth-child(odd){border-right:1px solid var(--line);font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--accent);font-variant-numeric:tabular-nums}
+.take>div:nth-child(even){font-size:14px;color:var(--ink-2)}
+.take b{color:var(--ink);font-weight:600}
+footer{margin-top:70px;border-top:1px solid var(--line-2);padding:22px 0 62px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+footer p{margin:0;font-size:13px;color:var(--ink-3);max-width:64ch}
+footer a{color:var(--ink)}
+
+/* ================= LA LASTRA =================
+   Geometria da video/src/primitives/slab.ts, token da video/src/theme.ts,
+   contenuto da SlabChrome.tsx. Font di sistema, raggi 8/6/4. */
+.slab{
+  position:absolute;left:-1200px;top:-370px;width:2400px;height:1200px;
+  background:hsl(222 16% 8.5%); transform-style:preserve-3d;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  color:#e6e8ec;
+}
+.edge{position:absolute;left:-1206px;top:-376px;width:2412px;height:1212px;background:#05060a;
+  transform:translateZ(-30px);box-shadow:0 90px 180px rgba(0,0,0,.75)}
+.glow{position:absolute;left:-1500px;top:826px;width:3000px;height:1200px;transform-origin:50% 0%;transform:rotateX(76deg);
+  background:radial-gradient(ellipse at 50% 0%,rgba(77,148,255,.55),rgba(77,148,255,0) 66%);opacity:0;filter:blur(22px)}
+.hdr{position:absolute;left:0;right:0;top:0;height:58px;background:hsl(222 15% 10%);border-bottom:1px solid hsl(220 11% 18%);
+  display:flex;align-items:center;gap:12px;padding:0 20px}
+.dots{display:flex;gap:8px;margin-right:10px}
+.dots i{width:13px;height:13px;border-radius:7px;display:block}
+.tab{display:flex;align-items:center;height:38px;padding:0 16px;font-size:18px;color:#8a9099;border:1px solid transparent;border-radius:6px}
+.tab.on{color:#e6e8ec;background:hsl(220 13% 14%);border-color:hsl(220 11% 18%)}
+.wm{margin-left:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:17px;color:#7d838d;letter-spacing:.5px}
+.side{position:absolute;left:0;top:58px;bottom:0;width:280px;background:hsl(222 14% 11%);border-right:1px solid hsl(220 11% 18%);
+  padding:20px 0;display:flex;flex-direction:column;gap:2px}
+.org{padding:0 18px 16px;font-size:14px;letter-spacing:1.2px;color:#7d838d;border-bottom:1px solid hsl(220 11% 18%);margin-bottom:8px}
+.nav{display:flex;align-items:center;gap:14px;height:44px;margin:0 10px;padding:0 14px;font-size:20px;color:#aab0ba;border-radius:6px}
+.nav.on{background:hsl(220 12% 17%);color:#e6e8ec}
+.nav .ic{font-size:16px;opacity:.7}
+.nav .pip{margin-left:auto;width:7px;height:7px;border-radius:4px;background:#4d94ff}
+.rec{padding:16px 18px 8px;font-size:13px;letter-spacing:1.1px;color:#7d838d;margin-top:12px}
+.recit{display:flex;align-items:center;gap:12px;height:40px;margin:0 10px;padding:0 14px;font-size:18px;color:#aab0ba}
+.recit .sw{width:16px;height:16px;border-radius:4px;background:hsl(220 10% 24%)}
+.colh{position:absolute;height:43px;display:flex;align-items:flex-start;gap:10px;border-bottom:1px solid hsl(220 11% 18%)}
+.colh .nm{font-size:18px;color:#8a9099;letter-spacing:.3px}
+.colh .cnt{font-size:14px;color:#7d838d;background:hsl(220 13% 14%);border:1px solid hsl(220 11% 18%);border-radius:10px;padding:2px 9px}
+.card{position:absolute;background:hsl(222 14% 11%);border:1px solid hsl(220 11% 18%);border-radius:8px;padding:16px 18px;
+  display:flex;flex-direction:column;gap:12px}
+.card.act{background:hsl(220 13% 14%);border-color:hsl(220 10% 24%);box-shadow:0 4px 20px rgba(0,0,0,.32)}
+.card .r1{display:flex;align-items:center;gap:10px}
+.tg{height:22px;padding:0 10px;border-radius:11px;font-size:13px;display:flex;align-items:center;letter-spacing:.3px}
+.age{margin-left:auto;font-size:14px;color:#7d838d}
+.ttl{font-size:19px;line-height:1.4;color:#e6e8ec}
+.ttl.done{color:#8a9099;text-decoration:line-through}
+.pbar{height:3px;background:hsl(220 11% 18%);border-radius:2px;overflow:hidden}
+.pbar i{display:block;height:100%;width:62%;background:#4d94ff}
+.add{position:absolute;height:42px;display:flex;align-items:center;gap:10px;padding:0 14px;border:1px dashed hsl(220 11% 18%);
+  border-radius:6px;font-size:17px;color:#7d838d;opacity:.7}
+.panel{position:absolute;right:0;top:58px;bottom:0;width:420px;background:hsl(222 14% 11%);border-left:1px solid hsl(220 11% 18%);
+  padding:24px 22px;display:flex;flex-direction:column;gap:18px;overflow:hidden}
+.panel .pt{font-size:22px;color:#e6e8ec}
+.panel .prow{display:flex;justify-content:space-between;font-size:16px;color:#969ca6;padding:7px 0;border-bottom:1px solid hsl(220 11% 18%)}
+.panel .prow span:last-child{color:#ccced4}
+.panel .pd{font-size:15px;line-height:1.55;color:#969ca6}
+.metric{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:56px;letter-spacing:-.02em;color:#e6e8ec;font-variant-numeric:tabular-nums}
+.composer{position:absolute;left:304px;right:444px;bottom:36px;height:96px;background:hsl(220 13% 14%);border:1px solid hsl(220 10% 24%);
+  border-radius:8px;padding:0 22px;display:flex;align-items:center;gap:12px;font-size:22px;color:#e6e8ec;box-shadow:0 -8px 40px rgba(0,0,0,.5)}
+.composer .ph{color:#7d838d}
+.caret{width:2px;height:28px;background:#4d94ff;display:inline-block}
+.send{margin-left:auto;height:52px;padding:0 26px;border-radius:6px;background:#4d94ff;color:#08111f;font-size:19px;
+  display:flex;align-items:center;font-weight:600}
+.send.press{background:#2f78e6;transform:translateY(2px)}
+.thread{position:absolute;left:304px;right:444px;bottom:150px;display:flex;flex-direction:column;gap:16px;align-items:stretch}
+.msgu{align-self:flex-end;max-width:72%;background:hsl(220 13% 14%);border:1px solid hsl(220 10% 24%);border-radius:8px;
+  padding:18px 22px;font-size:21px;line-height:1.5;color:#e6e8ec}
+.stream{padding:20px 22px;background:hsl(222 14% 11%);border:1px solid hsl(220 11% 18%);
+  border-radius:8px;font-size:21px;line-height:1.5;color:#ccced4;min-height:26px}
+.cur{position:absolute;width:52px;height:76px;margin-left:-6px;margin-top:-4px;pointer-events:none;z-index:9}
+.cur svg{display:block;width:100%;height:100%;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+.cur.ghost svg path{fill:#f87171;opacity:.55}
+.trace{position:absolute;left:0;top:0;width:2400px;height:1200px;pointer-events:none;overflow:visible}
+.fly{position:absolute;z-index:8}
+.veil{position:absolute;inset:0;background:hsl(222 16% 8.5%);opacity:0;pointer-events:none}
+
+/* marker: la croce sul soggetto (dentro la lastra, quindi grande) e quella
+   sull'origine della prospettiva (sul palco, quindi piccola). */
+.mk{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;pointer-events:none;z-index:10;color:#4d94ff}
+.mk::before,.mk::after{content:"";position:absolute;background:currentColor}
+.mk::before{left:0;right:0;top:29px;height:6px}
+.mk::after{top:0;bottom:0;left:29px;width:6px}
+.origin{position:absolute;left:50%;top:46%;width:26px;height:26px;margin:-13px 0 0 -13px;color:#f87171;z-index:11;pointer-events:none}
+.origin::before,.origin::after{content:"";position:absolute;background:currentColor}
+.origin::before{left:0;right:0;top:12px;height:2px}
+.origin::after{top:0;bottom:0;left:12px;width:2px}
+.graph{position:absolute;right:9px;top:9px;width:32%;max-width:290px;z-index:8;display:block;
+  background:rgba(4,6,10,.62);border:1px solid rgba(255,255,255,.16)}
+
+@media (prefers-reduced-motion:reduce){.rig{transition:none}}
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="topbar">
+      <strong>Grammatica della lastra</strong>
+      <a class="lab" href="./" style="text-decoration:none;border-bottom:1px solid var(--line-2);padding-bottom:2px">&larr; le scene</a>
+      <span class="lab">26 voci &middot; 30 fps</span>
+    </div>
+
+    <h1>Ventisei movimenti, <b>nessuno stacco</b></h1>
+
+    <div class="lede">
+      <div>
+        <p>Questo è il vocabolario di un commercial di prodotto software girato in una sola inquadratura. Non sono transizioni: una transizione la scegli fra due clip già chiuse, <b>un movimento invece porta il film da uno stato al successivo senza che ci sia una giunta da nascondere</b>.</p>
+        <p>Ogni voce sta dentro le quattro regole del repo, e ognuna porta con sé il controllo che la può bocciare. È la parte che di solito manca: un effetto senza un banco che lo smentisca resta un'opinione.</p>
+        <p>Le demo qui sotto non sono disegni di UI. Girano la lastra vera: geometria da <code class="mono">slab.ts</code>, token da <code class="mono">theme.ts</code>, contenuto da <code class="mono">SlabChrome.tsx</code>, font di sistema e raggi 8/6/4. Ogni fotogramma è funzione del numero di frame, quindi puoi trascinare la barra sotto ogni demo e fermarti dove vuoi.</p>
+      </div>
+      <aside class="card-note">
+        <h4>Le quattro regole</h4>
+        <ul>
+          <li><b>Frame-locked.</b> Solo <code class="mono">useCurrentFrame()</code>. Niente keyframe CSS, niente rAF, niente orologio di sistema.</li>
+          <li><b>Progress da 0 a 1.</b> Ogni scena accetta un progress normalizzato, così una timeline padre può guidarla.</li>
+          <li><b>Niente tagli.</b> Le scene si concatenano per trasformazione continua, e ognuna entra dalla posa in cui si ferma la precedente.</li>
+          <li><b>UI vera.</b> Lastre del prodotto su piani inclinati, con i suoi token. Un mockup sbagliato di 3px legge come mockup.</li>
+        </ul>
+      </aside>
+    </div>
+  </header>
+
+  <section class="reject">
+    <h3>Perché la prima versione di questo catalogo era da buttare</h3>
+    <p>Il catalogo che ti avevo dato raccoglieva wipe geometrici, lamelle sfalsate, flip in prospettiva, dissolvenze a blocchi e whip pan. Quella roba era già stata contata e scartata dentro questo repo: è il gruppo <em>Transitions</em> degli 81 template dell'ecosistema, e dodici di quelle arrivano gratis con <code class="mono">@remotion/transitions</code>. Anche il ripiego che stavo per fare, shader con dispersione e campi di particelle, finiva nel gruppo <em>Backgrounds &amp; FX</em>: stesso secchio, solo più lucido.</p>
+    <p>La differenza non è la difficoltà tecnica, è l'unità di misura. Il template è una clip che finisce e stacca. Qui l'unità è una scena che deve poter entrare da quella prima e uscire verso quella dopo, e questo cambia quali movimenti hanno senso esistere.</p>
+    <div class="reject-grid">
+      <div><b>81</b><span>template nel catalogo più grande dell'ecosistema, contati in CATALOG.md</span></div>
+      <div><b>9</b><span>di quegli 81 sono modi diversi di rivelare un logo</span></div>
+      <div><b>12</b><span>sono transizioni che Remotion regala già di suo</span></div>
+    </div>
+  </section>
+
+  <nav class="rail" aria-label="Filtro per famiglia">
+    <div class="wrap railin">
+      <button class="chip" data-fam="all" aria-pressed="true">Tutte <b>26</b></button>
+      <button class="chip" data-fam="cam" aria-pressed="false">Camera <b>6</b></button>
+      <button class="chip" data-fam="cur" aria-pressed="false">Cursore <b>4</b></button>
+      <button class="chip" data-fam="txt" aria-pressed="false">Testo e dati <b>5</b></button>
+      <button class="chip" data-fam="chr" aria-pressed="false">Coreografia <b>4</b></button>
+      <button class="chip" data-fam="mat" aria-pressed="false">Materia <b>3</b></button>
+      <button class="chip" data-fam="giu" aria-pressed="false">Giunte <b>4</b></button>
+      <span class="gap"></span>
+      <button class="chip" id="pause" aria-pressed="false">Ferma tutto</button>
+    </div>
+  </nav>
+
+  <main id="cat"></main>
+
+  <section class="sec" id="take">
+    <div class="sechead">
+      <span class="k">TAKE</span>
+      <h2>Quarantacinque secondi, una sola inquadratura</h2>
+      <p class="lab" style="margin-left:auto">1350 frame a 30 fps</p>
+    </div>
+    <div class="take">
+      <div>f0000</div><div><b>CAM-01</b> la lastra entra da fuori campo e si raddrizza, da <code class="mono">UI_MOCKUP_START_POSE</code> a <code class="mono">UI_MOCKUP_END_POSE</code></div>
+      <div>f0120</div><div><b>CAM-02</b> carrello a sinistra: sidebar, board e pannello si separano perché stanno a profondità diverse</div>
+      <div>f0240</div><div><b>CUR-01</b> il cursore entra in arco, supera di poco la card attiva e ci si posa</div>
+      <div>f0330</div><div><b>CUR-04</b> la prende e la trascina: la card resta indietro di tre frame e si inclina nella direzione del moto</div>
+      <div>f0450</div><div><b>CHR-01</b> la colonna di arrivo apre il varco prima che la card arrivi, quella di partenza si richiude dietro</div>
+      <div>f0570</div><div><b>CHR-03</b> il conteggio della colonna cala, poi il pannello cambia stato sei frame dopo. Il ritardo è quello che legge come causa</div>
+      <div>f0660</div><div><b>CAM-04</b> discesa al macro sulla card appena posata: è <code class="mono">CardFocus</code>, e resta nitida perché è DOM e non uno screenshot</div>
+      <div>f0780</div><div><b>TXT-01</b> il cursore raggiunge il composer e scrive con le pause di una persona</div>
+      <div>f0930</div><div><b>CUR-02</b> esita mezzo secondo sul pulsante, poi <b>CUR-03</b> preme e la UI risponde due frame dopo</div>
+      <div>f0990</div><div><b>TXT-02</b> la risposta arriva a blocchi, e arriva dentro l'area visibile, non sotto al composer</div>
+      <div>f1140</div><div><b>CAM-05</b> tutto quello che non è la risposta scende a 0,62 di opacità</div>
+      <div>f1230</div><div><b>CAM-03</b> orbita corta che scopre lo spessore della lastra e si ferma in posa di riposo</div>
+      <div>f1350</div><div>Fine. Ferma, quindi un'altra scena può attaccarsi qui senza che si veda</div>
+    </div>
+  </section>
+
+  <section class="sec" id="benches">
+    <div class="sechead">
+      <span class="k">BENCH</span>
+      <h2>I banchi, e cosa bocciano</h2>
+    </div>
+    <div class="tblwrap">
+      <table class="tbl">
+        <thead><tr><th>Banco</th><th>Il modo di fallire che intercetta</th><th>Misura sul repo</th></tr></thead>
+        <tbody>
+          <tr><td>seam.sh</td><td>Una giunta che in realtà è uno stacco travestito</td><td class="n">552 px contro 18.019, separazione 32×</td></tr>
+          <tr><td>handoff-travel.sh</td><td>Una card che non attraversa davvero: un fermo immagine passa gli altri controlli a pieni voti. Per mesi non è partito affatto su macOS, e la diagnosi che stampava era sulla scena invece che su sé stesso</td><td class="n">154 px, centroide monotono</td></tr>
+          <tr><td>beats.sh</td><td>Un beat promesso che non è sullo schermo. La risposta si assemblava sotto al composer</td><td class="n">il conteggio parole deve crescere</td></tr>
+          <tr><td>fill-measure.sh</td><td>Un'inquadratura che lascia morire i bordi</td><td class="n">20 campioni su 20 pieni sui 4 lati</td></tr>
+          <tr><td>legibility.sh</td><td>Testo che non regge la riduzione</td><td class="n">tiene sotto i 640 px di larghezza</td></tr>
+          <tr><td>framelocked-verdict.sh</td><td>Una scena non riproducibile, che esce lo stesso ma con pixel diversi</td><td class="n">stessi pixel a ogni render</td></tr>
+          <tr><td>focus-sharpness.sh</td><td>Una lastra che ha smesso di essere DOM: il testo si sfalda quando la camera ci arriva addosso</td><td class="n">2,09× contro 1,03× sulla fixture</td></tr>
+          <tr><td>fixture-screenshot.sh</td><td>Non misura: costruisce la scena che il banco sopra deve bocciare, e senza di essa quel banco è una promessa</td><td class="n">primo fotogramma ingrandito 2,26×</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:14px;color:var(--ink-3);margin:14px 0 0;max-width:78ch">Il controllo negativo va scritto per primo. Un banco che non può fallire non misura niente, e la regola nel README è esplicita: prima lo si fa uscire diverso da zero su un input rotto, poi ci si fida del verde.</p>
+  </section>
+
+  <section class="sec" id="out">
+    <div class="sechead">
+      <span class="k">OUT</span>
+      <h2>Quello che resta fuori, e perché</h2>
+    </div>
+    <div class="tblwrap">
+      <table class="tbl">
+        <thead><tr><th>Escluso</th><th>Motivo</th></tr></thead>
+        <tbody>
+          <tr><td>I nove modi di rivelare un logo</td><td>Ne serve uno, e va in fondo al film. Nove è un sintomo di cosa pensa di essere l'ecosistema</td></tr>
+          <tr><td>Le dodici transizioni da template</td><td>Arrivano già con Remotion. Riscriverle è lavoro buttato, e sono comunque stacchi</td></tr>
+          <tr><td>Il mobilio da YouTube</td><td>Subscribe reminder, end card, credits roll, countdown. Altro mestiere</td></tr>
+          <tr><td>Gli sfondi decorativi</td><td>Bokeh, matrix rain, particle explosion, starfield. Belli e muti: non dicono niente del prodotto</td></tr>
+          <tr><td>Qualsiasi cosa che pretenda un taglio</td><td>Se funziona solo grazie allo stacco, non entra in un piano sequenza</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>Costruito leggendo <a href="https://github.com/armonia/scenes">armonia/scenes</a> al commit del 28 agosto 2026: README, CATALOG.md, <code class="mono">primitives/slab.ts</code>, <code class="mono">primitives/rhythm.ts</code>, <code class="mono">primitives/SlabChrome.tsx</code>, <code class="mono">theme.ts</code>, <code class="mono">Root.tsx</code>. I numeri delle pose e delle misure vengono da lì, non sono inventati qui.</p>
+    <p style="margin-top:10px">Questa pagina sta nel repo, in <code class="mono">showcase/grammatica.html</code>, e si deploya insieme alle scene che descrive. Non ha build step: quello che apri in locale è quello che va online.</p>
+    <p class="lab">armonia/scenes &middot; showcase/grammatica.html</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   Geometria e contenuto: valori presi da video/src/primitives/slab.ts
+   e da SlabChrome.tsx. Se cambiano lì, cambiano qui.
+   ============================================================ */
+var SLAB_W=2400, SLAB_H=1200, SIDEBAR_W=280, HEADER_H=58, PANEL_W=420;
+var BOARD_PAD_X=24, BOARD_PAD_Y=28, COL_GAP=20, CARD_GAP=12;
+var COL_HEADER_H=28+14+1, CARD_H=96, ACTIVE_CARD_H=CARD_H+15;
+var BOARD_LEFT=SIDEBAR_W+BOARD_PAD_X, BOARD_TOP=HEADER_H+BOARD_PAD_Y;
+var BOARD_W=SLAB_W-SIDEBAR_W-PANEL_W-BOARD_PAD_X*2;
+var COL_W=(BOARD_W-COL_GAP*2)/3;
+var colX=function(i){ return BOARD_LEFT+i*(COL_W+COL_GAP); };
+var cardH=function(c){ return c.active?ACTIVE_CARD_H:CARD_H; };
+var cardY=function(cards,i){ var y=BOARD_TOP+COL_HEADER_H+CARD_GAP; for(var k=0;k<i;k++) y+=cardH(cards[k])+CARD_GAP; return y; };
+
+var COLUMNS=[
+ {name:"Backlog",cards:[
+   {title:"Migrazione schema v3",tag:"chore",age:"5d"},
+   {title:"Rate limit su /api/render",tag:"feature",age:"3d"},
+   {title:"Retry logic per job falliti",tag:"bugfix",age:"2d"}]},
+ {name:"In corso",cards:[
+   {title:"UIMockup: piano 3D + parallasse",tag:"feature",age:"1d",active:true},
+   {title:"Metriche latenza p99",tag:"chore",age:"12h"}]},
+ {name:"In review",cards:[
+   {title:"PromptInput: streaming fix",tag:"bugfix",age:"6h",done:true},
+   {title:"Docs: regole frame-lock",tag:"chore",age:"2h"}]}
+];
+var TAGC={feature:"#4d94ff",bugfix:"#f87171",chore:"#7d838d"};
+
+/* Le due pose che il repo tiene in slab.ts, non riscritte a occhio. */
+var START={yaw:-18,pitch:5,z:0,x:900,y:0};
+var END={yaw:-9,pitch:2.5,z:48,x:0,y:0};
+
+/* ============================================================ curve */
+var RM=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var FPS=30;
+function cl(v){ return v<0?0:v>1?1:v; }
+var E={
+ lin:function(t){return t;},
+ out:function(t){return 1-Math.pow(1-t,3);},
+ quart:function(t){return 1-Math.pow(1-t,4);},
+ expo:function(t){return t>=1?1:1-Math.pow(2,-9*t);},
+ inout:function(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;},
+ sine:function(t){return -(Math.cos(Math.PI*t)-1)/2;},
+ back:function(t){var c=1.75,d=c+1;return 1+d*Math.pow(t-1,3)+c*Math.pow(t-1,2);}
+};
+/* Stessa forma di interpolate() in Remotion: dominio in frame, extrapolate clamp. */
+function ip(f,fr,vr,ez){ var t=cl((f-fr[0])/(fr[1]-fr[0])); return vr[0]+(vr[1]-vr[0])*(ez||E.lin)(t); }
+function mix(a,b,t){ return {yaw:a.yaw+(b.yaw-a.yaw)*t, pitch:a.pitch+(b.pitch-a.pitch)*t, z:a.z+(b.z-a.z)*t, x:a.x+(b.x-a.x)*t, y:(a.y||0)+((b.y||0)-(a.y||0))*t}; }
+
+/* PRNG con seme e ritmo di battitura: porting di primitives/rhythm.ts */
+function mulberry32(seed){ var a=seed>>>0; return function(){ a=(a+0x6d2b79f5)>>>0; var t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+function typingSchedule(text,startFrame,seed,cps){
+  var rand=mulberry32(seed||20260812), base=FPS/(cps||13), out=[], t=startFrame;
+  for(var i=0;i<text.length;i++){
+    var ch=text[i], prev=i>0?text[i-1]:"";
+    var d=base*(0.55+rand()*0.95);
+    if(/[.,;:!?]/.test(prev)) d+=base*(2.2+rand()*1.8);
+    if(prev===" "){ var w=text.slice(i).split(" ")[0]||""; if(w.length>=6) d+=base*(0.8+rand()*1.2); }
+    if(ch!==" "&&prev!==" "&&rand()<0.34) d*=0.42;
+    t+=d; out.push(t);
+  }
+  return out;
+}
+function typedCount(sch,f){ var n=0; while(n<sch.length&&sch[n]<=f) n++; return n; }
+
+/* ============================================================ la lastra */
+function el(tag,cls,css,txt){ var e=document.createElement(tag); if(cls)e.className=cls; if(css)e.style.cssText=css; if(txt!=null)e.textContent=txt; return e; }
+
+function buildSlab(){
+  var S={};
+  var slab=el("div","slab"); S.slab=slab;
+
+  var edge=el("div","edge"); S.edge=edge;
+  var glow=el("div","glow"); S.glow=glow;
+
+  /* barra di sistema */
+  var hdr=el("div","hdr"); S.hdr=hdr;
+  var dots=el("div","dots"); ["#ff5f57","#febc2e","#28c840"].forEach(function(c){ dots.appendChild(el("i",null,"background:"+c)); });
+  hdr.appendChild(dots);
+  S.tabs=[];
+  [["Kanban",1],["Timeline",0],["Docs",0]].forEach(function(t){
+    var d=el("div","tab"+(t[1]?" on":""),null,t[0]); hdr.appendChild(d); S.tabs.push(d);
+  });
+  hdr.appendChild(el("div","wm",null,"Topics"));
+
+  /* sidebar */
+  var side=el("div","side"); S.side=side;
+  side.appendChild(el("div","org",null,"ACME CORP"));
+  S.nav=[];
+  [["Dashboard","⬡"],["Projects","◫"],["Board","▤"],["Agents","◎"],["Settings","⊙"]].forEach(function(it,i){
+    var d=el("div","nav"+(i===2?" on":""));
+    d.appendChild(el("span","ic",null,it[1]));
+    d.appendChild(document.createTextNode(it[0]));
+    if(i===2) d.appendChild(el("div","pip"));
+    side.appendChild(d); S.nav.push(d);
+  });
+  side.appendChild(el("div","rec",null,"RECENT"));
+  ["acme-app","server","landing"].forEach(function(p,i){
+    var d=el("div","recit");
+    d.appendChild(el("div","sw",i===0?"background:#4d94ff":null));
+    d.appendChild(document.createTextNode(p));
+    side.appendChild(d);
+  });
+
+  /* board */
+  S.cols=[]; S.cards=[]; S.adds=[];
+  COLUMNS.forEach(function(col,ci){
+    var h=el("div","colh","left:"+colX(ci)+"px;top:"+BOARD_TOP+"px;width:"+COL_W+"px");
+    h.appendChild(el("span","nm",null,col.name));
+    var cnt=el("span","cnt",null,String(col.cards.length));
+    h.appendChild(cnt);
+    S.cols.push({head:h,cnt:cnt,name:col.name});
+    slab.appendChild(h);
+
+    col.cards.forEach(function(c,ii){
+      var y=cardY(col.cards,ii), hh=cardH(c);
+      var d=el("div","card"+(c.active?" act":""),"left:"+colX(ci)+"px;top:"+y+"px;width:"+COL_W+"px;height:"+hh+"px"+(c.active?";transform:translateZ(40px)":""));
+      var r1=el("div","r1");
+      var tg=el("div","tg","background:"+TAGC[c.tag]+"22;border:1px solid "+TAGC[c.tag]+"44;color:"+TAGC[c.tag],c.tag);
+      r1.appendChild(tg); r1.appendChild(el("span","age",null,c.age));
+      d.appendChild(r1);
+      d.appendChild(el("div","ttl"+(c.done?" done":""),null,c.title));
+      if(c.active){ var b=el("div","pbar"); b.appendChild(el("i")); d.appendChild(b); }
+      slab.appendChild(d);
+      S.cards.push({el:d,col:ci,idx:ii,x:colX(ci),y:y,h:hh,data:c,tag:tg});
+    });
+
+    var ay=cardY(col.cards,col.cards.length);
+    var a=el("div","add","left:"+colX(ci)+"px;top:"+ay+"px;width:"+COL_W+"px");
+    a.appendChild(el("span",null,"font-size:20px;line-height:1","+"));
+    a.appendChild(document.createTextNode("Add card"));
+    slab.appendChild(a); S.adds.push({el:a,y:ay,col:ci});
+  });
+
+  /* pannello */
+  var panel=el("div","panel"); S.panel=panel;
+  panel.appendChild(el("div","pt",null,"UIMockup"));
+  S.prows=[];
+  [["Status","In corso"],["Priority","P0"],["Branch","topics/ui-mockup"],["Assignee","Agent"]].forEach(function(r){
+    var d=el("div","prow"); d.appendChild(el("span",null,null,r[0]));
+    var v=el("span",null,null,r[1]); d.appendChild(v);
+    panel.appendChild(d); S.prows.push(v);
+  });
+  S.metric=el("div","metric",null,"0 ms"); panel.appendChild(S.metric);
+  panel.appendChild(el("div","pd",null,"Piano CSS 3D con spessore sul bordo, camera slide da fuori frame, token da theme.ts."));
+
+  /* composer, risposta, cursori */
+  var comp=el("div","composer","opacity:0"); S.composer=comp;
+  S.ctext=el("span",null,null,""); comp.appendChild(S.ctext);
+  S.caret=el("span","caret"); comp.appendChild(S.caret);
+  S.send=el("div","send",null,"Invia"); comp.appendChild(S.send);
+
+  S.thread=el("div","thread");
+  S.msgu0=el("div","msgu","opacity:0"); S.old=el("div","stream","opacity:0");
+  S.msgu=el("div","msgu","opacity:0"); S.stream=el("div","stream","opacity:0");
+  [S.msgu0,S.old,S.msgu,S.stream].forEach(function(e){ e.textContent=""; S.thread.appendChild(e); });
+
+  var CURSVG='<svg viewBox="0 0 26 38"><path d="M3 2 L3 30 L9.6 24.2 L14.2 34 L18.6 32 L14.2 22.4 L22.6 21.4 Z" fill="#ffffff" stroke="#08090c" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  S.cur=el("div","cur","opacity:0"); S.cur.innerHTML=CURSVG;
+  S.ghost=el("div","cur ghost","opacity:0"); S.ghost.innerHTML=CURSVG;
+  S.trace=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  S.trace.setAttribute("class","trace"); S.trace.setAttribute("viewBox","0 0 2400 1200");
+  S.veil=el("div","veil");
+
+  slab.appendChild(hdr); slab.appendChild(side); slab.appendChild(panel);
+  slab.appendChild(S.thread); slab.appendChild(comp);
+  slab.appendChild(S.trace); slab.appendChild(S.ghost); slab.appendChild(S.cur); slab.appendChild(S.veil);
+
+  var cam=el("div","cam","position:absolute;transform-style:preserve-3d");
+  /* Il secondo piano, piu' piccolo e ruotato di piu', a BACKDROP_OPACITY.
+     Nel render vero e' un layer a parte: senza, il fotogramma sotto la board
+     resta vuoto e la lastra galleggia. */
+  var bg=el("div","bgslab","position:absolute;left:-1380px;top:-450px;width:2400px;height:1200px;"+
+    "opacity:0.62;transform:translateZ(-60px) rotateY(8deg) rotateX(4deg) scale(.92);transform-origin:50% 50%");
+  S.bg=bg;
+  cam.appendChild(bg); cam.appendChild(edge); cam.appendChild(glow); cam.appendChild(slab);
+  bg.appendChild(slab.cloneNode(true));
+  S.cam=cam;
+  return S;
+}
+
+/* ============================================================ camera */
+function pose(S,p){
+  S.cam.style.transform=
+    "translate3d("+(p.x||0).toFixed(2)+"px,"+(p.y||0).toFixed(2)+"px,"+(p.z||0).toFixed(2)+"px)"+
+    " rotateY("+(p.yaw||0).toFixed(3)+"deg) rotateX("+(p.pitch||0).toFixed(3)+"deg)";
+}
+
+/* ============================================================ motore */
+var insts=[], paused=false;
+function mount(stage,mv,code){
+  var S=buildSlab();
+  var room=el("div","room"), rig=el("div","rig");
+  rig.appendChild(S.cam); room.appendChild(rig); stage.appendChild(room);
+  S.rig=rig;
+
+  var hud=el("div","hud");
+  var fno=el("span","f",null,"f000"); var rd=el("span","rd",null,"");
+  hud.appendChild(fno); hud.appendChild(el("span",null,"opacity:.5","/ "+mv.dur)); hud.appendChild(rd);
+  stage.appendChild(hud);
+  var scrub=el("div","scrub"); var fill=el("i"); scrub.appendChild(fill); stage.appendChild(scrub);
+
+  var it={stage:stage,mv:mv,S:S,vis:false,t0:performance.now(),manual:null,fno:fno,rd:rd,fill:fill,base:0.5,last:-1};
+  S.hud=function(txt){ rd.textContent=txt; };
+
+  var ro=new ResizeObserver(function(){
+    var r=stage.getBoundingClientRect(); if(!r.width) return;
+    /* Come in UIMockup.tsx: la composizione e' 1920x1080 e la lastra 2400x1200
+       centrata dentro, quindi deborda su tutti e quattro i lati. La prospettiva
+       segue la scala, altrimenti a palco piccolo il 3D si appiattisce. */
+    it.base=(r.width/1920)*1.04;
+    rig.style.transform="scale("+it.base.toFixed(4)+")";
+    room.style.perspective=(2600*it.base).toFixed(1)+"px";
+    it.last=-1; draw(it, RM?Math.round(mv.dur*0.55):cur(it));
+  });
+  ro.observe(stage);
+
+  /* scrub: trascinando ci si ferma su un frame, che è il punto del frame-lock */
+  function setFromX(ev){
+    var r=scrub.getBoundingClientRect();
+    var u=cl((ev.clientX-r.left)/r.width);
+    it.manual=Math.min(mv.dur-1,Math.round(u*(mv.dur-1)));
+    it.last=-1; draw(it,it.manual);
+  }
+  scrub.addEventListener("pointerdown",function(ev){ scrub.setPointerCapture(ev.pointerId); setFromX(ev); ev.preventDefault(); });
+  scrub.addEventListener("pointermove",function(ev){ if(ev.buttons&1) setFromX(ev); });
+  scrub.addEventListener("pointerup",function(ev){
+    scrub.releasePointerCapture(ev.pointerId);
+    if(!RM){ it.t0=performance.now()-(it.manual/FPS)*1000; it.manual=null; }
+  });
+
+  io.observe(stage); stage.__it=it; insts.push(it);
+  if(mv.init) mv.init(S,stage);
+}
+
+function cur(it){ return Math.floor(((performance.now()-it.t0)/1000)*FPS)%it.mv.dur; }
+function draw(it,f){
+  if(f===it.last) return;
+  it.last=f;
+  it.mv.draw(f,it.S);
+  it.fno.textContent="f"+String(f).padStart(3,"0");
+  it.fill.style.width=((f/(it.mv.dur-1))*100).toFixed(2)+"%";
+}
+var io=new IntersectionObserver(function(es){
+  es.forEach(function(e){ var it=e.target.__it; if(!it) return; it.vis=e.isIntersecting;
+    if(e.isIntersecting){ it.last=-1; draw(it, it.manual!=null?it.manual:(RM?Math.round(it.mv.dur*0.55):cur(it))); } });
+},{rootMargin:"260px 0px"});
+
+function loop(){
+  for(var i=0;i<insts.length;i++){
+    var it=insts[i];
+    if(!it.vis||it.manual!=null) continue;
+    if(paused||RM) continue;
+    draw(it,cur(it));
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============================================================ i movimenti */
+function C(S,col,idx){ for(var i=0;i<S.cards.length;i++){ var c=S.cards[i]; if(c.col===col&&c.idx===idx) return c; } }
+function bez(A,Cp,B,u){ var m=1-u; return {x:m*m*A.x+2*m*u*Cp.x+u*u*B.x, y:m*m*A.y+2*m*u*Cp.y+u*u*B.y}; }
+function depth(S){
+  S.hdr.style.transform="translateZ(6px)";
+  S.side.style.transform="translateZ(10px)";
+  S.panel.style.transform="translateZ(18px)";
+  S.cards.forEach(function(c){ c.el.style.transform="translateZ("+(c.data.active?40:26)+"px)"; });
+}
+function svgPath(S,d,stroke,dash){
+  var p=document.createElementNS("http://www.w3.org/2000/svg","path");
+  p.setAttribute("d",d); p.setAttribute("fill","none"); p.setAttribute("stroke",stroke); p.setAttribute("stroke-width","3");
+  if(dash) p.setAttribute("stroke-dasharray",dash);
+  S.trace.appendChild(p); return p;
+}
+var PROMPT="Fai un commercial di 45 secondi per Topics, una sola inquadratura.";
+var ANSWER="Parto dalla lastra ferma nella posa finale, il cursore entra in arco e apre la board, poi la camera scende al macro sulla card attiva. Nessuno stacco in tutto il pezzo: la giunta con la scena dopo la misura seam.sh.";
+
+var M={};
+
+M.push={dur:150,draw:function(f,S){
+  var t=E.inout(cl((f-6)/108)), p=mix(START,END,t); pose(S,p);
+  S.hud("yaw "+p.yaw.toFixed(1)+"  pitch "+p.pitch.toFixed(1)+"  pushZ "+Math.round(p.z)+"  slideX "+Math.round(p.x));
+}};
+
+M.truck={dur:180,init:depth,draw:function(f,S){
+  var t=E.sine(f<90?f/90:(180-f)/90), x=-360+720*t;
+  pose(S,{yaw:-11+t*5,pitch:2.5,z:70,x:x,y:0});
+  S.hud("slideX "+Math.round(x)+"   z: header 6 · sidebar 10 · pannello 18 · board 26 · card attiva 40");
+}};
+
+M.orbit={dur:210,draw:function(f,S){
+  var t=E.sine(f<105?f/105:(210-f)/105), y=-36+46*t;
+  pose(S,{yaw:y,pitch:3.2,z:-260,x:0,y:0});
+  S.hud("yaw "+y.toFixed(1)+"   il bordo si vede solo perché dietro il piano c'è un secondo piano a -30");
+}};
+
+M.macro={dur:180,init:depth,draw:function(f,S){
+  var t=E.inout(cl((f-8)/126));
+  pose(S,{yaw:-9+9*t,pitch:2.5-2.5*t,z:48+1400*t,x:70*t,y:173.5*t});
+  S.hud("pushZ "+Math.round(48+1400*t)+"   il testo regge l'ingrandimento perché è DOM, non uno screenshot");
+}};
+
+M.attn={dur:170,draw:function(f,S){
+  pose(S,END);
+  var t=E.inout(cl((f-16)/44))*(1-E.inout(cl((f-118)/40))), o=1-0.38*t, os=o.toFixed(3);
+  S.side.style.opacity=os; S.panel.style.opacity=os; S.hdr.style.opacity=os;
+  S.cards.forEach(function(c){ c.el.style.opacity=c.col===1?"1":os; });
+  S.cols.forEach(function(c,i){ c.head.style.opacity=i===1?"1":os; });
+  S.adds.forEach(function(a){ a.el.style.opacity=a.col===1?"0.7":(0.7*o).toFixed(3); });
+  S.hud("backdrop "+o.toFixed(2)+"   misurato: sotto 0,62 il contenuto attenuato scende sotto 3:1 e legge come rumore");
+}};
+
+M.arc={dur:170,
+ init:function(S){
+   svgPath(S,"M2130 830 L1000 200","rgba(248,113,113,.42)","10 14");
+   svgPath(S,"M2130 830 Q1520 790 1000 200","rgba(77,148,255,.55)");
+ },
+ draw:function(f,S){
+   pose(S,END);
+   S.cur.style.opacity="1"; S.ghost.style.opacity="1";
+   var A={x:2130,y:830},Cp={x:1520,y:790},B={x:1000,y:200};
+   var raw=cl((f-8)/78), u=E.back(raw), q=bez(A,Cp,B,u);
+   S.cur.style.left=q.x+"px"; S.cur.style.top=q.y+"px";
+   S.ghost.style.left=(A.x+(B.x-A.x)*raw)+"px"; S.ghost.style.top=(A.y+(B.y-A.y)*raw)+"px";
+   S.hud("u "+u.toFixed(3)+"   sorpasso max 7,5%   in rosso lo stesso tempo su una retta a velocità costante");
+ }};
+
+M.hesit={dur:190,
+ init:function(S){ S.composer.style.opacity="1"; S.ctext.textContent=PROMPT;
+   S.stream.style.opacity="1"; S.stream.textContent="Ho la lastra ferma nella posa finale, con la board popolata e il pannello aperto sulla card attiva. La camera sta a yaw -9 e pitch 2,5, quindi la scena dopo entra da lì senza stacco. Dimmi durata e direzione di ingresso e ti do il piano dei frame.";
+   S.msgu0.style.opacity="1"; S.msgu0.textContent="Fammi vedere la board con la card attiva.";
+   S.old.style.opacity="1"; S.old.textContent="Fatto. Kanban aperto, la card attiva è UIMockup: piano 3D + parallasse, e il pannello mostra branch e assegnatario.";
+   S.msgu0.style.opacity="1"; S.msgu0.textContent="Fammi vedere la board con la card attiva.";
+   S.old.style.opacity="1"; S.old.textContent="Fatto. Kanban aperto, la card attiva è UIMockup: piano 3D + parallasse, e il pannello mostra branch e assegnatario.";
+   S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?"; },
+ draw:function(f,S){
+   pose(S,{yaw:-6,pitch:2,z:190,x:0,y:-560});
+   S.cur.style.opacity="1";
+   var A={x:1240,y:1178},Cp={x:1600,y:990},B={x:1878,y:1116};
+   var q=bez(A,Cp,B,E.expo(cl((f-8)/46)));
+   S.cur.style.left=q.x+"px"; S.cur.style.top=(q.y+(f>=70&&f<80?7:0))+"px";
+   S.send.className="send"+(f>=70&&f<80?" press":"");
+   var ph=f<54?"avvicinamento":(f<70?"attesa "+(f-54)+"f":(f<80?"pressione":"rilascio"));
+   S.hud("arrivo f54 · attesa 16f · pressione f70   ora: "+ph);
+ }};
+
+M.click={dur:130,
+ init:function(S){ S.composer.style.opacity="1"; S.ctext.textContent=PROMPT;
+   S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?"; },
+ draw:function(f,S){
+   pose(S,{yaw:-4,pitch:1.4,z:260,x:-120,y:-600});
+   S.cur.style.opacity="1"; S.cur.style.left="1878px"; S.cur.style.top=(1116+(f>=48&&f<58?7:0))+"px";
+   S.send.className="send"+(f>=48&&f<58?" press":"");
+   var eff=cl((f-50)/12);
+   S.stream.style.opacity=eff.toFixed(3);
+   S.stream.textContent=f>=50?"In lavorazione":"";
+   S.stream.style.transform="translateY("+((1-E.out(eff))*26).toFixed(1)+"px)";
+   S.hud("pressione f48 · conseguenza f50 · scarto 2 frame"+(f>=48&&f<50?"   ← siamo nel mezzo adesso":""));
+ }};
+
+function dragPos(f){
+  var A={x:1130,y:200},B={x:1760,y:236}, u=E.inout(cl((f-30)/110));
+  return {x:A.x+(B.x-A.x)*u, y:A.y+(B.y-A.y)*u-Math.sin(Math.PI*u)*74};
+}
+M.drag={dur:210,init:depth,draw:function(f,S){
+  pose(S,{yaw:-8,pitch:2.4,z:70,x:0,y:0});
+  S.cur.style.opacity="1";
+  var c=dragPos(f); S.cur.style.left=c.x+"px"; S.cur.style.top=c.y+"px";
+  var card=C(S,1,0), l3=dragPos(f-3), l6=dragPos(f-6), vx=l3.x-l6.x, held=f>=30&&f<=150;
+  card.el.style.left=(held?l3.x-COL_W/2:card.x)+"px";
+  card.el.style.top=(held?l3.y-ACTIVE_CARD_H/2:card.y)+"px";
+  card.el.style.transform="translateZ("+(held?150:40)+"px) rotate("+(vx*0.11).toFixed(2)+"deg)";
+  card.el.style.boxShadow=held?"0 44px 74px rgba(0,0,0,.62)":"0 4px 20px rgba(0,0,0,.32)";
+  card.el.style.borderColor=held?"#4d94ff":"hsl(220 10% 24%)";
+  S.hud("ritardo 3 frame   inclinazione "+(vx*0.11).toFixed(2)+"°, proporzionale alla velocità e quindi zero agli estremi");
+}};
+
+M.type={dur:230,
+ init:function(S){ S.composer.style.opacity="1"; S.sched=typingSchedule(PROMPT,18);
+   S.stream.style.opacity="1"; S.stream.textContent="Ho la lastra ferma nella posa finale, con la board popolata e il pannello aperto sulla card attiva. La camera sta a yaw -9 e pitch 2,5, quindi la scena dopo entra da lì senza stacco. Dimmi durata e direzione di ingresso e ti do il piano dei frame.";
+   S.msgu0.style.opacity="1"; S.msgu0.textContent="Fammi vedere la board con la card attiva.";
+   S.old.style.opacity="1"; S.old.textContent="Fatto. Kanban aperto, la card attiva è UIMockup: piano 3D + parallasse, e il pannello mostra branch e assegnatario.";
+   S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?"; },
+ draw:function(f,S){
+   pose(S,{yaw:-5,pitch:1.6,z:190,x:0,y:-560});
+   var n=typedCount(S.sched,f);
+   S.ctext.textContent=PROMPT.slice(0,n);
+   S.caret.style.opacity=(f%20<13)?"1":"0.18";
+   var gap=n>1?(S.sched[n-1]-S.sched[n-2]):0;
+   S.hud("caratteri "+n+"/"+PROMPT.length+"   Δ ultimo tasto "+gap.toFixed(1)+"f   cps 13, seme 20260812, mulberry32");
+ }};
+
+M.stream={dur:260,
+ init:function(S){ S.composer.style.opacity="1"; S.ctext.textContent=""; S.words=ANSWER.split(" ");
+   S.msgu0.style.opacity="1"; S.msgu0.textContent="Fammi vedere la board con la card attiva.";
+   S.old.style.opacity="1"; S.old.textContent="Fatto. Kanban aperto, la card attiva è UIMockup: piano 3D + parallasse, e il pannello mostra branch e assegnatario.";
+   S.msgu.style.opacity="1"; S.msgu.textContent=PROMPT; },
+ draw:function(f,S){
+   pose(S,{yaw:-5,pitch:1.6,z:190,x:0,y:-560});
+   S.stream.style.opacity="1";
+   var prog=cl(ip(f,[24,110],[0,0.42],E.out)+(f>130?ip(f,[130,214],[0,0.58],E.lin):0));
+   var n=Math.floor(prog*S.words.length);
+   S.stream.textContent=S.words.slice(0,n).join(" ");
+   var stall=f>=110&&f<=130;
+   S.hud("parole "+n+"/"+S.words.length+(stall?"   stasi":"")+"   il conteggio deve CRESCERE nella finestra, non solo essere diverso da zero");
+ }};
+
+M.metric={dur:170,draw:function(f,S){
+  pose(S,{yaw:-11,pitch:2.2,z:220,x:-900,y:-60});
+  var t=Math.min(E.back(cl((f-14)/72)),1.075);
+  S.metric.textContent=Math.round(128*t)+" ms";
+  S.metric.style.color=f>92?"#34d399":"#e6e8ec";
+  S.hud("128 ms · back out, sorpasso 7,5% · tabular-nums, quindi la larghezza non cambia mai e niente riflusso");
+}};
+
+M.insert={dur:190,
+ init:function(S){
+   var d=el("div","card","left:"+colX(0)+"px;top:"+cardY(COLUMNS[0].cards,1)+"px;width:"+COL_W+"px;height:"+CARD_H+"px;opacity:0;z-index:5");
+   var r1=el("div","r1");
+   r1.appendChild(el("div","tg","background:"+TAGC.chore+"22;border:1px solid "+TAGC.chore+"44;color:"+TAGC.chore,"chore"));
+   r1.appendChild(el("span","age",null,"ora"));
+   d.appendChild(r1); d.appendChild(el("div","ttl",null,"Ripulire i log del render"));
+   S.slab.appendChild(d); S.newcard=d;
+ },
+ draw:function(f,S){
+   pose(S,{yaw:-10,pitch:2.4,z:80,x:180,y:0});
+   var gap=E.out(cl((f-20)/34)), land=E.out(cl((f-38)/42)), shift=(CARD_H+CARD_GAP)*gap;
+   [1,2].forEach(function(i){ var c=C(S,0,i); c.el.style.top=(c.y+shift)+"px"; });
+   S.adds[0].el.style.top=(S.adds[0].y+shift)+"px";
+   S.newcard.style.opacity=land.toFixed(3);
+   S.newcard.style.top=(cardY(COLUMNS[0].cards,1)-52+52*land)+"px";
+   S.cols[0].cnt.textContent=f>=56?"4":"3";
+   S.hud("varco a f20, atterraggio a f38: 18 frame di anticipo. Se partono insieme la riga sembra incollata sopra il layout");
+ }};
+
+M.handoff={dur:250,
+ init:function(S){ svgPath(S,"M1130 196 Q1409 78 1687 196","rgba(77,148,255,.38)","9 12"); },
+ draw:function(f,S){
+   pose(S,{yaw:-9,pitch:2.5,z:60,x:0,y:0});
+   var lift=E.out(cl((f-14)/26)), fly=E.inout(cl((f-40)/86)),
+       open=E.out(cl((f-30)/40)), close=E.out(cl((f-56)/44));
+   var card=C(S,1,0), sx=colX(1), dx=colX(2), step=ACTIVE_CARD_H+CARD_GAP;
+   card.el.style.left=(sx+(dx-sx)*fly)+"px";
+   card.el.style.top=(141-Math.sin(Math.PI*fly)*104)+"px";
+   card.el.style.transform="translateZ("+(40+160*lift)+"px)";
+   card.el.style.boxShadow="0 "+(18+30*lift).toFixed(0)+"px "+(30+50*lift).toFixed(0)+"px rgba(0,0,0,"+(0.34+0.3*lift).toFixed(2)+")";
+   card.el.style.borderColor=lift>0.02?"#4d94ff":"hsl(220 10% 24%)";
+   [0,1].forEach(function(i){ var c=C(S,2,i); c.el.style.top=(c.y+step*open)+"px"; });
+   S.adds[2].el.style.top=(S.adds[2].y+step*open)+"px";
+   var c2=C(S,1,1);
+   c2.el.style.top=(c2.y-step*close)+"px";
+   S.adds[1].el.style.top=(S.adds[1].y-step*close)+"px";
+   S.cols[1].cnt.textContent=f>=100?"1":"2";
+   S.cols[2].cnt.textContent=f>=100?"3":"2";
+   S.hud("varco f30 · volo f40-126 · chiusura f56   handoff-travel.sh vuole centroide monotono e mezza colonna attraversata");
+ }};
+
+M.reflow={dur:190,init:depth,draw:function(f,S){
+  pose(S,{yaw:-10,pitch:2.4,z:70,x:160,y:0});
+  var target=C(S,0,1), gone=E.out(cl((f-18)/26));
+  target.el.style.opacity=(1-gone).toFixed(3);
+  target.el.style.transform="translateZ(26px) scale("+(1-0.14*gone).toFixed(3)+")";
+  var ox=colX(0)+COL_W/2, oy=target.y+CARD_H/2;
+  S.cards.forEach(function(c){
+    if(c===target) return;
+    var dx=(colX(c.col)+COL_W/2)-ox, dy=(c.y+c.h/2)-oy, d=Math.sqrt(dx*dx+dy*dy);
+    var t=E.out(cl((f-30-(d/1400)*22)/34));
+    c.el.style.top=(c.y+((c.col===0&&c.idx>1)?-(CARD_H+CARD_GAP)*t:0))+"px";
+    c.el.style.left=(colX(c.col)+(c.col===0?0:-7*t))+"px";
+  });
+  S.adds[0].el.style.top=(S.adds[0].y-(CARD_H+CARD_GAP)*E.out(cl((f-46)/34)))+"px";
+  S.cols[0].cnt.textContent=f>=44?"2":"3";
+  S.hud("ritardo = distanza dal cambiamento / 1400 × 22f. Sfalsando per indice il layout legge come una lista che scorre, non come uno spazio");
+}};
+
+M.prop={dur:200,draw:function(f,S){
+  pose(S,{yaw:-9,pitch:2.5,z:60,x:0,y:0});
+  var card=C(S,1,0), done=f>=30, col=done?"#34d399":"#4d94ff";
+  card.el.querySelector(".ttl").className="ttl"+(done?" done":"");
+  card.tag.textContent=done?"done":"feature";
+  card.tag.style.color=col; card.tag.style.background=col+"22"; card.tag.style.borderColor=col+"44";
+  S.cols[1].cnt.textContent=f>=35?"1":"2";
+  S.cols[1].cnt.style.color=(f>=35&&f<58)?"#4d94ff":"#7d838d";
+  S.prows[0].textContent=f>=41?"Fatto":"In corso";
+  S.prows[0].style.color=f>=41?"#34d399":"#ccced4";
+  S.hud("card f30 → conteggio f35 → pannello f41.  Sono i due ritardi a leggersi come causa: in sincrono sarebbero tre cose scollegate");
+}};
+
+M.thick={dur:200,draw:function(f,S){
+  var t=E.sine(f<100?f/100:(200-f)/100), off=f>=100;
+  pose(S,{yaw:-30+40*t,pitch:3,z:-300,x:0,y:0});
+  S.edge.style.opacity=off?"0":"1";
+  S.hud(off?"senza spessore: la lastra legge come carta da parati incollata al fondo":"spessore 30 dietro il piano, ombra di contatto 90/180");
+}};
+
+M.spill={dur:222,draw:function(f,S){
+  pose(S,{yaw:-15,pitch:7,z:-560,x:0,y:-250});
+  var ph=Math.floor(f/74)%3, col=["77,148,255","217,119,87","52,211,153"][ph];
+  S.tabs.forEach(function(t,i){ t.className="tab"+(i===ph?" on":""); });
+  S.glow.style.opacity=(0.72+0.26*E.sine(cl((f%74)/26))).toFixed(3);
+  S.glow.style.background="radial-gradient(ellipse at 50% 0%,rgba("+col+",.55),rgba("+col+",0) 66%)";
+  S.hud("il colore che si versa sul piano è quello dominante dello schermo in quel frame, non una luce decisa a mano");
+}};
+
+M.seam={dur:240,draw:function(f,S){
+  var p=f<120?mix(START,END,E.inout(cl(f/108)))
+              :mix(END,{yaw:-9,pitch:2.5,z:440,x:-170,y:70},E.inout(cl((f-120)/112)));
+  pose(S,p);
+  var at=f>=117&&f<=123;
+  S.hud((f<120?"UIMockup":"CardHandoff")+"   giunta a f120"+(at?"  ← adesso":"")+"   seam.sh: 552 px contro 18.019 del taglio di controllo, 32×");
+}};
+
+M.rest={dur:210,draw:function(f,S){
+  var t=E.inout(cl((f-10)/172)), t0=E.inout(cl((f-11)/172));
+  pose(S,mix(START,END,t));
+  S.hud("|v| "+(Math.abs(t-t0)*100).toFixed(2)+"   a f000 e a f209 è zero: due scene ferme agli estremi si mettono in qualsiasi ordine");
+}};
+
+M.through={dur:240,draw:function(f,S){
+  var t=f/239, at=Math.abs(f-120)<4;
+  pose(S,{yaw:-22+26*t,pitch:4.2-2.2*t,z:340*t,x:660-660*t,y:0});
+  S.hud("un montaggio normale metterebbe lo stacco a f120"+(at?"  ← passa adesso":"")+". La camera non si ferma, quindi non c'è niente da nascondere");
+}};
+
+/* --- CAM-06: il solo punto del quadro che non scappa sotto una spinta in Z --- */
+M.centre={dur:210,
+ init:function(S,stage){
+   /* La croce blu sta sul centro della card attiva, in coordinate lastra. */
+   var c=C(S,1,0);
+   S.mk=el("div","mk","left:"+(c.x+COL_W/2)+"px;top:"+(c.y+ACTIVE_CARD_H/2)+"px");
+   S.slab.appendChild(S.mk);
+   /* La croce rossa sta sull'origine della prospettiva del palco: 50% 46%. */
+   S.org=el("div","origin"); stage.appendChild(S.org);
+   S.stageEl=stage;
+ },
+ draw:function(f,S){
+   /* Prima meta': si spinge e basta. Seconda: si spinge compensando. */
+   var second=f>=105, q=(second?f-105:f)/98;
+   var t=E.inout(cl((q-0.06)/0.82)), z=48+1180*t;
+   var comp=second?t:0;
+   /* La compensazione si calcola, e il termine che tutti dimenticano e' il
+      secondo: l'origine della prospettiva sta al 46% dell'altezza, non al 50%,
+      quindi centrare in verticale non e' solo "meta' lastra meno il soggetto".
+      Con 173,5 fisso il soggetto resta fuori di una quarantina di pixel. */
+   var r=S.stageEl.getBoundingClientRect(), base=(r.width/1920)*1.04;
+   var cx=colX(1)+COL_W/2, cy=cardY(COLUMNS[1].cards,0)+ACTIVE_CARD_H/2;
+   var tx=1200-cx, ty=(0.46-0.5)*r.height/base+370-cy;
+   pose(S,{yaw:-9+9*t,pitch:2.5-2.5*t,z:z,x:tx*comp,y:ty*comp});
+   /* La deriva si misura sul rendering, non si dichiara. */
+   var d="—";
+   if(S.mk&&S.stageEl){
+     var a=S.mk.getBoundingClientRect(), b=S.stageEl.getBoundingClientRect();
+     if(a.width){
+       var dx=(a.left+a.width/2)-(b.left+b.width/2), dy=(a.top+a.height/2)-(b.top+b.height*0.46);
+       d=Math.round(Math.sqrt(dx*dx+dy*dy))+"px";
+     }
+   }
+   S.hud((second?"con compensazione":"senza compensazione")+"   pushZ "+Math.round(z)+"   deriva misurata sul rendering: "+d);
+ }};
+
+/* --- GIU-04: le tre grandezze della camera lungo tutta la catena --- */
+var CHAIN=[
+  {n:"UIMockup",    from:START,                          to:END},
+  {n:"CardHandoff", from:END,                            to:{yaw:-4,pitch:1.2,z:96,x:0,y:0}},
+  {n:"CardFocus",   from:{yaw:-4,pitch:1.2,z:96,x:0,y:0},to:{yaw:0,pitch:0,z:1180,x:70,y:173.5}}
+];
+M.chain={dur:330,
+ init:function(S,stage){
+   var cv=el("canvas","graph"); cv.width=580; cv.height=290; stage.appendChild(cv); S.g=cv;
+ },
+ draw:function(f,S){
+   var seg=f<110?0:(f<220?1:2), local=(f-seg*110)/109;
+   var t=E.inout(cl(local)), L=CHAIN[seg];
+   var p=mix(L.from,L.to,t); pose(S,p);
+   /* Il grafico: tre curve sull'intera catena piu' la testina. */
+   if(S.g){
+     var c=S.g.getContext("2d"), W=S.g.width, H=S.g.height;
+     c.clearRect(0,0,W,H);
+     var pad=26, gw=W-pad*2, gh=H-pad*2;
+     c.strokeStyle="rgba(255,255,255,.13)"; c.lineWidth=1;
+     for(var k=1;k<3;k++){ var jx=pad+gw*(k/3); c.beginPath(); c.moveTo(jx,pad-8); c.lineTo(jx,H-pad+8); c.stroke(); }
+     var series=[["yaw","#4d94ff",function(o){return (o.yaw+20)/22;}],
+                 ["pitch","#34d399",function(o){return o.pitch/6;}],
+                 ["push","#d97757",function(o){return o.z/1200;}]];
+     series.forEach(function(sr){
+       c.strokeStyle=sr[1]; c.lineWidth=2.4; c.beginPath();
+       for(var i=0;i<=90;i++){
+         var u=i/90, sg=Math.min(2,Math.floor(u*3)), lu=E.inout(cl(u*3-sg));
+         var q=mix(CHAIN[sg].from,CHAIN[sg].to,lu);
+         var X=pad+gw*u, Y=H-pad-gh*cl(sr[2](q));
+         i?c.lineTo(X,Y):c.moveTo(X,Y);
+       }
+       c.stroke();
+     });
+     var hx=pad+gw*(f/329);
+     c.strokeStyle="rgba(255,255,255,.75)"; c.lineWidth=1.5;
+     c.beginPath(); c.moveTo(hx,pad-8); c.lineTo(hx,H-pad+8); c.stroke();
+     c.font="500 17px ui-monospace, Menlo, monospace";
+     series.forEach(function(sr,i){ c.fillStyle=sr[1]; c.fillText(sr[0],pad+i*112,18); });
+   }
+   S.hud(L.n+"   yaw "+p.yaw.toFixed(1)+"  pitch "+p.pitch.toFixed(1)+"  push "+Math.round(p.z)+"   tutte e tre monotone, nessuna inverte");
+ }};
+
+/* --- MAT-03: il piano attenuato dietro, acceso e spento --- */
+M.backdrop={dur:220,draw:function(f,S){
+  var t=E.sine(f<110?f/110:(220-f)/110);
+  /* Arretrata: il piano dietro si vede solo se in quadro c'e' anche il bordo
+     della lastra, altrimenti lo copre lei stessa. */
+  pose(S,{yaw:-21+9*t,pitch:3.6,z:-520,x:330,y:130});
+  var on=f<110;
+  S.bg.style.opacity=on?"0.62":"0";
+  S.hud(on?"piano dietro a 0,62: il fotogramma ha un fondo e la lastra appoggia"
+          :"piano dietro spento: sotto la board resta il vuoto e la lastra galleggia");
+}};
+
+/* --- CHR-04: prima e dopo senza divisorio --- */
+M.ba={dur:250,init:depth,draw:function(f,S){
+  pose(S,{yaw:-10+3*E.sine(cl(f/249)),pitch:2.4,z:40+60*E.sine(cl(f/249)),x:120-240*E.sine(cl(f/249)),y:0});
+  /* Due card passano da Backlog a In review, sfalsate. Nessun wipe, nessuno
+     slider: lo stato cambia sotto una camera che non si ferma. */
+  var m1=E.inout(cl((f-52)/70)), m2=E.inout(cl((f-88)/70));
+  var a=C(S,0,2), b=C(S,0,1), dst=colX(2), step=CARD_H+CARD_GAP;
+  a.el.style.left=(a.x+(dst-a.x)*m1)+"px";
+  a.el.style.top=(a.y+(357-a.y)*m1-Math.sin(Math.PI*m1)*70)+"px";
+  a.el.style.transform="translateZ("+(26+90*Math.sin(Math.PI*m1))+"px)";
+  b.el.style.left=(b.x+(dst-b.x)*m2)+"px";
+  b.el.style.top=(b.y+(357+step-b.y)*m2-Math.sin(Math.PI*m2)*70)+"px";
+  b.el.style.transform="translateZ("+(26+90*Math.sin(Math.PI*m2))+"px)";
+  S.cols[0].cnt.textContent=String(3-(m1>=.5?1:0)-(m2>=.5?1:0));
+  S.cols[2].cnt.textContent=String(2+(m1>=.5?1:0)+(m2>=.5?1:0));
+  var mt=E.out(cl((f-120)/80));
+  S.metric.textContent=Math.round(128-64*mt)+" ms";
+  S.metric.style.color=mt>0.9?"#34d399":"#e6e8ec";
+  S.hud("nessun divisorio e nessuno slider: il prima e il dopo sono lo stesso piano in due istanti diversi");
+}};
+
+/* --- TXT-05: la correzione --- */
+var WRONG="Fai un commercial di 30 secondi con tre stacchi";
+var RIGHT="Fai un commercial di 45 secondi, una sola inquadratura.";
+var KEEP=22; /* "Fai un commercial di " resta */
+M.fix={dur:290,
+ init:function(S){ S.composer.style.opacity="1";
+   S.s1=typingSchedule(WRONG,14,20260812,13);
+   S.s2=typingSchedule(RIGHT.slice(KEEP),0,20260901,12);
+   S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?";
+ },
+ draw:function(f,S){
+   pose(S,{yaw:-5,pitch:1.6,z:190,x:0,y:-560});
+   var DEL0=118, DEL_END=DEL0+Math.ceil((WRONG.length-KEEP)/1.6), txt, fase;
+   if(f<DEL0){ txt=WRONG.slice(0,typedCount(S.s1,f)); fase="scrive"; }
+   else if(f<DEL_END){
+     /* Si cancella a raffica, alla cadenza di un tasto tenuto premuto: circa un
+        carattere e mezzo per frame, quasi quattro volte piu' veloce di come si
+        scrive. E ci si ferma su un confine di parola, non a meta'. */
+     var gone=Math.floor((f-DEL0)*1.6);
+     txt=WRONG.slice(0,Math.max(KEEP,WRONG.length-gone)); fase="cancella";
+   } else {
+     txt=RIGHT.slice(0,KEEP+typedCount(S.s2,f-DEL_END-8)); fase="riscrive";
+   }
+   S.ctext.textContent=txt;
+   S.caret.style.opacity=(f%20<13)?"1":"0.18";
+   S.hud(fase+"   "+txt.length+" caratteri   cancella a 1,6 car/frame contro 0,43 in scrittura, e si ferma su un confine di parola");
+ }};
+
+/* ============================================================ il catalogo */
+var FAMS=[
+ {k:"cam",n:"La camera sulla lastra",d:"Sei modi di muovere la macchina su un piano di UI. Nessuno di questi taglia."},
+ {k:"cur",n:"Il cursore come attore",d:"Il puntatore non è un cursore, è il protagonista. Ha peso, esita, e la UI gli risponde."},
+ {k:"txt",n:"Testo e dati",d:"Scrivere, sbagliare, rispondere, contare. Quello che un prodotto software fa davanti a te."},
+ {k:"chr",n:"Coreografia dentro una sola inquadratura",d:"Il layout che si muove da solo, senza che nessuno stacchi."},
+ {k:"mat",n:"La materia della lastra",d:"Tre dettagli che decidono se quello sullo schermo è un oggetto o uno sfondo."},
+ {k:"giu",n:"Le giunte",d:"La parte che questo repo ha e nessun altro: come due scene si attaccano senza che si veda."}
+];
+
+var CAT=[
+{fam:"cam",code:"CAM-01",t:"Avvicinamento che si raddrizza",demo:"push",src:"slab.ts · START/END_POSE",
+ a:"La lastra entra da fuori campo obliqua e arriva ferma, più frontale di come era partita. Lo yaw che si chiude è il modo di dire che adesso si può leggere.",
+ b:"Due pose dentro slab.ts e una sola interpolate fra le due. La posa finale vive nel modulo e non dentro la scena, perché è il punto di aggancio di quella dopo.",
+ c:"yaw da -18 a -9, pitch da 5 a 2,5, pushZ da 0 a 48, slideX da 900 a 0. Centootto frame in inOut cubic, poi quarantadue di riposo.",
+ d:"fill-measure.sh. Un avvicinamento che parte troppo stretto lascia morire un bordo: sul repo la misura è 20 campioni su 20 con tutti e quattro i lati pieni."},
+
+{fam:"cam",code:"CAM-02",t:"Carrello con parallasse fra i piani",demo:"truck",src:"translateZ per livello",
+ a:"La camera scorre di lato e sidebar, board e pannello si separano perché stanno a profondità diverse. È quello che distingue una lastra da una fotografia che trasla.",
+ b:"Ogni parte della UI prende un translateZ dentro un contenitore in preserve-3d. La parallasse non si anima: esce dalla prospettiva mentre la camera si muove.",
+ c:"header 6, sidebar 10, pannello 18, board 26, card attiva 40. slideX da -360 a 360 in inOut sine.",
+ d:"Un confronto di spostamento fra due livelli. Se pannello e board percorrono gli stessi pixel la profondità non c'è, e quello che stai guardando è un pan su un'immagine piatta."},
+
+{fam:"cam",code:"CAM-03",t:"Orbita che scopre lo spessore",demo:"orbit",src:"il secondo piano a -30",
+ a:"La camera gira attorno alla lastra quanto basta a mostrare che ha un bordo. Serve a stabilire che è un oggetto, e in un film si fa una volta sola.",
+ b:"Un secondo piano dietro il primo, appena più grande, con l'ombra di contatto. Oltre i quaranta gradi di yaw il testo smette di leggersi, quindi l'orbita si ferma prima.",
+ c:"yaw da -36 a +10, inOut sine su 105 frame di andata e altrettanti di ritorno. Spessore 30, ombra 90 di offset e 180 di sfocatura.",
+ d:"legibility.sh. Un'orbita larga porta il testo sotto la soglia di leggibilità, e il banco dice fino a che riduzione regge invece di lasciarlo al gusto."},
+
+{fam:"cam",code:"CAM-04",t:"Discesa al macro",demo:"macro",src:"scenes/CardFocus.tsx",
+ a:"La camera prosegue oltre la posa leggibile ed entra dentro un singolo elemento, che riempie il fotogramma restando nitido.",
+ b:"translateZ che cresce più una traslazione che porta il centro dell'elemento sull'origine. La nitidezza non è merito del movimento: è il motivo per cui la lastra deve essere DOM.",
+ c:"Nel repo: pushZ da 96 a 1493,6 su 169 frame in inOut cubic, cioè 2,35 volte, con la traslazione che esce da centreOn. La demo qui sopra gira alla scala del palco, quindi i suoi numeri sono più piccoli.",
+ d:"focus-sharpness.sh. Confronta l'energia alle alte frequenze del ritaglio della card con lo stesso contenuto ingrandito dal campo largo: 2,09× sul render vero contro 1,03× sulla fixture. La prima versione di quel banco confrontava il ritaglio con una copia sfocata di sé stesso, dava 4,14× alla fixture e la promuoveva."},
+
+{fam:"cam",code:"CAM-05",t:"Attenzione per opacità",demo:"attn",src:"theme.ts · BACKDROP_OPACITY",
+ a:"Invece di sfocare il resto, il resto scende di opacità. L'occhio va dove il contrasto è pieno e nessun pixel diventa illeggibile.",
+ b:"Un solo valore applicato a tutti i livelli che non sono il soggetto. Sta in theme.ts perché è una misura e non un gusto.",
+ c:"0,62. Sotto quella soglia il contenuto attenuato scende sotto 3:1 da renderizzato, e a quel punto legge come rumore invece che come profondità.",
+ d:"Un controllo di contrasto sul frame renderizzato. Se il livello attenuato passa sotto 3:1 il banco boccia, e il numero da alzare è quello, non l'opacità del soggetto."},
+
+{fam:"cam",code:"CAM-06",t:"Il centro che non scappa",demo:"centre",src:"slab.ts · centreOn",
+ a:"Sotto una spinta in Z c'è un solo punto del quadro che resta fermo, ed è l'origine della prospettiva. Tutto il resto scappa verso il bordo, tanto più in fretta quanto più sta lontano da lì.",
+ b:"Si calcola dove cade il centro del soggetto sullo schermo con yaw e pitch a zero, e si trasla la lastra di quanto serve a portarcelo sopra. Da quel momento la spinta lo ingrandisce senza spostarlo. In slab.ts sono slabPointOnScreen e centreOn, e la posa finale di CardFocus esce da quelle due invece che da numeri aggiustati a occhio.",
+ c:"origine a (960 , 496,8), cioè 50% e 46% di 1920 per 1080. Il termine che si dimentica è proprio quel 46: centrare in verticale non è metà lastra meno il soggetto, e con la formula sbagliata il soggetto resta fuori di una quarantina di pixel. Nella demo la deriva è misurata sul rendering a ogni frame: a parità di spinta sono 386 px senza compensazione e 0 con.",
+ d:"La distanza fra il centro del soggetto e l'origine sull'ultimo fotogramma. Se non sta dentro un paio di pixel, la discesa sta scivolando accanto al soggetto invece che dentro, e a occhio te ne accorgi solo alla fine."},
+
+{fam:"cur",code:"CUR-01",t:"Traiettoria con arco e sorpasso",demo:"arc",src:"primitives/Cursor.tsx",
+ a:"Il puntatore arriva su una curva, supera di poco il bersaglio e ci si posa. In rosso, sullo stesso tempo, la retta a velocità costante.",
+ b:"Bezier quadratica con il punto di controllo fuori asse, e una curva back applicata al parametro invece che alla posizione. Così il sorpasso avviene lungo la tangente e resta sulla traiettoria.",
+ c:"controllo a (1520 , 790), sorpasso massimo 7,5 per cento, 78 frame di percorso e 12 di assestamento.",
+ d:"Curvatura e profilo di velocità sui frame renderizzati. Curvatura zero o velocità costante vuol dire che quella non è una mano, è un tween."},
+
+{fam:"cur",code:"CUR-02",t:"L'esitazione prima del clic",demo:"hesit",src:"dramaturgia, non codice",
+ a:"Il cursore arriva sul pulsante e non preme subito. Quella pausa è tutto il racconto: dice che è una decisione e non un passaggio obbligato.",
+ b:"Tre finestre separate sulla timeline: avvicinamento, attesa, pressione. L'attesa non è un ease lento, è tempo morto vero, altrimenti legge come lentezza del software.",
+ c:"arrivo a f54, attesa 16 frame, pressione a f70. Sotto i dieci frame non si sente, sopra i venticinque sembra che si sia bloccato qualcosa.",
+ d:"Una finestra a velocità nulla fra arrivo e pressione. Se il banco non la trova, l'esitazione è nel copione ma non nel render."},
+
+{fam:"cur",code:"CUR-03",t:"Il clic a cui la UI risponde",demo:"click",src:"lo stato premuto",
+ a:"Lo stato premuto esiste e arriva prima della conseguenza. Due frame di scarto bastano perché il gesto sembri causare qualcosa.",
+ b:"Stato del pulsante e conseguenza su due finestre diverse. La tentazione è metterli sullo stesso frame perché è più corto da scrivere, ed è esattamente quello che rende il clic finto.",
+ c:"pressione a f48, conseguenza a f50. Sotto un frame di scarto il nesso sparisce, sopra i cinque diventa lentezza.",
+ d:"Confronto fra il frame in cui cambia il pulsante e quello in cui cambia il contenuto. Se sono lo stesso, boccia."},
+
+{fam:"cur",code:"CUR-04",t:"Trascinamento con peso",demo:"drag",src:"CardBox · lifted",
+ a:"L'oggetto trascinato resta indietro rispetto al puntatore e si inclina nella direzione del moto. Senza il ritardo la card sembra saldata al cursore.",
+ b:"La posizione della card è la posizione del cursore calcolata tre frame prima: aritmetica sul frame, nessuna memoria di stato. L'inclinazione viene dalla differenza fra due campioni.",
+ c:"ritardo 3 frame, inclinazione 0,11 gradi per pixel di velocità, ombra da 18/30 a 44/74, bordo acceso a partire dal sollevamento.",
+ d:"L'inclinazione agli estremi del trascinamento deve essere zero. Un'inclinazione costante non è una card in mano, è una card storta."},
+
+{fam:"txt",code:"TXT-01",t:"Digitazione con ritmo umano",demo:"type",src:"primitives/rhythm.ts",
+ a:"Il testo compare con le pause di una persona: si pensa dopo la punteggiatura, si rallenta prima di una parola lunga, e dentro le parole che le dita conoscono partono raffiche.",
+ b:"Uno schedule di frame per carattere calcolato una volta sola, poi una ricerca per frame. Il caso viene da mulberry32 con seme fisso: Math.random romperebbe il frame-lock in silenzio.",
+ c:"13 caratteri al secondo di base, jitter da 0,55 a 1,50, pausa dopo punteggiatura da 2,2 a 4,0 volte la base, raffica a 0,42 con probabilità 0,34. Seme 20260812.",
+ d:"framelocked-verdict.sh. Due render dello stesso frame devono dare gli stessi pixel. Con Math.random il video esce lo stesso e la riproducibilità no, che è il modo peggiore di rompersi."},
+
+{fam:"txt",code:"TXT-02",t:"Risposta in streaming",demo:"stream",src:"beats.sh",
+ a:"La risposta si assembla a blocchi, con una stasi nel mezzo. E deve arrivare dentro l'area visibile, che è la parte che si dimentica.",
+ b:"Il testo cresce per parole e non per caratteri, con la finestra di stasi scritta esplicitamente. La posizione è vincolata a stare sopra al composer, che è opaco.",
+ c:"la crescita si ferma fra f110 e f130. Il blocco sta sopra al composer, che è alto 96 e parte a 36 dal fondo della lastra.",
+ d:"beats.sh, il banco che si è ripagato da solo. Per un giorno intero il render prometteva quattro beat e ne consegnava tre: la risposta si assemblava sotto al composer opaco, e tutti i type check passavano. Ora il banco pretende che il conteggio parole CRESCA nella finestra, non che sia diverso da zero."},
+
+{fam:"txt",code:"TXT-03",t:"Numero che si posa",demo:"metric",src:"tabular-nums",
+ a:"Una metrica arriva sul suo valore con un piccolo sorpasso e si ferma, invece di scorrere come un contachilometri.",
+ b:"Una curva back sul valore e cifre a passo fisso, così la larghezza non cambia mai. Un numero che cambia larghezza fa muovere tutto quello che ha intorno, e quel movimento non lo hai deciso tu.",
+ c:"128 ms, sorpasso 7,5 per cento, 72 frame.",
+ d:"Larghezza del blocco misurata frame per frame. Se cambia c'è un riflusso, e il riflusso è la cosa che fa sembrare finto un cruscotto."},
+
+{fam:"txt",code:"TXT-04",t:"Riga che arriva in una lista ordinata",demo:"insert",src:"cardY · posizione assoluta",
+ a:"Il varco si apre prima che la riga arrivi. La lista fa spazio, e la riga atterra dentro uno spazio già fatto.",
+ b:"Le card stanno in posizione assoluta e la loro y è aritmetica pura, quindi se ne può inserire una senza che il layout collassi nello stesso frame. Con un flex, aggiungere è uno stacco travestito da animazione.",
+ c:"varco a f20, atterraggio a f38, diciotto frame di anticipo. Lo spostamento è 108, cioè un'altezza di card più il gap.",
+ d:"Confronto fra il frame in cui parte lo spostamento e quello in cui la riga diventa visibile. Se coincidono, la riga sembra incollata sopra al layout invece che dentro."},
+
+{fam:"txt",code:"TXT-05",t:"La correzione",demo:"fix",src:"primitives/rhythm.ts",
+ a:"Si scrive una cosa, ci si ferma, si cancella fino a un confine di parola e si riscrive. È il modo più economico che esista di far vedere che il prodotto perdona un ripensamento.",
+ b:"Tre finestre: la battitura con lo schedule di rhythm.ts, la cancellazione a velocità costante e molto più rapida, la riscrittura con un secondo schedule e un altro seme. Cancellare con la stessa curva della scrittura è l'errore: nessuno cancella pensando.",
+ c:"scrittura a 13 caratteri al secondo, cioè 0,43 per frame. Cancellazione a 1,6 per frame, la cadenza di un tasto tenuto premuto, quasi quattro volte più veloce. Si ferma a 22 caratteri, il confine di parola più vicino.",
+ d:"Il rapporto fra la velocità di cancellazione e quella di scrittura. Se si avvicina a uno, la cancellazione legge come una seconda battitura al contrario, che nessuno ha mai visto fare."},
+
+{fam:"chr",code:"CHR-01",t:"Consegna",demo:"handoff",src:"scenes/CardHandoff.tsx",
+ a:"Un elemento attraversa il layout e il layout lo assorbe. La parte difficile non è il volo: è che la colonna di arrivo apra il posto prima, e quella di partenza si richiuda dietro.",
+ b:"La card si stacca dal piano, viaggia su un arco e si posa. Le due colonne si muovono su finestre proprie, sfalsate rispetto al volo, e tutte le posizioni vengono da cardY.",
+ c:"varco a f30, volo da f40 a f126, chiusura a f56. Passo di 123, cioè l'altezza della card attiva più il gap.",
+ d:"handoff-travel.sh, l'unico banco che guarda se il gesto succede: un fermo immagine passa seam.sh e fill-measure.sh a pieni voti. Traccia il centroide dei pixel cambiati e pretende moto orizzontale monotono per almeno mezza colonna."},
+
+{fam:"chr",code:"CHR-02",t:"Riorganizzazione per distanza",demo:"reflow",src:"scelta di sfalso",
+ a:"Quando qualcosa cambia, il resto si riassesta con un ritardo proporzionale alla distanza dal punto del cambiamento, non al proprio indice nella lista.",
+ b:"Per ogni elemento si calcola la distanza dal punto dove è successa la cosa, e quella diventa il ritardo. Costa una radice quadrata per elemento per frame, che a queste quantità non si sente.",
+ c:"ritardo uguale a distanza diviso 1400, per 22 frame.",
+ d:"Correlazione fra ritardo e distanza sui frame renderizzati. Se il ritardo cresce con l'indice invece che con la distanza il banco lo vede, e si vede anche a occhio: il layout legge come una lista che scorre invece che come uno spazio che reagisce."},
+
+{fam:"chr",code:"CHR-03",t:"Stato che si propaga",demo:"prop",src:"conteggi e pannello",
+ a:"Una modifica in un punto ne causa un'altra altrove, con un ritardo. È il ritardo a leggersi come causa.",
+ b:"Tre finestre in cascata sulla stessa timeline. Nessun evento e nessuno stato: solo tre soglie di frame diverse, quindi resta funzione del frame.",
+ c:"card a f30, conteggio di colonna a f35, pannello a f41. Cinque e sei frame di scarto.",
+ d:"Ordine dei frame di cambiamento. Se due cadono sullo stesso frame la catena non c'è: sono tre cose scollegate che cambiano insieme."},
+
+{fam:"chr",code:"CHR-04",t:"Prima e dopo senza divisorio",demo:"ba",src:"build list · before-after",
+ a:"Il confronto fra due stati si fa lasciando che lo stato cambi mentre la camera si muove. Niente slider da trascinare e niente wipe verticale: il prima e il dopo sono lo stesso piano in due istanti diversi.",
+ b:"Le card cambiano colonna sfalsate fra loro, i conteggi seguono a metà tragitto e la metrica scende sulla sua curva. La camera fa un movimento lento e indipendente da tutto questo, così il cambiamento non cade mai su una pausa.",
+ c:"prima card a f52, seconda a f88, metrica da 128 a 64 ms fra f120 e f200. La camera non è ferma in nessuno di quegli istanti.",
+ d:"Il frame in cui cambia il conteggio non deve coincidere con un frame in cui la camera è ferma. Se coincidono, quello che hai fatto è uno stacco con la camera parcheggiata sopra."},
+
+{fam:"mat",code:"MAT-01",t:"Spessore e ombra di contatto",demo:"thick",src:"il piano dietro il piano",
+ a:"La lastra ha un bordo e appoggia su qualcosa. Nella seconda metà della demo lo spessore è spento, per vedere cosa si perde.",
+ b:"Un secondo piano dietro il primo, appena più grande, con un'ombra profonda. Costa un div, e decide se l'oggetto legge come oggetto.",
+ c:"spessore 30 dietro il piano, ombra 90 di offset e 180 di sfocatura al 75 per cento.",
+ d:"Qui non serve un numero, serve il confronto: basta spegnerlo e guardare. È lo stesso motivo per cui ogni misura del repo stampa due colonne invece di un valore solo."},
+
+{fam:"mat",code:"MAT-02",t:"Luce dello schermo sul piano",demo:"spill",src:"l'alone sotto la lastra",
+ a:"Il colore dominante dello schermo si versa sul piano sotto, e cambia quando cambia quello che c'è sullo schermo.",
+ b:"Un gradiente radiale coricato dietro la lastra, con la tinta presa dal contenuto attivo. Se fosse una luce di scena decisa a mano resterebbe uguale mentre lo schermo cambia, e si vedrebbe.",
+ c:"opacità fra 0,72 e 0,98, sfocatura 22, coricato a 76 gradi con origine sul bordo alto, agganciato al bordo basso della lastra.",
+ d:"Confronto fra la tinta dell'alone e quella dominante del frame. Se non si muovono insieme, l'alone è decorazione."},
+
+{fam:"mat",code:"MAT-03",t:"Il piano attenuato dietro",demo:"backdrop",src:"theme.ts · BACKDROP_OPACITY",
+ a:"Dietro la lastra c'è una seconda copia, più piccola e più ruotata, a opacità ridotta. Spegnendola il fotogramma sotto la board resta vuoto e la lastra galleggia nel nero.",
+ b:"È la stessa board disegnata una seconda volta, non una texture sfocata: un'immagine resterebbe indietro appena il contenuto cambia, e in un piano sequenza il contenuto cambia sempre. Costa un clone e un translateZ negativo.",
+ c:"0,62 di opacità, arretrata di 60, otto gradi in più di yaw e quattro di pitch, in scala 0,92.",
+ d:"Lo stesso controllo di contrasto di CAM-05. Il piano dietro deve restare sopra 3:1 da renderizzato: sotto quella soglia non è profondità, è sporco sul fondo."},
+
+{fam:"giu",code:"GIU-01",t:"Entrare dalla posa finale",demo:"seam",src:"UI_MOCKUP_END_POSE",
+ a:"La scena dopo comincia esattamente dove si è fermata quella prima. Al frame della giunta non succede niente, ed è precisamente quello il punto.",
+ b:"La posa vive nel modulo condiviso e non dentro le due scene. Due copie della stessa posa restano uguali esattamente finché nessuno tocca una delle due.",
+ c:"Prima giunta a f120: 552 pixel contro 18.019 del taglio di controllo, 33 volte. Seconda giunta, CardHandoff verso CardFocus: 7 pixel contro 22.901.",
+ d:"seam.sh, e quello che lo rende onesto è il controllo accanto: lo stesso ultimo frame contro un frame preso in mezzo alla scena dopo, che è uno stacco vero. Se i due valori si avvicinano lo script esce 2 e dichiara che la misura non separa niente. Prende la coppia come argomenti, perché una giunta esiste per ogni coppia adiacente e cablare i percorsi voleva dire un secondo script uguale al primo tranne due righe."},
+
+{fam:"giu",code:"GIU-02",t:"Il punto di riposo",demo:"rest",src:"proprietà della scena",
+ a:"Una scena che comincia ferma e finisce ferma si può mettere in qualunque ordine, perché al bordo non c'è moto da spezzare.",
+ b:"Curve che arrivano a derivata nulla agli estremi. Un ease out finisce fermo, un lineare no, ed è per questo che il lineare non si usa mai al confine di una scena.",
+ c:"|v| uguale a zero a f000 e a f209. La velocità qui è la differenza fra due frame consecutivi, la stessa cosa che misurerebbe il banco.",
+ d:"Derivata discreta sui primi e sugli ultimi frame renderizzati. Se non è zero quella scena ha un ordine obbligato, e va saputo prima del montaggio invece che scoperto durante."},
+
+{fam:"giu",code:"GIU-03",t:"Trasformazione continua al posto dello stacco",demo:"through",src:"la regola, dal README",
+ a:"La camera attraversa il punto in cui un montaggio normale metterebbe il taglio, e non succede niente. Il film cambia argomento mentre si sta muovendo.",
+ b:"Una sola curva lunga che copre il confine. Il contenuto cambia sotto, la camera no. È il vincolo architetturale da cui discende tutto il resto del repo.",
+ c:"il taglio cadrebbe a f120 su 240. Lì la camera è a metà di una curva che dura tutti e 240 i frame.",
+ d:"seam.sh applicato al confine, col controllo del taglio deliberato accanto. È l'unico modo di distinguere una giunta riuscita da una scena che semplicemente non si muove."},
+
+{fam:"giu",code:"GIU-04",t:"Monotonia della derivata",demo:"chain",src:"le tre pose di confine",
+ a:"Lungo tutta la catena yaw, pitch e spinta si muovono sempre nello stesso verso. Non è pignoleria: l'occhio segue la derivata del movimento, e un'inversione a una giunta legge come uno stacco anche quando i pixel dei due fotogrammi coincidono.",
+ b:"Le pose di confine stanno in un modulo solo, quindi la monotonia si verifica guardando tre costanti invece che aprire tre scene. Il grafico nell'angolo è esattamente quello: le tre grandezze su tutta la catena, con le due giunte marcate.",
+ c:"yaw -18, -9, -4, 0. pitch 5, 2,5, 1,2, 0. spinta 0, 48, 96, 1493,6. Nessuna delle tre torna mai indietro.",
+ d:"Il segno della differenza fra fotogrammi consecutivi attraverso ogni giunta. seam.sh dice che i pixel coincidono, questo dice che il movimento non si è rovesciato: sono due difetti diversi, e il primo banco non vede il secondo."}
+];
+
+/* ============================================================ costruzione */
+var host=document.getElementById("cat");
+FAMS.forEach(function(F){
+  var items=CAT.filter(function(x){ return x.fam===F.k; });
+  var sec=el("section","fam"); sec.setAttribute("data-fam",F.k);
+  var h=el("div","famhead");
+  h.appendChild(el("span","k",null,F.k.toUpperCase()+" / "+items.length));
+  h.appendChild(el("h2",null,null,F.n));
+  h.appendChild(el("p",null,null,F.d));
+  sec.appendChild(h);
+
+  items.forEach(function(x){
+    var art=el("article","mv");
+    var hd=el("div","mvhead");
+    hd.appendChild(el("span","code",null,x.code));
+    hd.appendChild(el("h3",null,null,x.t));
+    hd.appendChild(el("span","from",null,x.src));
+    art.appendChild(hd);
+
+    var stage=el("div","stage"+(RM?" rm":""));
+    art.appendChild(stage);
+
+    var spec=el("dl","spec");
+    [["Cosa fa",x.a,""],["Come si costruisce",x.b,""],["I numeri",x.c,""],["Il banco che la boccia",x.d,"bench"]].forEach(function(r){
+      var d=el("div",r[2]||null);
+      d.appendChild(el("dt",null,null,r[0]));
+      d.appendChild(el("dd",null,null,r[1]));
+      spec.appendChild(d);
+    });
+    art.appendChild(spec);
+    sec.appendChild(art);
+    mount(stage,M[x.demo],x.code);
+  });
+  host.appendChild(sec);
+});
+
+/* filtri e pausa */
+var chips=[].slice.call(document.querySelectorAll(".chip[data-fam]"));
+chips.forEach(function(ch){
+  ch.addEventListener("click",function(){
+    var k=ch.getAttribute("data-fam");
+    chips.forEach(function(o){ o.setAttribute("aria-pressed",o===ch?"true":"false"); });
+    [].forEach.call(document.querySelectorAll(".fam"),function(s){
+      s.style.display=(k==="all"||s.getAttribute("data-fam")===k)?"":"none";
+    });
+  });
+});
+var pb=document.getElementById("pause");
+pb.addEventListener("click",function(){
+  paused=!paused;
+  pb.setAttribute("aria-pressed",paused?"true":"false");
+  pb.textContent=paused?"Riparti":"Ferma tutto";
+});
+if(RM){ paused=true; pb.textContent="Riparti"; pb.setAttribute("aria-pressed","true"); }
+
+})();
+</script>
+
+
+  </body>
+</html>
