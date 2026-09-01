@@ -272,18 +272,33 @@ entry, or its green means only that it reached the end.
 `contrast-floor.py` measures the number `CAM-05` had been asserting. The
 catalogue says the attenuation floor is 0.62 *because* below it the attenuated
 content falls under 3:1 once rendered — and nobody had ever rendered it and
-looked. It now reads the WCAG ratio between the attenuated message text and its
+looked. It now reads the WCAG ratio between the attenuated thread heading and its
 background on a real frame, with the crop projected out of `slab.ts` instead of
-picked by eye, and gets 3.56:1. The same scene rendered at 0.25, which is what
-`attnFloor` exists for, collapses to 1.55:1 and the bench fails it.
+picked by eye, and gets 4.17:1. The same scene rendered at 0.25, which is what
+`attnFloor` exists for, collapses to 1.71:1 and the bench fails it.
 
-Its first version measured the composer's placeholder and failed the scene at
-1.76:1. The reading was right and the subject was wrong: "Chiedi qualcosa" is
-deliberately faint and sits at 2.75:1 with no attenuation at all, so the bench
-was failing `CAM-05` for a decision about the input field. A placeholder is not
-content. It also has a third outcome now — if the crop lands on empty
-background, foreground and background converge, and it exits 3 rather than
-reporting a scene that is fine as broken.
+It took two wrong versions to get there. The first measured the composer's
+placeholder and failed the scene at 1.76:1 — right reading, wrong subject:
+"Chiedi qualcosa" is deliberately faint and sits at 2.93:1 with no attenuation
+at all, so the bench was failing `CAM-05` for a decision about the input field.
+A placeholder is not content.
+
+The second measured real content in a place that moves. Messages have natural
+heights and the thread is anchored to the bottom, so the instant the font
+metrics differ — which is exactly what happens between this machine and the
+Linux in CI — everything shifts and a fixed crop lands on empty background. It
+exited 3 there, "could not measure", which was at least the honest answer rather
+than a verdict about a scene that was fine. The heading it reads instead sits at
+`THREAD_TOP`, which is a constant, so its position is arithmetic. The same
+lesson `slab.ts` already records about card heights, learned again one floor
+down.
+
+How it reads matters too: background is the modal value of the crop, foreground
+is the mean of the *glyph core*, the pixels above sixty per cent of the way from
+background to maximum. Percentiles were not enough — on a crop where text is a
+small fraction of the pixels, the 97th percentile is still measuring background,
+and the same scene read 2.59:1 or 4.17:1 depending on how much text happened to
+fall inside the rectangle.
 
 `beats.sh` was not running anywhere, and had not been for months. It is not in
 the workflow's measurement step, and on the machine these scenes are written on
