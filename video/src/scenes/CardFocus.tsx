@@ -18,7 +18,7 @@ import {
   handoffCard,
   handoffLandedRect,
 } from "../primitives/slab";
-import { SlabLighting } from "../primitives/SlabChrome";
+import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
 import { Board } from "../primitives/Board";
 
 /**
@@ -133,6 +133,15 @@ export const CardFocus: React.FC<CardFocusProps> = ({ progress }) => {
       </AbsoluteFill>
 
       <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
+        {/* Lo spessore, dietro. Fratello e non figlio: la lastra ritaglia, e
+            qualunque ritaglio appiattisce il 3D dei suoi figli. */}
+        <SlabEdge
+          left={(1920 - SLAB_W) / 2 + slideX}
+          top={(1080 - SLAB_H) / 2 + slideY}
+          pushZ={pushZ}
+          yaw={yaw}
+          pitch={pitch}
+        />
         <div
           style={{
             position: "absolute",

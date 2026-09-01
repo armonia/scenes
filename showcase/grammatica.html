@@ -266,8 +266,8 @@
           and names the bench that can fail it.
         </p>
         <p class="lede" style="margin-top:18px;font-size:16px">
-          Twenty-one of the twenty-six name a bench that exists and runs in CI.
-          The other five name one that does not exist yet, and those are printed
+          Twenty-two of the twenty-six name a bench that exists and runs in CI.
+          The other four name one that does not exist yet, and those are printed
           in grey: a measurement nobody has written is a proposal, and this page
           would be doing the thing it warns against if it let the two look alike.
         </p>
@@ -298,14 +298,14 @@
       <section>
         <p class="section-title">Forty-five seconds, one shot</p>
         <p class="note" style="margin:0 0 20px">
-          This is the film the vocabulary is for. Eleven of the thirteen beats
-          render and join end to end; the two in grey exist only as the
-          demonstrations above, and they are printed that way on purpose — same
-          rule as the benches, a plan and a thing are not allowed to look alike.
-          The four that went in last are the hand: the cursor arrives on an arc,
-          grabs the card, drags it with weight, and the board answers in a chain
-          rather than all at once. A card that crosses on its own is an
-          animation; a card somebody picks up is a piece of software.
+          This is the film the vocabulary is for. Twelve of the thirteen beats
+          render and join end to end. The one still in grey is the truck, and it
+          is not grey for lack of time: any clipping — <code>overflow: hidden</code>,
+          <code>overflow: clip</code>, <code>clip-path</code> — flattens
+          <code>preserve-3d</code>, and the slab has to clip, so per-layer
+          parallax costs a restructure of the DOM in every scene rather than a
+          few <code>translateZ</code>. It stays printed the way the missing
+          benches are printed: a plan and a thing are not allowed to look alike.
         </p>
         <div class="take">
           <div>f0000</div><div><b>CAM-01</b> the slab enters from off-frame and straightens, from <code>UI_MOCKUP_START_POSE</code> to <code>UI_MOCKUP_END_POSE</code><i class="tag">UIMockup</i></div>
@@ -319,18 +319,18 @@
           <div>f0930</div><div><b>CUR-02</b> half a second of hesitation on the button, then <b>CUR-03</b> presses and the UI answers five frames later<i class="tag">PromptInput</i></div>
           <div>f0990</div><div><b>TXT-02</b> the answer arrives in chunks, and inside the visible area rather than under the composer<i class="tag">PromptInput</i></div>
           <div>f1140</div><div><b>CAM-05</b> everything that is not the answer drops to 0.62 opacity<i class="tag">PromptInput</i></div>
-          <div class="none">f1230</div><div class="none"><b>CAM-03</b> a short orbit shows the edge of the slab and stops at rest<i class="tag">not written</i></div>
-          <div>f1350</div><div>End. At rest, so another scene can attach here without it showing</div>
+          <div>f1230</div><div><b>CAM-03</b> a short orbit shows the edge of the slab and stops at rest<i class="tag">BoardOrbit</i></div>
+          <div>f1350</div><div>End. At rest, so another scene can attach here without it showing<i class="tag">BoardOrbit</i></div>
         </div>
         <p class="note" style="margin-top:18px">
-          What renders today is five scenes joined end to end, every join
+          What renders today is six scenes joined end to end, every join
           measured by <code>seam.sh</code>: UIMockup, CardHandoff, CardFocus,
-          CardRelease, PromptInput. 1310 frames, 43.7 seconds, no cut anywhere in
-          them, and the four joins read 557, 64, 55 and 29 pixels. The last is
-          the cleanest, which is what happens when both sides take the same
-          geometry from the same module instead of agreeing by hand. CardRelease
-          is not a beat in this list because this list is the plan and not the
-          inventory.
+          CardRelease, PromptInput, BoardOrbit. 1460 frames, 48.7 seconds, no cut
+          anywhere in them, and the five joins read 557, 64, 55, 29 and 15
+          pixels. They get cleaner as they go, which is what happens when both
+          sides take the same geometry from the same module instead of agreeing
+          by hand. CardRelease is not a beat in this list because this list is
+          the plan and not the inventory.
         </p>
       </section>
 
@@ -349,6 +349,7 @@
               <tr><td>focus-sharpness.sh</td><td>A slab that stopped being DOM: the text falls apart once the camera is on top of it</td><td class="n">2.09× against 1.03× on the fixture</td></tr>
               <tr><td>rest-point.sh</td><td>A scene still moving where the next one has to attach. Its thresholds were absolute to begin with, tuned on this machine, and every one of them failed the move to Linux</td><td class="n">edges under 30% of mid-scene</td></tr>
               <tr><td>click-gap.sh</td><td>A press and its consequence fused onto one frame, or so far apart that it stops reading as a consequence and starts reading as lag</td><td class="n">f271 and f276, five frames</td></tr>
+              <tr><td>contrast-floor.py</td><td>Content attenuated so far that it stops being a plane behind and becomes dirt on the background. Its first version measured the composer placeholder, which is deliberately faint and sits at 2.75:1 before any attenuation at all — so it failed the scene for a decision about the field</td><td class="n">3.56:1 against 1.55 at 0.25</td></tr>
               <tr><td>demo-check.py</td><td>A demonstration on this page that has stopped demonstrating its own entry. The difference between showing a thesis and not showing it is almost always temporal, and a screenshot cannot see it, so this one scrubs</td><td class="n">15 entries, frame by frame</td></tr>
               <tr><td>fixture-screenshot.sh</td><td>Measures nothing. It builds the scene the bench above has to fail, and without it that bench is a promise</td><td class="n">first frame magnified 2.26×</td></tr>
             </tbody>
@@ -1165,10 +1166,10 @@ var CAT=[
  c:"header 6, sidebar 10, panel 18, board 26, active card 40, and the truck runs pushed in at 780 rather than from the wide pose. That is not a taste: at the wide pose those same offsets buy four pixels of shear over the whole move, which is real and invisible. Close in they buy twenty, and the readout measures them rather than claiming them.",
  d:"demo-check.py. Panel and board travel different pixels even flat, because they sit at different points on an inclined plane, so the differential travel on its own measures nothing. What measures the depth is how much that difference changes when the z offsets come off: nineteen pixels, and the readout takes them off the rendering rather than from this sentence."},
 
-{fam:"cam",code:"CAM-03",t:"Orbit that shows the edge",demo:"orbit",src:"the second plane at -30",
+{fam:"cam",code:"CAM-03",t:"Orbit that shows the edge",demo:"orbit",src:"scenes/BoardOrbit.tsx",
  a:"The camera goes around the slab far enough to show it has an edge. It establishes the thing as an object, and a film does that once.",
  b:"A second plane behind the first, slightly larger, with the contact shadow. Past forty degrees of yaw the text stops reading, so the orbit stops before that.",
- c:"yaw +10 to -36, which is the range a film uses, then out to -56 and back. The overshoot is there so the limit is something you see rather than something you are told: past forty degrees the board foreshortens to 59 per cent of its width and the titles stop being titles. Edge 30, shadow 90 offset and 180 blur.",
+ c:"In the film: from frontal out to -34 over 118 frames, then 32 frames of stillness, so the piece ends on a pose and not on an interrupted move. Thirty-four is where the board still reads. In the demo: yaw +10 to -36, then out to -56 and back. The overshoot is there so the limit is something you see rather than something you are told: past forty degrees the board foreshortens to 59 per cent of its width and the titles stop being titles. Edge 30, shadow 90 offset and 180 blur.",
  d:"legibility.sh. A wide orbit drops the text under the legibility threshold, and the bench says down to what size it survives instead of leaving it to taste."},
 
 {fam:"cam",code:"CAM-04",t:"Descent to macro",demo:"macro",src:"scenes/CardFocus.tsx",
@@ -1177,11 +1178,11 @@ var CAT=[
  c:"In the repo: pushZ 96 to 1493.6 over 169 frames of inOut cubic, 2.35 times, with the translation coming out of centreOn. The demo above takes its translation from the same formula measured on its own stage, and it has to: with the repo numbers hardcoded on a stage of a different width the camera goes past the card and the frame ends black.",
  d:"focus-sharpness.sh. It compares the high-frequency energy of the card crop against the same content magnified from the wide shot: 2.09× on the real render, 1.03× on the fixture. Its first version compared the crop to a blurred copy of itself, scored the fixture 4.14× and passed it."},
 
-{fam:"cam",code:"CAM-05",p:1,t:"Attention by opacity",demo:"attn",src:"scenes/PromptInput.tsx",
+{fam:"cam",code:"CAM-05",t:"Attention by opacity",demo:"attn",src:"scenes/PromptInput.tsx",
  a:"Instead of blurring the rest, the rest drops in opacity. The eye goes where the contrast is full and no pixel becomes unreadable.",
  b:"One value applied to every layer that is not the subject. It used to live in theme.ts as BACKDROP_OPACITY and go unread by every scene, so it was deleted; a number no scene uses is a proposal wearing the clothes of a fact. It is back now because a scene finally does the thing: while the answer streams, the board above it, the earlier messages and the composer all go to 0.62, and the answer alone keeps full contrast.",
  c:"0.62. The demo goes down to it and then carries on to 0.25, because a floor you never touch is a number somebody wrote down: at 0.25 the attenuated content is under 3:1 and reads as dirt on the background rather than as a plane behind.",
- d:"A contrast check on the rendered frame, and that one is still missing: demo-check.py only holds the demonstration to the floor, verifying that it touches 0.62 and then goes under it. What nobody has measured yet is the ratio the attenuated layer actually lands on once rendered, which is the number the 0.62 is supposed to come from."},
+ d:"contrast-floor.py, and the number the 0.62 was supposed to come from turns out to be 3.56:1. It reads the WCAG ratio between the attenuated message text and its background on frame 430 of the real render, with the crop projected out of slab.ts rather than picked by eye, and it fails the same scene rendered at 0.25, where the ratio collapses to 1.55. Its first version measured the composer placeholder instead and failed the scene at 1.76:1 — correctly, and about the wrong thing: that placeholder is deliberately faint and sits at 2.75:1 with no attenuation at all. A placeholder is not content, and the entry is about content."},
 
 {fam:"cam",code:"CAM-06",t:"The point that does not run",demo:"centre",src:"slab.ts · centreOn",
  a:"Under a push in Z there is exactly one point of the frame that stays put, the perspective origin. Everything else runs for the edge, faster the further out it sits.",
@@ -1267,10 +1268,10 @@ var CAT=[
  c:"First card at f52, second at f88, metric from 128 to 64 ms between f120 and f200. The camera is not still at any of those.",
  d:"The frame a count changes on must not coincide with a frame where the camera is still. If they coincide, what you made is a cut with the camera parked over it."},
 
-{fam:"mat",code:"MAT-01",t:"Edge and contact shadow",demo:"thick",src:"the plane behind the plane",
+{fam:"mat",code:"MAT-01",t:"Edge and contact shadow",demo:"thick",src:"SlabChrome · SlabEdge",
  a:"The slab has an edge and it rests on something. In the second half of the demo the edge is switched off, to see what goes.",
- b:"A second plane behind the first, slightly larger, with a deep shadow. It costs one div, and it decides whether the object reads as an object.",
- c:"Edge 30 behind the plane, shadow 90 offset and 180 blur at 75 per cent.",
+ b:"A second plane behind the first, slightly larger, with a deep shadow. It costs one div, and it decides whether the object reads as an object. In the repo it is a SIBLING of the slab and not a child, which is not a detail: the slab clips, and any clipping flattens preserve-3d, so a child at translateZ(-30) would be squashed onto its parent's plane and never stick out. As a sibling inside the same perspective its Z is real.",
+ c:"Edge 30 behind the plane, 6 px of overhang per side, shadow 90 offset and 180 blur at 75 per cent. All six scenes draw it and only the last one shows it: at small yaw angles it sits exactly behind the slab, which is why it went unwritten for so long — nothing in the film turned far enough to need it.",
  d:"No number needed here, a comparison is: switch it off and look. demo-check.py does exactly that, and holds the second half to it. It is the same reason every measurement in the repo prints two columns instead of one value."},
 
 {fam:"mat",code:"MAT-02",p:1,t:"Screen light on the floor",demo:"spill",src:"the glow under the slab",

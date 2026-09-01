@@ -23,7 +23,7 @@ import {
   handoffCard,
   handoffTargetCards,
 } from "../primitives/slab";
-import { SlabLighting } from "../primitives/SlabChrome";
+import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
 import { Board } from "../primitives/Board";
 import { Cursor, pointOnPath, type Waypoint } from "../primitives/Cursor";
 
@@ -250,6 +250,15 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
       </AbsoluteFill>
 
       <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
+        {/* Lo spessore, dietro. Fratello e non figlio: la lastra ritaglia, e
+            qualunque ritaglio appiattisce il 3D dei suoi figli. */}
+        <SlabEdge
+          left={(1920 - SLAB_W) / 2}
+          top={(1080 - SLAB_H) / 2}
+          pushZ={pushZ}
+          yaw={yaw}
+          pitch={pitch}
+        />
         <div
           style={{
             position: "absolute",

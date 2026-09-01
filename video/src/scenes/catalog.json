@@ -80,6 +80,19 @@
       "fill": true,
       "blurb": "The fifth link, and the one that used to be homeless. Four beats in one unbroken shot: the cursor comes down onto the composer, the prompt is typed with uneven human rhythm, it is sent after a pause, and the answer streams back word by word. It used to draw a slab of its own — 2200 wide at perspective 2800, its own chrome, its own sidebar — which made it a second screen, and between two screens the passage is a cut whatever you do with it. Now it is the same slab as the other four, with the assistant living in the bottom half the board never used, and the move from the board to the composer is a camera descending. <code>seam.sh</code> measures the join.",
       "seamAfter": "CardRelease"
+    },
+    {
+      "id": "BoardOrbit",
+      "slug": "board-orbit",
+      "title": "Board orbit",
+      "durationInFrames": 150,
+      "fps": 30,
+      "width": 1920,
+      "height": 1080,
+      "fill": true,
+      "seamAfter": "PromptInput",
+      "restAtEdges": true,
+      "blurb": "The end of the film. The camera lets go of the composer and turns around the slab far enough to show it has an edge, because a piece that finishes on a detail stays open, and because until now the slab had never claimed to be an <em>object</em>: seen frontally, an inclined plane with UI on it is indistinguishable from wallpaper glued to the background. The thickness behind it is drawn by all six scenes and visible only in this one — at small yaw angles it sits exactly behind the slab. It stops at 34 degrees, which is where the board still reads: past forty it foreshortens under sixty per cent of its width and the titles stop being titles."
     }
   ]
 }
