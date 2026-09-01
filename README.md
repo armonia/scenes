@@ -274,7 +274,9 @@ catalogue says the attenuation floor is 0.62 *because* below it the attenuated
 content falls under 3:1 once rendered — and nobody had ever rendered it and
 looked. It now reads the WCAG ratio between the attenuated thread heading and its
 background on a real frame, with the crop projected out of `slab.ts` instead of
-picked by eye, and gets 4.17:1. The same scene rendered at 0.25, which is what
+picked by eye, and gets 4.17:1 here — 3.84:1 in CI, because Linux renders the
+same text with different fonts. Same verdict, and a reminder of why the number
+is a floor and not an equality. The same scene rendered at 0.25, which is what
 `attnFloor` exists for, collapses to 1.71:1 and the bench fails it.
 
 It took two wrong versions to get there. The first measured the composer's
