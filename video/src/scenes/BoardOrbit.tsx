@@ -8,11 +8,11 @@ import {
 } from "remotion";
 import { SLAB_BACKDROP, app, fontStack } from "../theme";
 import {
-  CARD_FOCUS_END_POSE,
-  CARD_RELEASE_END_POSE,
+  BOARD_ORBIT_END_POSE,
   COLUMNS,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
+  PROMPT_INPUT_END_POSE,
   SLAB_H,
   SLAB_W,
   handoffCard,
@@ -22,60 +22,68 @@ import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
 import { Board } from "../primitives/Board";
 
 /**
- * CardRelease: il quarto anello, e la fine del film.
+ * BoardOrbit: il sesto anello, e la fine del film.
  *
- * La camera si stacca dalla card e torna larga e frontale, con la board di
- * nuovo tutta leggibile. Serve perche' un piano sequenza deve finire da
- * qualche parte, e finire addosso a un dettaglio lascia il pezzo aperto.
+ * La camera lascia il composer e gira attorno alla lastra quanto basta a
+ * mostrarle un bordo. Serve perche' un pezzo che finisce addosso a un dettaglio
+ * resta aperto, e perche' finora la lastra non aveva mai dichiarato di essere
+ * un oggetto: frontale, un piano inclinato con dentro della UI e'
+ * indistinguibile da una carta da parati incollata sul fondo. E' l'unica cosa
+ * che un film di prodotto dice una volta sola, all'inizio o alla fine.
  *
- * QUESTA SCENA INVERTE LA SPINTA, ed e' l'unica. Altrove il repo sostiene che
- * un'inversione a una giunta si legge come uno stacco anche a pixel
- * coincidenti, il che e' vero dove la giunta e' in MOVIMENTO: li' l'occhio
- * segue la derivata. Qui i due lati sono fermi, CardFocus arriva a derivata
- * nulla e questa riparte da derivata nulla, quindi non c'e' nessuna derivata da
- * rovesciare. E' la stessa ragione per cui due scene ferme agli estremi si
- * possono mettere in qualunque ordine, e adesso `rest-point.sh` la misura
- * invece di lasciarla scritta.
+ * LO SPESSORE ESISTE SOLO PERCHE' LA CAMERA GIRA. `SlabEdge` sta in tutte e
+ * cinque le scene precedenti e in nessuna si vede: a yaw piccoli sta esattamente
+ * dietro la lastra. Qui sporge, ed e' il motivo per cui e' stato scritto.
  *
- * LA BOARD E' QUELLA A CONSEGNA AVVENUTA, come in CardFocus e per lo stesso
- * motivo: e' lo stesso componente con gli stessi valori, quindi il primo frame
- * di questa e' l'ultimo di quella per costruzione.
+ * L'ATTENUAZIONE SI RIAPRE. Il primo fotogramma la trova a 0,62, che e' dove
+ * PromptInput l'ha lasciata, e la riporta a 1 lungo l'orbita: la risposta e'
+ * finita, l'attenzione torna all'oggetto intero. Partire da 1 avrebbe rotto la
+ * giunta di piu' di quanto qualunque posa possa fare.
+ *
+ * LA CAMERA SI FERMA PRIMA DELLA FINE, a f118 su 150. Gli ultimi trenta
+ * fotogrammi sono fermi, cosi' il pezzo finisce su una posa e non su un
+ * movimento interrotto, e un'altra scena potrebbe attaccarsi qui.
  *
  * Frame-locked: ogni valore viene da useCurrentFrame().
  */
 
-export type CardReleaseProps = {
+export type BoardOrbitProps = {
   progress?: number;
 };
 
-export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
+/** Il frame in cui la camera arriva e si ferma. */
+const SETTLE = 118;
+
+export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
   const localFrame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
-  const last = durationInFrames - 1;
 
-  // Una curva sola, inOut: derivata nulla a sinistra per agganciarsi alla fine
-  // di CardFocus, derivata nulla a destra perche' e' l'ultimo frame del film.
   const at = (from: number, to: number): number =>
-    interpolate(frame, [0, last], [from, to], {
+    interpolate(frame, [0, SETTLE], [from, to], {
       easing: Easing.inOut(Easing.cubic),
       extrapolateRight: "clamp",
     });
 
-  const yaw = at(CARD_FOCUS_END_POSE.yaw, CARD_RELEASE_END_POSE.yaw);
-  const pitch = at(CARD_FOCUS_END_POSE.pitch, CARD_RELEASE_END_POSE.pitch);
-  const pushZ = at(CARD_FOCUS_END_POSE.pushZ, CARD_RELEASE_END_POSE.pushZ);
-  const slideX = at(CARD_FOCUS_END_POSE.slideX, CARD_RELEASE_END_POSE.slideX);
+  const yaw = at(PROMPT_INPUT_END_POSE.yaw, BOARD_ORBIT_END_POSE.yaw);
+  const pitch = at(PROMPT_INPUT_END_POSE.pitch, BOARD_ORBIT_END_POSE.pitch);
+  const pushZ = at(PROMPT_INPUT_END_POSE.pushZ, BOARD_ORBIT_END_POSE.pushZ);
+  const slideX = at(PROMPT_INPUT_END_POSE.slideX, BOARD_ORBIT_END_POSE.slideX);
   const slideY = at(
-    CARD_FOCUS_END_POSE.slideY ?? 0,
-    CARD_RELEASE_END_POSE.slideY ?? 0,
+    PROMPT_INPUT_END_POSE.slideY ?? 0,
+    BOARD_ORBIT_END_POSE.slideY ?? 0,
   );
+
+  // Il quadro si riapre: 0,62 e' dove PromptInput ha lasciato l'attenuazione.
+  const attn = at(0.62, 1);
 
   const bgYaw = yaw * 0.6;
   const bgSlideX = slideX * 0.45;
   const bgSlideY = slideY * 0.45;
 
+  // La board sta come l'hanno lasciata le scene prima: consegna avvenuta, e il
+  // thread con la risposta gia' arrivata per intero.
   const moving = handoffCard();
   const fromRest = COLUMNS[HANDOFF_FROM_COL]!.cards.filter(
     (_, i) => i !== HANDOFF_FROM_IDX,
@@ -88,9 +96,21 @@ export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
     lift: 0,
     cardX: landed.x,
     cardY: landed.y,
-    moving,
+    moving: { ...moving, age: "ora" },
     fromRest,
   };
+
+  const assistant = {
+    sent: true,
+    sentPrompt: "Rifai il flusso di auth e apri la PR",
+    answer:
+      "Trovati tre punti di chiamata in server/auth.ts. Sposto il refresh del token dentro un guard solo, poi apro la PR su topics/auth-refresh.",
+    frame,
+    attn,
+  };
+
+  const left = (1920 - SLAB_W) / 2 + slideX;
+  const top = (1080 - SLAB_H) / 2 + slideY;
 
   return (
     <AbsoluteFill style={{ background: app.bg, fontFamily: fontStack }}>
@@ -117,25 +137,18 @@ export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
             overflow: "hidden",
           }}
         >
-          <Board {...board} dimmed />
+          <Board {...board} assistant={assistant} boardOpacity={attn} dimmed />
         </div>
       </AbsoluteFill>
 
       <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
-        {/* Lo spessore, dietro. Fratello e non figlio: la lastra ritaglia, e
-            qualunque ritaglio appiattisce il 3D dei suoi figli. */}
-        <SlabEdge
-          left={(1920 - SLAB_W) / 2 + slideX}
-          top={(1080 - SLAB_H) / 2 + slideY}
-          pushZ={pushZ}
-          yaw={yaw}
-          pitch={pitch}
-        />
+        <SlabEdge left={left} top={top} pushZ={pushZ} yaw={yaw} pitch={pitch} />
+
         <div
           style={{
             position: "absolute",
-            left: (1920 - SLAB_W) / 2 + slideX,
-            top: (1080 - SLAB_H) / 2 + slideY,
+            left,
+            top,
             width: SLAB_W,
             height: SLAB_H,
             transform: `translateZ(${pushZ}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(1.04)`,
@@ -149,19 +162,7 @@ export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
             overflow: "hidden",
           }}
         >
-          <Board {...board} />
-
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 3,
-              background:
-                "linear-gradient(to right, transparent, rgba(255,255,255,0.12) 20%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.12) 80%, transparent)",
-            }}
-          />
+          <Board {...board} assistant={assistant} boardOpacity={attn} />
         </div>
       </AbsoluteFill>
 

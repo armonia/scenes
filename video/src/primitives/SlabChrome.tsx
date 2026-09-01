@@ -9,6 +9,8 @@ import {
   HEADER_H,
   PANEL_W,
   SIDEBAR_W,
+  SLAB_H,
+  SLAB_W,
   cardHeight,
   columnX,
 } from "./slab";
@@ -489,6 +491,48 @@ export const DetailPanel: React.FC<{
 );
 
 /** Vignettatura + riflesso: la stessa luce in tutte le scene. */
+/**
+ * Lo spessore della lastra: il piano dietro il piano.
+ *
+ * PERCHE' ESISTE. Frontale non si vede, ed e' il motivo per cui e' mancato
+ * finora: a yaw piccoli sta esattamente dietro la lastra e non sporge da
+ * nessuna parte. Si vede quando la camera gira, ed e' li' che decide se quello
+ * che si sta guardando e' un OGGETTO o una carta da parati incollata sul fondo.
+ * Senza, un'orbita mostra un rettangolo che ruota; con, mostra una cosa che ha
+ * un dietro.
+ *
+ * E' UN FRATELLO DELLA LASTRA, non un suo figlio, e non e' un dettaglio: la
+ * lastra ritaglia (`overflow: hidden`, per via degli angoli arrotondati e del
+ * contenuto che deborda) e QUALUNQUE ritaglio appiattisce `preserve-3d`. Un
+ * figlio a translateZ(-30) verrebbe schiacciato sul piano del padre e non
+ * sporgerebbe mai. Da fratello, dentro la stessa prospettiva, il suo Z e' vero.
+ *
+ * I 30 di stacco e i 6 px di debordo per lato sono la stessa coppia di numeri
+ * che il catalogo dichiara in MAT-01.
+ */
+export const SlabEdge: React.FC<{
+  left: number;
+  top: number;
+  pushZ: number;
+  yaw: number;
+  pitch: number;
+}> = ({ left, top, pushZ, yaw, pitch }) => (
+  <div
+    style={{
+      position: "absolute",
+      left: left - 6,
+      top: top - 6,
+      width: SLAB_W + 12,
+      height: SLAB_H + 12,
+      transform: `translateZ(${pushZ - 30}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(1.04)`,
+      transformOrigin: "50% 50%",
+      background: "#05060a",
+      borderRadius: 22,
+      boxShadow: "0 90px 180px rgba(0,0,0,0.75)",
+    }}
+  />
+);
+
 export const SlabLighting: React.FC = () => (
   <>
     <div

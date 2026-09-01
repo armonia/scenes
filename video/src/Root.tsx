@@ -6,6 +6,7 @@ import { UIMockup } from "./scenes/UIMockup";
 import { CardHandoff } from "./scenes/CardHandoff";
 import { CardFocus } from "./scenes/CardFocus";
 import { CardRelease } from "./scenes/CardRelease";
+import { BoardOrbit } from "./scenes/BoardOrbit";
 import catalog from "./scenes/catalog.json";
 
 /**
@@ -26,6 +27,7 @@ const COMPONENTS: Record<string, React.FC> = {
   CardHandoff,
   CardFocus,
   CardRelease,
+  BoardOrbit,
 };
 
 const missing = catalog.scenes.filter((s) => !COMPONENTS[s.id]);
