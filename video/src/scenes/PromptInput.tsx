@@ -11,7 +11,7 @@ import { Board } from "../primitives/Board";
 import { bubbleCurve } from "../primitives/Assistant";
 import { Cursor, type Waypoint } from "../primitives/Cursor";
 import { typedCount, typingSchedule } from "../primitives/rhythm";
-import { SlabLighting } from "../primitives/SlabChrome";
+import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
 import {
   CARD_RELEASE_END_POSE,
   COLUMNS,
@@ -63,6 +63,13 @@ export type PromptInputProps = {
   branch?: string;
   /** Via di fuga: 0 a 1, per farsi pilotare da una timeline padre. */
   progress?: number;
+  /**
+   * Il pavimento dell'attenuazione. Esiste come prop per una ragione sola:
+   * contrast-floor.py ha bisogno di poter renderizzare la stessa scena con un
+   * valore troppo basso, per avere il caso che il banco deve bocciare. Un banco
+   * senza il suo contronegativo non misura niente.
+   */
+  attnFloor?: number;
 };
 
 // I frame della recita. La pausa prima dell'invio e' la parte che la rende
@@ -89,6 +96,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   response = DEFAULT_RESPONSE,
   branch = "topics/verdant-ether",
   progress,
+  attnFloor = 0.62,
 }) => {
   const localFrame = useCurrentFrame();
   const { durationInFrames, fps } = useVideoConfig();
@@ -185,8 +193,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
    * pavimento: sotto, il contenuto attenuato scende sotto 3:1 una volta
    * renderizzato e legge come sporco sul fondo invece che come un piano dietro.
    */
-  const ATTN_FLOOR = 0.62;
-  const attn = interpolate(frame, [streamAt - 6, streamAt + 26], [1, ATTN_FLOOR], {
+  const attn = interpolate(frame, [streamAt - 6, streamAt + 26], [1, attnFloor], {
     easing: Easing.inOut(Easing.cubic),
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -209,7 +216,12 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     { x: COMPOSER_X + 110, y: COMPOSER_Y + COMPOSER_H / 2, at: T.travelEnd },
     { x: COMPOSER_X + 110, y: COMPOSER_Y + COMPOSER_H / 2, at: sendTravelStart },
     { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: sendClick },
-    { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: durationInFrames },
+    // La mano si ritira mentre la risposta scorre. Non e' una gentilezza: al
+    // suo posto resterebbe una freccia sull'ultimo fotogramma, e la scena dopo
+    // un cursore non ce l'ha, quindi la giunta la mostrerebbe sparire.
+    { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: streamAt + 16 },
+    { x: 2620, y: 1330, at: streamAt + 58 },
+    { x: 2620, y: 1330, at: durationInFrames },
   ];
 
   // La board sta come l'ha lasciata CardRelease: consegna avvenuta, niente in
@@ -276,6 +288,15 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       </AbsoluteFill>
 
       <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
+        {/* Lo spessore, dietro. Fratello e non figlio: la lastra ritaglia, e
+            qualunque ritaglio appiattisce il 3D dei suoi figli. */}
+        <SlabEdge
+          left={(1920 - SLAB_W) / 2 + slideX}
+          top={(1080 - SLAB_H) / 2 + slideY}
+          pushZ={pushZ}
+          yaw={yaw}
+          pitch={pitch}
+        />
         <div
           style={{
             position: "absolute",

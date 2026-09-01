@@ -38,8 +38,10 @@ it enters from the pose `CardHandoff` stops in and descends onto the card that
 scene has just delivered, magnifying it 2.35 times. `seam.sh` now takes the pair
 as arguments, because a join exists for every adjacent couple and hardcoding the
 paths meant a second script identical to the first but for two lines. Across the
-five scenes yaw runs -18, -9, -4, 0, 0 and pitch 5, 2.5, 1.2, 0, 0 without ever
-reversing: a join reads as a cut when the derivative flips, even when the pixels
+six scenes yaw runs -18, -9, -4, 0, 0, -34 and pitch 5, 2.5, 1.2, 0, 0, 3.2. It
+reverses twice, at CardRelease and at BoardOrbit, and both times between two
+poses that are at rest: where the join is still there is no derivative to flip.
+In motion it never reverses: a join reads as a cut when the derivative flips, even when the pixels
 match.
 
 `PromptInput` used to stand on its own, and the reason is worth keeping because
@@ -59,10 +61,7 @@ of nothing, and `seam.sh` would call that a cut, correctly. With one screen the
 move from the board to the composer stops being a change of screen and becomes a
 camera descending, which is a movement the catalogue already has a name for.
 
-Five scenes now, 1310 frames, 43.7 seconds, and four measured joins: 559 pixels,
-32, 55, and 29. The last one is `CardRelease → PromptInput` and it is the
-cleanest of the four, at 2064 times better than its control cut, because it was
-built last and nothing about it was agreed by hand.
+Five scenes at that point, 1310 frames, and four measured joins.
 
 Four more of the catalogue's movements went into the film after that, and they
 are all one gesture. `CardHandoff` used to fly the card across on an
@@ -90,6 +89,27 @@ as cause.
 And while the answer streams in `PromptInput`, everything that is not the answer
 drops to 0.62 — the board above, the earlier messages, the composer. Not a blur:
 nothing becomes unreadable, only the place where the contrast is full moves.
+
+The film ends on an orbit, which is the one thing a product piece says once:
+this is an *object*. Seen frontally, an inclined plane with UI on it is
+indistinguishable from wallpaper glued to the background, and until `BoardOrbit`
+nothing in the chain ever turned far enough to prove otherwise. It stops at 34
+degrees of yaw, just under the 40 where the board foreshortens below sixty per
+cent of its width and the titles stop being titles, and it holds still for the
+last 32 frames so the piece finishes on a pose rather than on an interrupted
+move.
+
+The thickness it shows — `SlabEdge` — is drawn by all six scenes and visible in
+exactly one, because at small yaw angles it sits precisely behind the slab. It
+is a *sibling* of the slab and not a child, and that is not a detail: the slab
+clips, any clipping flattens `preserve-3d`, and a child at `translateZ(-30)`
+would be squashed onto its parent's plane and never stick out. The same fact is
+why the parallax truck is still unwritten: per-layer depth inside the slab needs
+the clipping moved somewhere else, in every scene, which is a restructure and
+not an addition.
+
+Six scenes now, 1460 frames, 48.7 seconds, five measured joins: 557, 64, 55, 29
+and 15 pixels.
 
 **Real UI, not a drawing of UI.** Slabs of the actual product on inclined
 planes, with the product's own tokens, radii and system font stack. A mockup
@@ -128,6 +148,8 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/click-gap.sh [scene.mp4]                      # does the UI answer the click, or fire with it
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/demo-check.py [page.html]                     # do the catalogue demos still show their thesis
+./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
+./scripts/fixture-attenuation.sh                        # build the scene contrast-floor must fail
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 
 node scripts/catalog.mjs render                          # the render command for every scene
@@ -247,6 +269,39 @@ that `CHR-03` fires its three events on separate frames in both halves and the
 contrast disappears. The script has to exit non-zero on that copy and name the
 entry, or its green means only that it reached the end.
 
+`contrast-floor.py` measures the number `CAM-05` had been asserting. The
+catalogue says the attenuation floor is 0.62 *because* below it the attenuated
+content falls under 3:1 once rendered — and nobody had ever rendered it and
+looked. It now reads the WCAG ratio between the attenuated thread heading and its
+background on a real frame, with the crop projected out of `slab.ts` instead of
+picked by eye, and gets 4.17:1 here — 3.84:1 in CI, because Linux renders the
+same text with different fonts. Same verdict, and a reminder of why the number
+is a floor and not an equality. The same scene rendered at 0.25, which is what
+`attnFloor` exists for, collapses to 1.71:1 and the bench fails it.
+
+It took two wrong versions to get there. The first measured the composer's
+placeholder and failed the scene at 1.76:1 — right reading, wrong subject:
+"Chiedi qualcosa" is deliberately faint and sits at 2.93:1 with no attenuation
+at all, so the bench was failing `CAM-05` for a decision about the input field.
+A placeholder is not content.
+
+The second measured real content in a place that moves. Messages have natural
+heights and the thread is anchored to the bottom, so the instant the font
+metrics differ — which is exactly what happens between this machine and the
+Linux in CI — everything shifts and a fixed crop lands on empty background. It
+exited 3 there, "could not measure", which was at least the honest answer rather
+than a verdict about a scene that was fine. The heading it reads instead sits at
+`THREAD_TOP`, which is a constant, so its position is arithmetic. The same
+lesson `slab.ts` already records about card heights, learned again one floor
+down.
+
+How it reads matters too: background is the modal value of the crop, foreground
+is the mean of the *glyph core*, the pixels above sixty per cent of the way from
+background to maximum. Percentiles were not enough — on a crop where text is a
+small fraction of the pixels, the 97th percentile is still measuring background,
+and the same scene read 2.59:1 or 4.17:1 depending on how much text happened to
+fall inside the rectangle.
+
 `beats.sh` was not running anywhere, and had not been for months. It is not in
 the workflow's measurement step, and on the machine these scenes are written on
 `tesseract` was never installed — so every OCR read came back empty, every count
@@ -319,10 +374,10 @@ npx remotion render <CompositionId> out/<name>.mp4
 `showcase/index.template.html` is the public page, and it is a template: the
 scene section is generated from `catalog.json` by `showcase-build.sh`, so a
 render that exists and a page that shows it cannot drift apart. Open
-`showcase/dist/index.html` after a build to see it. It carries the five scenes
+`showcase/dist/index.html` after a build to see it. It carries the six scenes
 playing
-(`UIMockup`, `CardHandoff`, `CardFocus`, `CardRelease`, `PromptInput`, in the
-order they join), the four rules, the
+(`UIMockup`, `CardHandoff`, `CardFocus`, `CardRelease`, `PromptInput`,
+`BoardOrbit`, in the order they join), the four rules, the
 license note. Beside it, `showcase/grammatica.html` is the catalogue: twenty-six
 movements with a live demo each, the numbers they start from, and the bench that
 can fail them. The demos are browser re-creations of the slab, not the renders,

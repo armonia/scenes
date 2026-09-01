@@ -339,6 +339,35 @@ export const PROMPT_INPUT_END_POSE: CameraPose = (() => {
 })();
 
 /**
+ * La posa in cui il film finisce davvero: di tre quarti, indietro abbastanza da
+ * vedere i due bordi verticali della lastra.
+ *
+ * LO YAW E' UN LIMITE MISURATO e non un gusto. Oltre i quaranta gradi la board
+ * scorcia sotto il sessanta per cento della sua larghezza e i titoli smettono
+ * di essere titoli; trentaquattro sta appena sotto, che e' il punto in cui
+ * l'oggetto si legge come oggetto e il contenuto si legge ancora.
+ *
+ * LA SPINTA VA INDIETRO, e serve. L'orbita deve mostrare il BORDO, e il bordo
+ * sta al confine della lastra: finche' la lastra deborda dal quadro il suo
+ * confine e' fuori inquadratura e non c'e' niente da far vedere. A -420 la
+ * lastra scorciata misura 1874 px di larghezza proiettata, quindi i due bordi
+ * verticali stanno dentro i 1920 con un margine, mentre in verticale continua
+ * a debordare.
+ *
+ * E' LA SECONDA POSA DELLA CATENA CHE INVERTE LA SPINTA, dopo CardRelease, e
+ * vale la stessa ragione: PromptInput finisce a derivata nulla, questa parte da
+ * derivata nulla, e dove i due lati della giunta sono fermi non c'e' nessuna
+ * derivata da rovesciare.
+ */
+export const BOARD_ORBIT_END_POSE: CameraPose = {
+  yaw: -34,
+  pitch: 3.2,
+  pushZ: -420,
+  slideX: 0,
+  slideY: 0,
+};
+
+/**
  * La posa in cui il film si ferma: larga, frontale, la board di nuovo leggibile.
  *
  * E' l'unica posa della catena che INVERTE il verso della spinta, e va detto

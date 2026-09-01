@@ -117,6 +117,7 @@ jobs:
           ./scripts/rest-point.sh
           ./scripts/click-gap.sh
           ./scripts/beats.sh
+          ./scripts/contrast-floor.py
 
       # Il banco nuovo va messo alla prova sul caso che deve bocciare, non solo
       # sul render che deve promuovere. Senza questo passo "verde" vorrebbe dire
@@ -180,6 +181,15 @@ jobs:
           sudo mv "$TESS.off" "$TESS"
           [ "$rc" = 3 ] || { echo "beats.sh senza tesseract: atteso 3 (non ho potuto misurare), ottenuto $rc" >&2; exit 1; }
           echo "beats.sh distingue una scena rotta da uno strumento assente."
+
+          # contrast-floor.py deve bocciare la stessa scena attenuata troppo.
+          # E' l'unica prova che il pavimento a 0,62 sia un limite e non una
+          # decorazione: se anche 0,25 passasse, il banco non misurerebbe il
+          # pavimento, misurerebbe che il testo esiste.
+          ./scripts/fixture-attenuation.sh
+          rc=0; ./scripts/contrast-floor.py video/out/.fixture-attn-025.mp4 >/dev/null 2>&1 || rc=$?
+          [ "$rc" = 1 ] || { echo "contrast-floor.py sull'attenuazione a 0,25: atteso 1, ottenuto $rc" >&2; exit 1; }
+          echo "contrast-floor.py boccia l'attenuazione a 0,25, come deve."
 
 
       # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa
