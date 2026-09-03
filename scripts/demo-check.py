@@ -67,6 +67,37 @@ PROBE = """([code, f]) => {
   return out;
 }"""
 
+# Le voci tipografiche non hanno lastra: il palco contiene parole, e quello che
+# serve giudicarle sono i rettangoli e i colori resi degli span.
+PROBE_TYPE = """([code, f]) => {
+  const heads = [...document.querySelectorAll('.mv')];
+  const mv = heads.find(m => (m.querySelector('.code')||{}).textContent?.trim() === code);
+  if (!mv) throw new Error('voce non trovata: ' + code);
+  const stage = mv.querySelector('.stage');
+  const it = stage.__it;
+  it.manual = f; it.last = -1; it.mv.draw(f, it.S);
+  const sr = stage.getBoundingClientRect();
+  const line = stage.querySelector('.tline');
+  const spans = [...stage.querySelectorAll('.tline > .tw')].map(sp => {
+    const r = sp.getBoundingClientRect();
+    const cs = getComputedStyle(sp);
+    // Le parole che si scambiano stanno DENTRO la casella: per il colore e
+    // l'opacita' conta quella visibile, non il contenitore.
+    const kids = [...sp.children].filter(k => parseFloat(getComputedStyle(k).opacity) > 0.5);
+    const vis = kids.length ? kids[0] : sp;
+    const vr = vis.getBoundingClientRect(), vcs = getComputedStyle(vis);
+    return {
+      text: (vis.textContent || '').trim(),
+      x: vr.left - sr.left + vr.width / 2, y: vr.top - sr.top + vr.height / 2,
+      w: r.width, h: vr.height,
+      op: parseFloat(cs.opacity) * parseFloat(vcs.opacity),
+      color: vcs.color, size: parseFloat(vcs.fontSize),
+      shown: kids.length > 0 || sp.children.length === 0,
+    };
+  });
+  return { dur: it.mv.dur, lineColor: getComputedStyle(line).color, spans };
+}"""
+
 fails = []
 def check(name, ok, said):
     print(("  ok   " if ok else "  ROTTA ") + name + "  " + said)
@@ -274,6 +305,74 @@ with sync_playwright() as pw:
     check("MAT-01", at("MAT-01", 50)["edge"] > 0.9 and at("MAT-01", 150)["edge"] < 0.1,
           "bordo della lastra: opacita' %.0f nella prima meta', %.0f nella seconda"
           % (at("MAT-01", 50)["edge"], at("MAT-01", 150)["edge"]))
+
+    # ---------------------------------------------------------------- typ
+    tcache = {}
+    def ty(code, f):
+        k = (code, f)
+        if k not in tcache:
+            tcache[k] = pg.evaluate(PROBE_TYPE, [code, f])
+        return tcache[k]
+
+    # TYP-01 - la sosta, cioe' i fotogrammi in cui la frase e' su e ferma.
+    # Caso peggiore: due meta' con la stessa sosta non dimostrerebbero niente,
+    # perche' la voce parla di quanto una sosta puo' accorciarsi prima che la
+    # riga venga tolta mentre la si legge.
+    def dwell(code, lo, hi):
+        prev, run, best = None, 0, 0
+        for f in range(lo, hi):
+            s0 = ty(code, f)
+            up = all(sp["op"] > 0.985 for sp in s0["spans"])
+            still = prev is not None and all(
+                abs(a["x"] - b["x"]) < 0.4 and abs(a["y"] - b["y"]) < 0.4
+                for a, b in zip(s0["spans"], prev["spans"])
+            )
+            run = run + 1 if (up and still) else 0
+            best = max(best, run)
+            prev = s0
+        return best
+    chars = len("Real UI, not a drawing of UI.")
+    d1, d2 = dwell("TYP-01", 0, 104), dwell("TYP-01", 104, 187)
+    c1 = chars / (d1 / 30) if d1 else 0
+    c2 = chars / (d2 / 30) if d2 else 0
+    check("TYP-01", d1 > d2 * 1.4 and 14 < c1 < 17 and 22 < c2 < 30,
+          "sosta netta %df = %.1f c/s nella prima meta', %df = %.1f c/s nella seconda"
+          % (d1, c1, d2, c2))
+
+    # TYP-02 - una parola sola, enorme.
+    def hratio(code, f):
+        sp = ty(code, f)["spans"]
+        key = sp[0]["size"]
+        rest = max(s["size"] for s in sp[1:])
+        return key / rest
+    r1 = max(hratio("TYP-02", f) for f in range(60, 100, 6))
+    r2 = max(hratio("TYP-02", f) for f in range(170, 210, 6))
+    check("TYP-02", r1 > 2.0 and abs(r2 - 1.0) < 0.05,
+          "corpo della parola chiave: %.2f volte le altre, contro %.2f quando la riga e' tutta uguale" % (r1, r2))
+
+    # TYP-03 - il colore su una parola sola.
+    def lit(code, f):
+        s0 = ty(code, f)
+        return sum(1 for sp in s0["spans"] if sp["color"] != s0["lineColor"])
+    l1 = max(lit("TYP-03", f) for f in range(60, 84, 4))
+    l2 = max(lit("TYP-03", f) for f in range(160, 184, 4))
+    check("TYP-03", l1 == 1 and l2 >= 3,
+          "parole accese: %d nella prima meta', %d nella seconda" % (l1, l2))
+
+    # TYP-04 - le parole che restano non si muovono.
+    # Gli indici 0, 2 e 3 sono le tre parole in comune fra le due frasi; l'1 e'
+    # quella che cambia, e quella deve muoversi.
+    def drift(code, lo, hi):
+        base = ty(code, lo)["spans"]
+        worst = 0
+        for f in range(lo, hi, 3):
+            sp = ty(code, f)["spans"]
+            for i in (0, 2, 3):
+                worst = max(worst, abs(sp[i]["x"] - base[i]["x"]))
+        return worst
+    w1, w2 = drift("TYP-04", 40, 118), drift("TYP-04", 170, 248)
+    check("TYP-04", w1 < 1.0 and w2 > 20,
+          "spostamento delle tre parole in comune: %.2f px sostituendo una parola, %.0f px sostituendo la riga" % (w1, w2))
 
     br.close()
 

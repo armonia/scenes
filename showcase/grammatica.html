@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <title>The grammar — scenes</title>
-    <meta name="description" content="Twenty-six movements for a software product commercial shot in one take. Each one runs a live demo of the slab, states the numbers it starts from, and names the bench that can fail it." />
+    <meta name="description" content="Thirty movements for a software product commercial shot in one take. Each one runs a live demo, states the numbers it starts from, and names the bench that can fail it." />
     <meta property="og:title" content="The grammar — scenes" />
     <meta property="og:description" content="The vocabulary behind armonia/scenes: continuous movements over real UI, no cuts, each with the measurement that can disprove it." />
     <style>
@@ -109,6 +109,20 @@
         background: hsl(220 11% 26%); }
       .scrub i { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--accent); width: 0; }
       .stage.rm .scrub { cursor: pointer; }
+
+      /* Il palco tipografico. Non c'e' lastra: qui il soggetto e' la parola.
+         Il corpo e' in cqw, non in px, perche' in una composizione vera la
+         tipografia e' una frazione del quadro - scritta in pixel, la stessa
+         demo leggerebbe enorme sul desktop e minuscola sul telefono, e la
+         proporzione fra parola e inquadratura E' il contenuto di queste voci. */
+      .tstage { position: absolute; inset: 0; display: flex; align-items: center;
+        justify-content: center; padding: 0 5cqw; overflow: hidden; }
+      .tground { position: absolute; inset: 0; }
+      .tline { position: relative; display: flex; flex-wrap: wrap; align-items: baseline;
+        justify-content: center; column-gap: 0.22em; row-gap: 0.04em;
+        font-weight: 800; letter-spacing: -0.035em; line-height: 0.94;
+        text-align: center; font-size: 7.4cqw; color: var(--text); }
+      .tw { display: inline-block; white-space: pre; }
 
       /* the four fields, on the grid the index uses for the rules */
       .spec { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -257,18 +271,20 @@
     <div class="wrap">
       <header>
         <p class="eyebrow">The grammar</p>
-        <h1>Twenty-six movements,<br />no cuts.</h1>
+        <h1>Thirty movements,<br />no cuts.</h1>
         <p class="lede">
           The vocabulary the scenes are built from. A transition is something you
           pick between two finished clips; <strong>a movement carries the film
           from one state to the next with no join to hide</strong>. Every entry
-          here runs a live demo of the slab, states the numbers it starts from,
-          and names the bench that can fail it.
+          here runs a live demo, states the numbers it starts from, and names the
+          bench that can fail it. Twenty-six of them run on the slab; the last
+          four have no interface on screen at all, because in those the sentence
+          is the film.
         </p>
         <p class="lede" style="margin-top:18px;font-size:16px">
-          Twenty-two of the twenty-six name a bench that exists and runs in CI.
-          The other four name one that does not exist yet, and those are printed
-          in grey: a measurement nobody has written is a proposal, and this page
+          Twenty-six of the thirty name a bench that exists and runs in CI. The
+          other four name one that does not exist yet, and those are printed in
+          grey: a measurement nobody has written is a proposal, and this page
           would be doing the thing it warns against if it let the two look alike.
         </p>
         <div class="cta">
@@ -280,13 +296,14 @@
 
     <nav class="rail" aria-label="Filter by family">
       <div class="wrap railin">
-        <button class="chip" data-fam="all" aria-pressed="true">All <b>26</b></button>
+        <button class="chip" data-fam="all" aria-pressed="true">All <b>30</b></button>
         <button class="chip" data-fam="cam" aria-pressed="false">Camera <b>6</b></button>
         <button class="chip" data-fam="cur" aria-pressed="false">Cursor <b>4</b></button>
         <button class="chip" data-fam="txt" aria-pressed="false">Text <b>5</b></button>
         <button class="chip" data-fam="chr" aria-pressed="false">Choreography <b>4</b></button>
         <button class="chip" data-fam="mat" aria-pressed="false">Material <b>3</b></button>
         <button class="chip" data-fam="giu" aria-pressed="false">Joins <b>4</b></button>
+        <button class="chip" data-fam="typ" aria-pressed="false">Typography <b>4</b></button>
         <span class="gap"></span>
         <button class="chip" id="pause" aria-pressed="false">Stop all</button>
       </div>
@@ -590,9 +607,41 @@ function pose(S,p){
     " rotateY("+(p.yaw||0).toFixed(3)+"deg) rotateX("+(p.pitch||0).toFixed(3)+"deg)";
 }
 
+/* ============================================================ palco tipografico
+   Le voci della famiglia typ non hanno bisogno della lastra: il soggetto e' la
+   parola. Stesso motore, stesso frame-lock, stessa HUD; cambia solo cosa c'e'
+   dentro il palco. */
+function buildType(){
+  var wrap=el("div","tstage");
+  var ground=el("div","tground","background:#0a0c11");
+  var line=el("div","tline");
+  wrap.appendChild(ground); wrap.appendChild(line);
+  var T={wrap:wrap, ground:ground, line:line, spans:[]};
+  /* Le parole si creano una volta e poi si pilotano: ricrearle a ogni frame
+     rifarebbe il layout e i tempi diventerebbero funzione del browser. */
+  T.words=function(arr){
+    line.textContent="";
+    T.spans=arr.map(function(w){ var sp=el("span","tw",null,w); line.appendChild(sp); return sp; });
+    T.text=arr;
+    return T.spans;
+  };
+  T.reset=function(){
+    T.spans.forEach(function(sp){
+      sp.style.opacity="1"; sp.style.transform="none"; sp.style.color="";
+      sp.style.fontSize=""; sp.style.letterSpacing="";
+    });
+  };
+  return T;
+}
+
 /* ============================================================ motore */
 var insts=[], paused=false;
 function mount(stage,mv,code){
+  /* Due specie di palco. Le voci tipografiche non montano la lastra: montarla e
+     poi coprirla vorrebbe dire renderizzare per niente un kanban dietro una
+     parola, e la prospettiva del palco falserebbe il corpo del testo. */
+  if(mv.kind==="type") return mountType(stage,mv);
+
   var S=buildSlab();
   var room=el("div","room"), rig=el("div","rig");
   rig.appendChild(S.cam); room.appendChild(rig); stage.appendChild(room);
@@ -635,6 +684,39 @@ function mount(stage,mv,code){
 
   io.observe(stage); stage.__it=it; insts.push(it);
   if(mv.init) mv.init(S,stage);
+}
+
+/* Lo stesso motore di mount(), senza lastra e senza prospettiva. La HUD e lo
+   scrub sono identici: sono il punto del frame-lock, non un ornamento della
+   lastra. */
+function mountType(stage,mv){
+  var T=buildType();
+  stage.appendChild(T.wrap);
+
+  var hud=el("div","hud");
+  var fno=el("span","f",null,"f000"); var rd=el("span","rd",null,"");
+  hud.appendChild(fno); hud.appendChild(el("span",null,"opacity:.5","/ "+mv.dur)); hud.appendChild(rd);
+  stage.appendChild(hud);
+  var scrub=el("div","scrub"); var fill=el("i"); scrub.appendChild(fill); stage.appendChild(scrub);
+
+  var it={stage:stage,mv:mv,S:T,vis:false,t0:performance.now(),manual:null,fno:fno,rd:rd,fill:fill,base:1,last:-1};
+  T.hud=function(txt){ rd.textContent=txt; };
+
+  function setFromX(ev){
+    var r=scrub.getBoundingClientRect();
+    var u=cl((ev.clientX-r.left)/r.width);
+    it.manual=Math.min(mv.dur-1,Math.round(u*(mv.dur-1)));
+    it.last=-1; draw(it,it.manual);
+  }
+  scrub.addEventListener("pointerdown",function(ev){ scrub.setPointerCapture(ev.pointerId); setFromX(ev); ev.preventDefault(); });
+  scrub.addEventListener("pointermove",function(ev){ if(ev.buttons&1) setFromX(ev); });
+  scrub.addEventListener("pointerup",function(ev){
+    scrub.releasePointerCapture(ev.pointerId);
+    if(!RM){ it.t0=performance.now()-(it.manual/FPS)*1000; it.manual=null; }
+  });
+
+  io.observe(stage); stage.__it=it; insts.push(it);
+  if(mv.init) mv.init(T,stage);
 }
 
 function cur(it){ return Math.floor(((performance.now()-it.t0)/1000)*FPS)%it.mv.dur; }
@@ -1057,6 +1139,156 @@ M.centre={dur:210,
    S.hud((second?"compensated":"no compensation")+"   pushZ "+Math.round(z)+"   drift measured on the rendering: "+d);
  }};
 
+/* ============================================================ tipografia
+   Quattro voci in cui il soggetto e' la parola. La regola di questo repo -
+   niente stacchi - vale anche qui: le reference tipografiche di partenza
+   montavano a battute con stacchi netti, ma le due scelte per ultime (Apple
+   Creator Studio, cinque stacchi in trentacinque secondi; i tre shot Dribbble,
+   zero stacchi) hanno spostato la cosa sulla trasformazione continua. Queste
+   quattro stanno da quel lato. */
+
+/* --- TYP-01: la sosta, misurata in caratteri al secondo --- */
+var TLINE = ["Real", "UI,", "not", "a", "drawing", "of", "UI."];
+var TCHARS = TLINE.join(" ").length;
+
+M.dwell={dur:187, kind:"type",
+ init:function(T){ T.words(TLINE); },
+ draw:function(f,T){
+   /* Due meta': la prima tiene la frase 56 frame da ferma, la seconda 29.
+      Stessa frase, stesso ingresso, stessa uscita: cambia solo la sosta. */
+   var second=f>=104, q=second?f-104:f, dwell=second?41:62;
+   var COMPOSE=24, LEAVE=18;
+   T.spans.forEach(function(sp,i){
+     /* Le parole entrano scaglionate, ma lo scaglionamento e' STRETTO: e' il
+        modo di guadagnare lettura senza rallentare il montaggio. Allargarlo
+        ruba tempo alla sosta, che e' l'unico tratto in cui si legge davvero. */
+     var inP=E.out(cl((q-i*2.2)/COMPOSE));
+     var out=E.inout(cl((q-COMPOSE-dwell)/LEAVE));
+     sp.style.opacity=(inP*(1-out)).toFixed(3);
+     sp.style.transform="translateY("+((1-inP)*0.26+out*-0.16).toFixed(3)+"em)";
+   });
+   /* La finestra dichiarata e la SOSTA NETTA non sono lo stesso numero, e la
+      differenza e' il contenuto della voce: la sosta comincia quando l'ultima
+      parola si e' posata, non quando la prima e' partita. Con l'ingresso
+      scaglionato sono sei frame di scarto, e demo-check.py misura quella netta
+      sul rendering invece di fidarsi di questa costante. */
+   var net=dwell-6, sec=net/FPS, cps=TCHARS/sec;
+   var at=q>=COMPOSE&&q<COMPOSE+dwell;
+   T.hud(TCHARS+" characters · net dwell "+net+"f = "+sec.toFixed(2)+"s → "+cps.toFixed(1)+" c/s"
+     +(at?"  ← composed and still now":"")
+     +(second?"   over 20: the line is taken away while you are still reading it"
+             :"   large type holds 15 to 16"));
+ }};
+
+/* --- TYP-02: una parola sola, enorme --- */
+var TCLAIM = ["One", "shot.", "Forty-eight", "seconds."];
+
+M.big={dur:220, kind:"type",
+ init:function(T){ T.words(TCLAIM); },
+ draw:function(f,T){
+   var second=f>=110, q=second?f-110:f;
+   var inP=E.out(cl(q/26)), grow=E.inout(cl((q-30)/44)), out=E.inout(cl((q-96)/14));
+   T.spans.forEach(function(sp,i){
+     var key=i===0;
+     /* Nella seconda meta' la parola chiave non cresce: la frase resta tutta
+        allo stesso corpo, che e' il caso da guardare. */
+     var k=(key&&!second)?1+1.6*grow:1;
+     sp.style.opacity=(inP*(1-out)).toFixed(3);
+     sp.style.fontSize=(k*100).toFixed(1)+"%";
+     sp.style.transform="translateY("+((1-inP)*0.22).toFixed(3)+"em)";
+   });
+   T.hud(second
+     ? "every word at the same size: nothing in the line is the subject"
+     : "the keyword at "+(1+1.6*grow).toFixed(2)+"× the rest   one word per beat becomes enormous, and the others stay where they were");
+ }};
+
+/* --- TYP-03: colore solo sulla parola chiave --- */
+M.only={dur:200, kind:"type",
+ init:function(T){ T.words(TCLAIM); },
+ draw:function(f,T){
+   var second=f>=100, q=second?f-100:f;
+   var inP=E.out(cl(q/24)), on=E.inout(cl((q-34)/26)), out=E.inout(cl((q-84)/14));
+   var tint=["hsl(18 74% 60%)","hsl(150 52% 52%)","hsl(210 80% 66%)","hsl(45 90% 62%)"];
+   T.spans.forEach(function(sp,i){
+     sp.style.opacity=(inP*(1-out)).toFixed(3);
+     sp.style.transform="translateY("+((1-inP)*0.2).toFixed(3)+"em)";
+     var lit=second ? on>0.5 : (i===0 && on>0.5);
+     sp.style.color=lit ? (second?tint[i%4]:tint[0]) : "";
+   });
+   T.hud(second
+     ? "colour on every word: at that point colour is not pointing at anything"
+     : "one word lit, the rest left neutral   the colour is the pointer, and a pointer that points everywhere is not one");
+ }};
+
+/* --- TYP-04: la parola che resta --- */
+var TA = ["Every", "join", "is", "measured."];
+var TB = ["Every", "pose", "is", "measured."];
+
+M.stays={dur:260, kind:"type",
+ init:function(T){
+   T.words(TA);
+   /* Le due parole che si scambiano stanno nella STESSA casella, una nel flusso
+      e una sopra in assoluto. Quella nel flusso da' la larghezza, quindi la riga
+      non si ricompone e le altre tre parole non hanno motivo di spostarsi.
+      "join" e "pose" sono lunghe uguali di proposito: con larghezze diverse la
+      riga centrata si riflowa e le parole "che restano" si muovono, cioe' la
+      tesi della voce cade da sola. */
+   var slot=T.spans[1];
+   slot.textContent="";
+   slot.style.position="relative";
+   var oldw=el("span",null,null,TA[1]);
+   var neww=el("span",null,"position:absolute;left:0;top:0;opacity:0",TB[1]);
+   slot.appendChild(oldw); slot.appendChild(neww);
+   T.oldw=oldw; T.neww=neww;
+ },
+ draw:function(f,T){
+   var second=f>=130, q=second?f-130:f;
+   var inP=E.out(cl(q/24));
+   /* LA SOSTITUZIONE E' IN SEQUENZA, NON IN CROCE, e la prima versione era in
+      croce: a meta' dissolvenza si vedevano "join" e "pose" sovrapposte nella
+      stessa casella, che non legge come una parola che ne sostituisce un'altra,
+      legge come un errore di rendering. La vecchia esce prima, la nuova entra
+      dopo, e nel mezzo la casella resta vuota per due frame: quel vuoto e' una
+      battuta, non un buco. */
+   var outW=E.inout(cl((q-58)/18));
+   var inW=E.inout(cl((q-78)/18));
+   var sw=E.inout(cl((q-58)/38));
+
+   T.spans.forEach(function(sp,i){
+     if(second){
+       /* Il caso da guardare: si sostituisce TUTTA la riga. Anche le tre parole
+          che le due frasi hanno in comune se ne vanno e ritornano, e la riga
+          intera scorre. Coi pixel al posto giusto legge comunque come uno
+          stacco con le buone maniere. */
+       var slide=(sw<0.5? -sw*2 : (sw-1)*2)*1.15;
+       sp.style.transform="translateX("+slide.toFixed(3)+"em)";
+       sp.style.opacity=(inP*(1-Math.sin(cl(sw)*Math.PI)*0.94)).toFixed(3);
+     } else {
+       sp.style.transform="none";
+       sp.style.opacity=inP.toFixed(3);
+     }
+   });
+
+   if(second){
+     T.oldw.style.opacity=sw<0.5?"1":"0";
+     T.neww.style.opacity=sw<0.5?"0":"1";
+     T.oldw.style.transform="none"; T.neww.style.transform="none";
+   } else {
+     /* Solo la parola che cambia cambia: la vecchia sale e se ne va, poi la
+        nuova arriva da sotto. La casella resta larga comunque, perche' la
+        parola nel flusso c'e' anche quando e' invisibile, quindi le altre tre
+        non hanno motivo di spostarsi. */
+     T.oldw.style.opacity=(1-outW).toFixed(3);
+     T.oldw.style.transform="translateY("+(outW*-0.42).toFixed(3)+"em)";
+     T.neww.style.opacity=inW.toFixed(3);
+     T.neww.style.transform="translateY("+((1-inW)*0.42).toFixed(3)+"em)";
+   }
+
+   T.hud(second
+     ? "the whole line replaced: the three words the two phrases share leave and come back too"
+     : "one word out, then the other in — never both at once   three words stay put and do not move a pixel");
+ }};
+
 /* --- GIU-04: le tre grandezze della camera lungo tutta la catena --- */
 var CHAIN=[
   {n:"UIMockup",    from:START,                          to:END},
@@ -1168,7 +1400,8 @@ var FAMS=[
  {k:"txt",n:"Text and data",d:"Typing, correcting, answering, counting. What a software product does in front of you."},
  {k:"chr",n:"Choreography inside one shot",d:"The layout moving on its own, without anyone cutting."},
  {k:"mat",n:"The material of the slab",d:"Three details that decide whether what is on screen is an object or a backdrop."},
- {k:"giu",n:"The joins",d:"What this repo has and nothing else does: how two scenes attach without it showing."}
+ {k:"giu",n:"The joins",d:"What this repo has and nothing else does: how two scenes attach without it showing."},
+ {k:"typ",n:"Typography as the subject",d:"Four entries where the film is the sentence and there is no interface on screen. Same rule as the rest: the sentence transforms, it does not cut."}
 ];
 
 var CAT=[
@@ -1321,6 +1554,30 @@ var CAT=[
  b:"One long curve covering the boundary. The content changes underneath, the camera does not. It is the architectural constraint everything else in the repo follows from.",
  c:"The cut would fall at f120 of 240. The camera there is halfway through a curve that runs all 240.",
  d:"seam.sh applied to the boundary, with the deliberate-cut control beside it. It is the only way to tell a working join from a scene that simply is not moving."},
+
+{fam:"typ",code:"TYP-01",t:"The dwell, in characters per second",demo:"dwell",src:"a measured rule, not a taste",
+ a:"How long a line stays on screen is not chosen by eye. It is chosen in characters per second of NET DWELL: the stretch in which the sentence is already composed and still, after the last word has landed and before it starts to leave.",
+ b:"Three windows on the same timeline — compose, dwell, leave — and only the middle one counts for reading. The entry stagger is deliberately tight: widening it looks like generosity and is theft, because every frame it takes comes out of the only stretch where anybody is actually reading.",
+ c:"Large type holds 15 to 16 characters per second. Over 20 the line is taken away while you are still reading it. Here the line is 29 characters and the two halves hold it for 56 and 35 frames of NET dwell, which is 15.5 and 24.9. The declared window is six frames longer than the net one in both, because the dwell only starts once the last word has landed — that gap is the whole reason this entry measures the net figure and not the constant. To gain reading time WITHOUT slowing the cut down, tighten the entry stagger and lengthen only the dwell.",
+ d:"demo-check.py measures the dwell on the rendering: the frames in which every word is up and nothing is moving, divided into the character count. 15.5 c/s against 24.9. The bench cannot tell you where the ceiling should be — that number came from watching people miss the end of lines — but it can tell you the two halves are not the same speed, and it fails if they are."},
+
+{fam:"typ",code:"TYP-02",t:"One word, enormous",demo:"big",src:"scale contrast",
+ a:"One word per beat becomes enormous and the rest of the line stays where it was. The size difference is what says which word the sentence is about.",
+ b:"A scale factor on one span, not a font size on the line. The others keep their box, so the line does not reflow and nothing else moves while the keyword grows.",
+ c:"2.6 times the rest, over 44 frames, after the line has composed. The second half of the demo runs at 1.0, which is the case worth looking at.",
+ d:"demo-check.py compares the rendered height of the keyword against the others: 2.6 times in the first half, 1.0 in the second. When every word is the same size no word is the subject, and that is not a matter of taste — it is what the frame is failing to say."},
+
+{fam:"typ",code:"TYP-03",t:"Colour on one word only",demo:"only",src:"the accent as a pointer",
+ a:"Everything neutral except one word. The colour is not decoration, it is the pointer: it says read this one first.",
+ b:"One span takes the accent, the others take nothing. Not a gradient, not a highlight box — a colour change on the glyphs, which is the cheapest thing on the list and the one that survives being scaled down.",
+ c:"One word out of four. The second half of the demo lights all four in different hues, which is the failure this entry exists to name.",
+ d:"demo-check.py counts the words whose rendered colour differs from the line's: one against four. A pointer that points at everything is not a pointer, and the count is the whole measurement."},
+
+{fam:"typ",code:"TYP-04",t:"The word that stays",demo:"stays",src:"the join rule, applied to a sentence",
+ a:"Two consecutive lines share most of their words. The shared ones do not move: only the word that changes is replaced. It is the join rule of this repo written as a sentence — the next state enters from the pose the previous one stopped in.",
+ b:"The two words that swap live in the SAME box, one in the flow and one absolutely on top of it. The one in the flow gives the width, so the centred line does not reflow and the words that stay have no reason to shift. They are the same length on purpose: with different widths the line recomposes and the words that are supposed to stay put move, which kills the thesis on its own.",
+ c:"One word out of four changes, over 30 frames. The other three do not move a pixel. The second half replaces the whole line and slides it out and back, which is what an edit does when it has nothing to keep.",
+ d:"demo-check.py measures the screen position of the three shared words across the change: under a pixel of movement in the first half against 40 or more in the second. If the words that are supposed to stay are moving, the sentence is cutting and only pretending not to."},
 
 {fam:"giu",code:"GIU-04",t:"Monotonic derivative",demo:"chain",src:"the three boundary poses",
  a:"Across the whole chain yaw, pitch and push always move the same way. Not fussiness: the eye follows the derivative of the movement, and a reversal at a join reads as a cut even when the pixels of the two frames match.",

@@ -262,6 +262,22 @@ jobs:
             cat /tmp/guasta.log >&2; exit 1; }
           echo "demo-check.py boccia la copia guasta e dice quale voce, come deve."
 
+          # E lo stesso sul lato tipografico, che ha un palco diverso e quindi
+          # una sonda diversa: qui si rendono uguali le due soste di TYP-01, cioe'
+          # si toglie il contrasto sul quale la voce si regge.
+          sed 's/dwell=second?41:62/dwell=62/' \
+            showcase/dist/grammatica.html > /tmp/guasta-typ.html
+          if cmp -s showcase/dist/grammatica.html /tmp/guasta-typ.html; then
+            echo "la copia guasta tipografica e' identica all'originale: la sed non ha trovato niente." >&2
+            exit 1
+          fi
+          rc=0; ./scripts/demo-check.py /tmp/guasta-typ.html > /tmp/gt.log 2>&1 || rc=$?
+          [ "$rc" != 0 ] || { echo "demo-check.py promuove una pagina in cui le due soste di TYP-01 sono uguali." >&2; cat /tmp/gt.log >&2; exit 1; }
+          grep -q 'ROTTA TYP-01' /tmp/gt.log || {
+            echo "demo-check.py boccia la copia guasta tipografica ma non nomina TYP-01:" >&2
+            cat /tmp/gt.log >&2; exit 1; }
+          echo "demo-check.py boccia anche una voce tipografica senza contrasto."
+
       # I render restano scaricabili dalla run anche quando il deploy non parte,
       # cosi' su una PR si guarda il video invece di fidarsi del diff.
       - uses: actions/upload-artifact@v4
