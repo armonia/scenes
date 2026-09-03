@@ -111,6 +111,56 @@ not an addition.
 Six scenes now, 1460 frames, 48.7 seconds, five measured joins: 557, 64, 55, 29
 and 15 pixels.
 
+## Typography, where the sentence is the film
+
+Four entries with no interface on screen at all. They come from three reference
+films the type direction was read off — a SaaS promo, a Spotify spot, an Apple
+Business Essentials piece — and their common DNA: the typography *is* the film,
+one phrase per beat, always centred, heavy sans with tight tracking, scale
+contrast so one word per beat becomes enormous, and colour on the keyword only.
+
+That DNA also said **hard cuts on the beat, no continuous camera**, which is the
+opposite of this repo's founding rule. It is not a contradiction to paper over,
+so here is how it resolves: the references chosen *later* moved the other way on
+their own. Apple's Creator Studio film has five cuts in thirty-five seconds and
+is continuous transformation rather than editing; the three shots picked for the
+UI direction have **zero**; Linear's and Vercel's have zero. These four entries
+sit on that side. `TYP-04` is the clearest case — it is this repo's join rule
+written as a sentence: two consecutive lines share most of their words, and the
+shared ones do not move a pixel while the one that changes is replaced.
+
+**The dwell is measured, and it is the entry that matters.** How long a line
+stays is not chosen by eye but in characters per second of *net* dwell — the
+stretch in which the sentence is already composed and still, after the last word
+has landed. Large type holds 15 to 16; over 20 the line is taken away while you
+are still reading it. The declared window and the net dwell are not the same
+number — with a staggered entry there are six frames between them — which is
+exactly why the bench measures the net figure on the rendering instead of
+trusting the constant. It reads 15.5 c/s against 24.9 across the two halves of
+the demo. And the corollary is the useful part: to gain reading time *without*
+slowing the cut down, tighten the entry stagger and lengthen only the dwell.
+Widening the stagger looks like generosity and is theft, because every frame it
+takes comes out of the only stretch where anybody is reading.
+
+The page grew a second kind of stage for these. Type demos do not mount the slab
+— mounting it and then covering it would render a kanban behind a word for
+nothing, and the stage's perspective would falsify the type size. Same engine,
+same frame lock, same HUD and scrub; what changes is what is inside. The body is
+sized in `cqw` and not pixels, because in a real composition the type is a
+fraction of the frame, and the proportion between word and frame *is* the content
+of these entries.
+
+One defect worth recording, because it is the same shape as others in here.
+`TYP-04` first cross-faded the two swapping words in the same box, and at the
+midpoint you saw `join` and `pose` overlapping — which does not read as one word
+replacing another, it reads as a rendering error. The substitution is sequential
+now: the old one leaves, then the new one arrives, and the two frames of empty
+box between them are a beat rather than a hole. The box keeps its width the whole
+time because the outgoing word stays in the flow while invisible, so the three
+words that are supposed to stay put have no reason to move — and `demo-check.py`
+measures that they move 0.00 px, against 77 in the half that replaces the whole
+line.
+
 ## Speed is a number in `catalog.json`
 
 Motion design is dense. The references this repo chases run 13 to 42 seconds and
