@@ -26,6 +26,7 @@ import {
 import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
 import { Board } from "../primitives/Board";
 import { Cursor, pointOnPath, type Waypoint } from "../primitives/Cursor";
+import { tempo } from "../primitives/tempo";
 
 /**
  * CardHandoff: la terza scena, e quella che rende dimostrabile la regola
@@ -70,14 +71,31 @@ export type CardHandoffProps = {
 // che si usa. Erano due voci del catalogo che nessuna scena implementava, CUR-01
 // per l'arrivo in arco e CUR-04 per il peso del trascinamento, e stavano ferme
 // li' mentre la scena faceva volare la card con una interpolazione.
+/**
+ * La durata di riferimento a cui sono scritti i tempi qui sotto. Cambiare
+ * `durationInFrames` in catalog.json li scala tutti insieme: e' cosi' che si
+ * cambia la velocita' della scena senza riscriverne nessuno.
+ */
+const BASE = 240;
+
 const GRAB = 78;
 const DRAG_START = 84;
 const DRAG_END = 176;
 const RELEASE = 178;
 const SETTLE_END = 196;
-/** Di quanti frame la card resta indietro rispetto alla mano. */
+
+/**
+ * NON SI SCALANO, e i motivi sono diversi fra loro.
+ *
+ * LAG e' il peso dell'oggetto: la card sta dove stava la mano tre frame fa
+ * perche' e' una cosa che ha inerzia, non perche' il montaggio ha quel ritmo.
+ * A velocita' doppia diventerebbe un frame e mezzo, cioe' la card tornerebbe
+ * saldata al puntatore, che e' esattamente il difetto che CUR-04 descrive.
+ *
+ * TILT_PER_PX non e' nemmeno un tempo: e' gradi per pixel di velocita'. Scala
+ * da se' quando la corsa si accorcia, perche' la velocita' cresce.
+ */
 const LAG = 3;
-/** Gradi di inclinazione per pixel di velocita'. */
 const TILT_PER_PX = 0.11;
 
 /**
@@ -109,6 +127,7 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
   const last = durationInFrames - 1;
+  const T = tempo(durationInFrames, BASE);
 
   // La camera continua l'arco di UIMockup: stessa direzione, stessa curva.
   const yaw = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.yaw, CARD_HANDOFF_END_POSE.yaw], {
@@ -151,38 +170,42 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   // ci si posa. L'overshoot e' 26 px su 1130 di corsa.
   const path: Waypoint[] = [
     { x: 2620, y: 1330, at: 0 },
-    { x: 2620, y: 1330, at: 14 },
-    { x: 1580, y: 700, at: 46 },
-    { x: x0 + gdx + 26, y: y0 + gdy - 18, at: 66 },
-    { x: x0 + gdx, y: y0 + gdy, at: 76 },
-    { x: x0 + gdx, y: y0 + gdy, at: DRAG_START },
-    { x: (x0 + x1) / 2 + gdx, y: Math.min(y0, y1) + gdy - 96, at: 130 },
-    { x: x1 + gdx, y: y1 + gdy, at: DRAG_END },
-    { x: x1 + gdx, y: y1 + gdy, at: 186 },
+    { x: 2620, y: 1330, at: T.at(14) },
+    { x: 1580, y: 700, at: T.at(46) },
+    { x: x0 + gdx + 26, y: y0 + gdy - 18, at: T.at(66) },
+    { x: x0 + gdx, y: y0 + gdy, at: T.at(76) },
+    { x: x0 + gdx, y: y0 + gdy, at: T.at(DRAG_START) },
+    { x: (x0 + x1) / 2 + gdx, y: Math.min(y0, y1) + gdy - 96, at: T.at(130) },
+    { x: x1 + gdx, y: y1 + gdy, at: T.at(DRAG_END) },
+    { x: x1 + gdx, y: y1 + gdy, at: T.at(186) },
     // La mano se ne va prima della fine, e non e' una gentilezza: la scena dopo
     // non ha nessun cursore, quindi se restasse in quadro all'ultimo frame la
     // giunta con CardFocus mostrerebbe una freccia che sparisce.
-    { x: 2620, y: 1330, at: 216 },
+    { x: 2620, y: 1330, at: T.at(216) },
     { x: 2620, y: 1330, at: last },
   ];
 
   // CUR-04: la card sta dove stava la mano tre frame fa, e l'inclinazione esce
   // dalla differenza fra due campioni. Senza il ritardo la card sembra saldata
   // al puntatore; senza l'inclinazione sembra trascinata su un tavolo.
-  const heldFrame = Math.min(frame, RELEASE) - LAG;
+  const heldFrame = Math.min(frame, T.at(RELEASE)) - LAG;
   const lagged = pointOnPath(path, heldFrame);
   const before = pointOnPath(path, heldFrame - 3);
-  const held = frame >= GRAB;
+  const held = frame >= T.at(GRAB);
 
   // Dopo il rilascio la card scivola nello slot: la correzione e' piccola,
   // perche' la mano ha gia' dimorato sul punto d'arrivo.
-  const settle = interpolate(frame, [RELEASE, SETTLE_END], [0, 1], {
+  const settle = interpolate(frame, [T.at(RELEASE), T.at(SETTLE_END)], [0, 1], {
     easing: Easing.inOut(Easing.cubic),
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const lift = interpolate(frame, [GRAB, GRAB + 12, RELEASE, SETTLE_END], [0, 1, 1, 0], {
+  const lift = interpolate(
+    frame,
+    [T.at(GRAB), T.at(GRAB + 12), T.at(RELEASE), T.at(SETTLE_END)],
+    [0, 1, 1, 0],
+    {
     easing: Easing.inOut(Easing.quad),
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -195,14 +218,14 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   const tilt = held ? (lagged.x - before.x) * TILT_PER_PX * (1 - settle) : 0;
 
   // Il terzo anello della catena: la card si riscrive l'eta'.
-  const movingNow = frame >= PANEL_AT ? { ...moving, age: "ora" } : moving;
+  const movingNow = frame >= T.at(PANEL_AT) ? { ...moving, age: "ora" } : moving;
 
   // Quanto del tragitto e' fatto: e' da qui che la board sa quando aggiornare i
   // contatori e quando aprire lo slot di destinazione.
   const travel = Math.max(0, Math.min(1, (cardX - x0) / (x1 - x0)));
 
   // Le card sotto risalgono mentre quella sopra si sta gia' posando, non prima.
-  const closeGap = interpolate(frame, [DRAG_END - 22, SETTLE_END], [0, 1], {
+  const closeGap = interpolate(frame, [T.at(DRAG_END - 22), T.at(SETTLE_END)], [0, 1], {
     easing: Easing.inOut(Easing.cubic),
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -242,8 +265,8 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
             moving={movingNow}
             fromRest={fromRest}
             tilt={tilt}
-            handed={frame >= COUNT_AT ? 1 : 0}
-            statusChanged={frame >= PANEL_AT ? 1 : 0}
+            handed={frame >= T.at(COUNT_AT) ? 1 : 0}
+            statusChanged={frame >= T.at(PANEL_AT) ? 1 : 0}
             dimmed
           />
         </div>
@@ -286,15 +309,15 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
             moving={movingNow}
             fromRest={fromRest}
             tilt={tilt}
-            handed={frame >= COUNT_AT ? 1 : 0}
-            statusChanged={frame >= PANEL_AT ? 1 : 0}
+            handed={frame >= T.at(COUNT_AT) ? 1 : 0}
+            statusChanged={frame >= T.at(PANEL_AT) ? 1 : 0}
           />
 
           {/* La mano sta DENTRO la lastra, quindi prende la stessa prospettiva
               e appoggia sul piano. Al primo e all'ultimo frame sta fuori dai
               2400x1200 e l'overflow la taglia: e' cosi' che le due giunte
               restano identiche a scene che un cursore non ce l'hanno. */}
-          <Cursor path={path} clicks={[GRAB, RELEASE]} />
+          <Cursor path={path} clicks={[T.at(GRAB), T.at(RELEASE)]} />
 
           <div
             style={{

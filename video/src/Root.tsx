@@ -68,6 +68,29 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{ detachTicker: true }}
       />
+      {/* PROVINI DEL TEMPO, non scene: non stanno in catalog.json, quindi non
+          vanno in vetrina e nessuno le renderizza per il film. Sono le stesse
+          due scene a durata dimezzata e a due terzi, e servono a tempo.sh per
+          provare che accorciare la durata accorcia OGNI battuta dentro la
+          scena, e che le soglie percettive invece non si muovono. Senza un
+          render veloce da misurare, "il tempo si puo' cambiare" resterebbe una
+          frase nel README. */}
+      <Composition
+        id="CardHandoffFast"
+        component={CardHandoff}
+        durationInFrames={120}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="PromptInputFast"
+        component={PromptInput}
+        durationInFrames={300}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
       <Composition
         id="FrameLockedProbeAttached"
         component={FrameLockedProbe}

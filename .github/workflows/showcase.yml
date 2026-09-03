@@ -119,6 +119,24 @@ jobs:
           ./scripts/beats.sh
           ./scripts/contrast-floor.py
 
+          # IL TEMPO. Le battute interne di una scena sono scritte rispetto a una
+          # durata di riferimento e `durationInFrames` le scala tutte, quindi
+          # cambiare la velocita' di una clip e' cambiare un numero in
+          # catalog.json. E' una promessa che si rompe in silenzio, e non si
+          # verifica guardando: due render alla stessa velocita' apparente hanno
+          # durate diverse.
+          ./scripts/fixture-tempo.sh
+          ./scripts/tempo.py
+
+          # E i banchi percettivi devono passare ANCHE sul render ritempificato.
+          # E' il vero controllo di regressione del tempo: se accorciando la
+          # scena il clic si scollasse dalla sua conseguenza, o un tempo finisse
+          # oltre l'ultimo fotogramma, si vedrebbe qui e non in montaggio.
+          ./scripts/click-gap.sh video/out/.fast-prompt-input.mp4
+          ./scripts/beats.sh video/out/.fast-prompt-input.mp4
+          ./scripts/contrast-floor.py video/out/.fast-prompt-input.mp4
+          ./scripts/handoff-travel.sh video/out/.fast-card-handoff.mp4
+
       # Il banco nuovo va messo alla prova sul caso che deve bocciare, non solo
       # sul render che deve promuovere. Senza questo passo "verde" vorrebbe dire
       # soltanto che lo script e' arrivato in fondo.
@@ -190,6 +208,14 @@ jobs:
           rc=0; ./scripts/contrast-floor.py video/out/.fixture-attn-025.mp4 >/dev/null 2>&1 || rc=$?
           [ "$rc" = 1 ] || { echo "contrast-floor.py sull'attenuazione a 0,25: atteso 1, ottenuto $rc" >&2; exit 1; }
           echo "contrast-floor.py boccia l'attenuazione a 0,25, come deve."
+
+          # tempo.py deve bocciare una scena TAGLIATA invece che ritempificata:
+          # e' esattamente quello che si otteneva abbassando la durata prima che
+          # le battute la seguissero, ed e' il difetto che il banco cerca.
+          ./scripts/fixture-trim.sh
+          rc=0; ./scripts/tempo.py video/out/card-handoff.mp4 video/out/.fixture-trim.mp4 >/dev/null 2>&1 || rc=$?
+          [ "$rc" = 1 ] || { echo "tempo.py sul ritaglio non ritempificato: atteso 1, ottenuto $rc" >&2; exit 1; }
+          echo "tempo.py boccia una scena tagliata invece che ritempificata, come deve."
 
 
       # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa

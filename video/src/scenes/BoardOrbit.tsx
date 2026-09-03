@@ -20,6 +20,7 @@ import {
 } from "../primitives/slab";
 import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
 import { Board } from "../primitives/Board";
+import { tempo } from "../primitives/tempo";
 
 /**
  * BoardOrbit: il sesto anello, e la fine del film.
@@ -51,6 +52,9 @@ export type BoardOrbitProps = {
   progress?: number;
 };
 
+/** La durata di riferimento a cui e' scritto SETTLE. Vedi primitives/tempo.ts. */
+const BASE = 150;
+
 /** Il frame in cui la camera arriva e si ferma. */
 const SETTLE = 118;
 
@@ -60,8 +64,10 @@ export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
 
+  const T = tempo(durationInFrames, BASE);
+
   const at = (from: number, to: number): number =>
-    interpolate(frame, [0, SETTLE], [from, to], {
+    interpolate(frame, [0, T.at(SETTLE)], [from, to], {
       easing: Easing.inOut(Easing.cubic),
       extrapolateRight: "clamp",
     });

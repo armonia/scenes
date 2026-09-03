@@ -12,6 +12,7 @@ import { bubbleCurve } from "../primitives/Assistant";
 import { Cursor, type Waypoint } from "../primitives/Cursor";
 import { typedCount, typingSchedule } from "../primitives/rhythm";
 import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
+import { tempo } from "../primitives/tempo";
 import {
   CARD_RELEASE_END_POSE,
   COLUMNS,
@@ -75,6 +76,9 @@ export type PromptInputProps = {
 // I frame della recita. La pausa prima dell'invio e' la parte che la rende
 // credibile: senza, l'invio parte insieme all'ultimo tasto e legge come uno
 // script che esegue, non come qualcuno che rilegge.
+/** La durata di riferimento a cui sono scritti i tempi. Vedi primitives/tempo.ts. */
+const BASE = 450;
+
 const T = {
   travelStart: 56,
   travelEnd: 114,
@@ -85,6 +89,21 @@ const T = {
   bubble: 14,
   thinking: 26,
 } as const;
+
+/**
+ * IL BATTITO DEL CARET NON SI SCALA: quindici frame sono una frequenza, non una
+ * durata. Un cursore che lampeggia al doppio della velocita' non legge come una
+ * scena piu' rapida, legge come un cursore rotto.
+ */
+const CARET_PERIOD = 15;
+
+/**
+ * QUATTRO FRAME FRA IL COLPO E LA CONSEGUENZA, e non si scalano nemmeno questi.
+ * click-gap.sh misura che stiano fra 1 e 8: e' la finestra in cui l'occhio lega
+ * il gesto al suo effetto, non una decisione di ritmo. A velocita' doppia
+ * diventerebbero due, sul bordo di sparire.
+ */
+const BUBBLE_AFTER_CLICK = 4;
 
 const DEFAULT_PROMPT = "Rifai il flusso di auth e apri la PR";
 
@@ -103,23 +122,44 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
   const last = durationInFrames - 1;
+  const K = tempo(durationInFrames, BASE);
 
+  /**
+   * LA BATTITURA SCALA, e SI DIVIDE invece di moltiplicarsi. Tredici caratteri
+   * al secondo e' un ritmo umano, quindi sarebbe da lasciare fermo; ma una
+   * scena piu' rapida in cui il testo si scrive alla stessa velocita' non ci
+   * sta dentro: la spedizione arriva dopo l'ultimo fotogramma e la scena
+   * finisce a meta' gesto.
+   *
+   * `cps` e' una VELOCITA', non una durata, quindi va all'inverso del fattore:
+   * a meta' durata servono il doppio dei caratteri al secondo. Scrivendolo
+   * moltiplicato - come era la prima volta - una scena piu' corta si ritrovava
+   * un dattilografo piu' LENTO, la spedizione slittava all'83 per cento della
+   * durata invece del 60, e `beats.sh` trovava il campo ancora pieno dove si
+   * aspettava il segnaposto. Sbagliato di un reciproco, e visibile solo
+   * misurando.
+   *
+   * Il limite superiore esiste e non e' misurato: oltre una certa velocita' la
+   * battitura smette di leggere come una mano e comincia a leggere come un
+   * incolla. A meta' durata sono 26 caratteri al secondo, ed e' probabilmente
+   * la' intorno.
+   */
   const schedule = typingSchedule({
     text: prompt,
-    startFrame: T.typeStart,
+    startFrame: K.at(T.typeStart),
     fps,
-    cps: 13,
+    cps: 13 / K.k,
   });
 
   const typeEnd = schedule[schedule.length - 1] ?? T.typeStart;
   const nTyped = typedCount(schedule, frame);
   const typed = prompt.slice(0, nTyped);
 
-  const sendTravelStart = typeEnd + T.pauseAfterTyping;
-  const sendClick = sendTravelStart + T.travelToSend;
-  const bubbleAt = sendClick + 4;
-  const thinkAt = bubbleAt + T.bubble;
-  const streamAt = thinkAt + T.thinking;
+  const sendTravelStart = typeEnd + K.at(T.pauseAfterTyping);
+  const sendClick = sendTravelStart + K.at(T.travelToSend);
+  const bubbleAt = sendClick + BUBBLE_AFTER_CLICK;
+  const thinkAt = bubbleAt + K.at(T.bubble);
+  const streamAt = thinkAt + K.at(T.thinking);
 
   const sent = frame >= sendClick;
 
@@ -137,7 +177,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
    * poi ci si ferma: nessuno muove la macchina mentre qualcuno scrive e legge,
    * perche' l'inquadratura in cui si legge deve stare ferma.
    */
-  const CAM_SETTLE = 132;
+  const CAM_SETTLE = K.at(132);
 
   // Lo streaming va a blocchi di parole, non a caratteri. Un LLM non scrive
   // lettera per lettera: arriva a token, e l'occhio lo riconosce.
@@ -147,7 +187,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     Math.min(
       words.length,
       Math.floor(
-        interpolate(frame, [streamAt, last - 18], [0, words.length], {
+        interpolate(frame, [streamAt, last - K.at(18)], [0, words.length], {
           extrapolateLeft: "clamp",
           extrapolateRight: "clamp",
         }),
@@ -178,9 +218,9 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   const bgSlideX = slideX * 0.45;
   const bgSlideY = slideY * 0.45;
 
-  const focused = frame >= T.clickField;
+  const focused = frame >= K.at(T.clickField);
   // Il caret lampeggia a 15 frame, e il calcolo e' sul frame: nessun keyframe CSS.
-  const caretOn = focused && !sent && Math.floor(frame / 15) % 2 === 0;
+  const caretOn = focused && !sent && Math.floor(frame / CARET_PERIOD) % 2 === 0;
 
   /**
    * CAM-05: mentre la risposta arriva, tutto quello che non e' la risposta
@@ -193,7 +233,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
    * pavimento: sotto, il contenuto attenuato scende sotto 3:1 una volta
    * renderizzato e legge come sporco sul fondo invece che come un piano dietro.
    */
-  const attn = interpolate(frame, [streamAt - 6, streamAt + 26], [1, attnFloor], {
+  const attn = interpolate(frame, [streamAt - K.at(6), streamAt + K.at(26)], [1, attnFloor], {
     easing: Easing.inOut(Easing.cubic),
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -211,16 +251,16 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   // si sposta il puntatore lo segue.
   const path: Waypoint[] = [
     { x: 2620, y: 1330, at: 0 },
-    { x: 2620, y: 1330, at: T.travelStart },
-    { x: 1760, y: 1214, at: T.travelStart + 22 },
-    { x: COMPOSER_X + 110, y: COMPOSER_Y + COMPOSER_H / 2, at: T.travelEnd },
+    { x: 2620, y: 1330, at: K.at(T.travelStart) },
+    { x: 1760, y: 1214, at: K.at(T.travelStart + 22) },
+    { x: COMPOSER_X + 110, y: COMPOSER_Y + COMPOSER_H / 2, at: K.at(T.travelEnd) },
     { x: COMPOSER_X + 110, y: COMPOSER_Y + COMPOSER_H / 2, at: sendTravelStart },
     { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: sendClick },
     // La mano si ritira mentre la risposta scorre. Non e' una gentilezza: al
     // suo posto resterebbe una freccia sull'ultimo fotogramma, e la scena dopo
     // un cursore non ce l'ha, quindi la giunta la mostrerebbe sparire.
-    { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: streamAt + 16 },
-    { x: 2620, y: 1330, at: streamAt + 58 },
+    { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: streamAt + K.at(16) },
+    { x: 2620, y: 1330, at: streamAt + K.at(58) },
     { x: 2620, y: 1330, at: durationInFrames },
   ];
 
