@@ -111,6 +111,55 @@ not an addition.
 Six scenes now, 1460 frames, 48.7 seconds, five measured joins: 557, 64, 55, 29
 and 15 pixels.
 
+## Speed is a number in `catalog.json`
+
+Motion design is dense. The references this repo chases run 13 to 42 seconds and
+fit more into them than there is in these 48. Going faster used to mean opening
+every scene and rewriting a dozen constants — `GRAB 78`, `DRAG_END 176`,
+`CAM_SETTLE 132` — keeping them consistent with each other by eye. That is the
+kind of work that goes wrong silently: miss one and the gesture comes apart with
+every bench still green.
+
+Now the tempo *is* the duration. Each scene declares its beats against a
+reference duration, and `durationInFrames` scales all of them: halving it halves
+every beat inside the scene rather than cutting the tail off.
+
+**But not everything scales, and that is the part that matters.** There are two
+kinds of number in a scene. *Edit tempi* scale — when the hand arrives, how long
+the travel runs, when the camera settles: those are rhythm decisions, and rhythm
+is exactly what you want to change. *Perceptual thresholds* do not. The four
+frames between a click and its consequence are not rhythm, they are the window
+in which the eye ties a gesture to its effect — `click-gap.sh` measures that they
+sit between 1 and 8, and at double speed they would be two, on the edge of
+disappearing. The three frames the card lags behind the hand are the weight of
+the object. The caret's fifteen-frame blink is a frequency, not a duration.
+Scaling the second kind along with the first is how a faster scene becomes a
+broken scene. `at()` scales; bare numbers do not; and every bare number in a
+scene has the reason it stayed bare written next to it.
+
+One of those got the sign wrong first time round, and only measuring caught it.
+`cps` — the typing rate — is a *speed*, so it goes as the inverse of the factor:
+half the duration needs twice the characters per second. Written as a
+multiplication, a shorter scene got a *slower* typist, the send slid to 83 per
+cent of the duration instead of 60, and `beats.sh` found the field still full
+where it expected the placeholder.
+
+`tempo.py` proves the mechanism the only way it can be proved: if the beats
+scale, frame *f* of the short render is frame *f/k* of the long one. Compared
+time-normalised the two renders differ by 287 pixels; compared without
+normalising, by 5379 — nineteen times worse. And the 287 is not slop: it is the
+signature of the thresholds that deliberately stayed put. At zero they would
+have scaled too. Its negative control is the same scene truncated instead of
+retimed, which is exactly what lowering the duration produced before any of
+this, and there the normalised comparison is the wrong one.
+
+Every bench with a hardcoded frame number now follows the duration too —
+`beats.sh`, `handoff-travel.sh`, `contrast-floor.py` — because a bench that
+looks at frame 430 of a scene that is now 300 frames long is measuring a scene
+that no longer exists. They all pass on both the film and the retimed fixtures,
+and that is the real regression guard: retime a scene and the perceptual
+measurements still hold.
+
 **Real UI, not a drawing of UI.** Slabs of the actual product on inclined
 planes, with the product's own tokens, radii and system font stack. A mockup
 that is 3px off reads as a mockup.
@@ -149,6 +198,9 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/demo-check.py [page.html]                     # do the catalogue demos still show their thesis
 ./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
+./scripts/tempo.py [long.mp4 short.mp4]                 # does shortening a scene retime it or just trim it
+./scripts/fixture-tempo.sh                              # render the two retimed fixtures
+./scripts/fixture-trim.sh                               # build the trimmed scene tempo.py must fail
 ./scripts/fixture-attenuation.sh                        # build the scene contrast-floor must fail
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 

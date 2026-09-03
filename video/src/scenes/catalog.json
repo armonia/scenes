@@ -18,7 +18,16 @@
     "restAtEdges = la scena dichiara di stare ferma su tutti e due i bordi, e",
     "rest-point.sh la boccia se non lo fa. Le altre le misura e le stampa senza",
     "dare verdetti: UIMockup all'inizio NON e' ferma, la board si popola, e non",
-    "promette di esserlo."
+    "promette di esserlo.",
+    "",
+    "durationInFrames NON E' SOLO LA DURATA, E' LA VELOCITA'. I tempi interni di",
+    "ogni scena sono scritti rispetto a una durata di riferimento dichiarata nella",
+    "scena stessa, e questo numero li scala tutti: dimezzarlo dimezza ogni battuta",
+    "dentro la scena invece di tagliarne la coda. Cambiare la velocita' di una clip",
+    "e' cambiare un numero qui. Le soglie percettive - i quattro frame fra il clic e",
+    "la sua conseguenza, i tre di ritardo della card sulla mano, il periodo del",
+    "caret - restano ferme di proposito: vedi primitives/tempo.ts. Lo verifica",
+    "tempo.py, che boccia una scena tagliata invece che ritempificata."
   ],
   "scenes": [
     {
