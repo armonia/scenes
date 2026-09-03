@@ -37,9 +37,21 @@ WORK="$ROOT/out/.travel"
 rm -rf "$WORK"; mkdir -p "$WORK"
 trap 'rm -rf "$WORK"' EXIT
 
-# La finestra del viaggio: TRAVEL_START 38 e TRAVEL_END 118 a 30fps.
+# La finestra del viaggio, in secondi, alla durata di riferimento della scena.
 # Si campiona dentro, non ai bordi, per non prendere il sollevamento.
-SAMPLES="1.40 1.80 2.20 2.60 3.00 3.40 3.80"
+#
+# I CAMPIONI SEGUONO LA DURATA. Da quando le battute interne sono scritte
+# rispetto a una durata di riferimento e `durationInFrames` le scala (vedi
+# primitives/tempo.ts), un banco coi secondi scritti a mano guarda una scena che
+# non esiste piu': su un render dimezzato questi sette istanti cadrebbero tutti
+# dopo l'atterraggio e la card risulterebbe ferma.
+BASE_FRAMES=240
+NF=$(ffprobe -v error -count_frames -select_streams v:0 \
+       -show_entries stream=nb_read_frames -of csv=p=0 "$SRC" | tr -dc '0-9')
+case "${NF:-}" in ''|*[!0-9]*) echo "non riesco a contare i fotogrammi di $SRC" >&2; exit 3 ;; esac
+SAMPLES=$(python3 -c "
+k = $NF / $BASE_FRAMES
+print(' '.join('%.2f' % (t * k) for t in (1.40, 1.80, 2.20, 2.60, 3.00, 3.40, 3.80)))")
 
 # Larghezza di una colonna in coordinate lastra: (2400-280-420-48-40)/3 = 537,
 # che scalata nel quadro renderizzato vale circa 300px. La card deve percorrere

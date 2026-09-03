@@ -49,8 +49,14 @@ SOGLIA = 3.0
 # Sotto questo numero di pixel il ritaglio non contiene testo, e non c'e' niente
 # di cui misurare il contrasto.
 NUCLEO_MINIMO = 120
-# Il fotogramma: tardi nello streaming, quando l'attenuazione e' a regime.
-FRAME = 430
+# Il fotogramma da guardare, tardi nello streaming, quando l'attenuazione e' a
+# regime - espresso alla durata di riferimento della scena e poi scalato.
+#
+# SEGUE LA DURATA perche' le battute interne la seguono (primitives/tempo.ts):
+# su un render ritempificato a due terzi il fotogramma 430 non esiste, e su uno
+# a meta' cadrebbe dopo la fine.
+BASE_FRAMES = 450
+FRAME_BASE = 430
 
 if not SRC.exists():
     print("manca il render: %s" % SRC, file=sys.stderr)
@@ -92,6 +98,17 @@ r = json.loads(geo.stdout.strip().splitlines()[-1])
 if r["w"] < 40 or r["h"] < 12:
     print("il ritaglio calcolato e' degenere: %s" % r, file=sys.stderr)
     raise SystemExit(3)
+
+nf = subprocess.run(
+    ["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
+     "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", str(SRC)],
+    capture_output=True, text=True,
+).stdout
+nf = int("".join(c for c in nf if c.isdigit()) or 0)
+if nf <= 0:
+    print("non riesco a contare i fotogrammi di %s" % SRC, file=sys.stderr)
+    raise SystemExit(3)
+FRAME = round(FRAME_BASE * nf / BASE_FRAMES)
 
 raw = subprocess.run(
     ["ffmpeg", "-nostdin", "-v", "error", "-i", str(SRC),

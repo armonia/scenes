@@ -335,6 +335,22 @@
       </section>
 
       <section>
+        <p class="section-title">Speed is a number</p>
+        <p class="note" style="margin:0 0 20px">
+          Motion design is dense: the references behind this vocabulary run 13 to
+          42 seconds and fit more into them than there is in these 48. The tempo
+          of a scene is now its duration — each scene writes its beats against a
+          reference length and <code>durationInFrames</code> scales all of them,
+          so halving it halves every beat inside rather than cutting the tail
+          off. <strong>What does not scale is the perceptual thresholds</strong>:
+          the four frames between a click and its consequence are the window in
+          which the eye ties a gesture to its effect, not a rhythm decision, and
+          at double speed they would be two. Same for the three frames the card
+          lags behind the hand, which are the weight of the object, and for the
+          caret's blink, which is a frequency. Scaling those along with the rest
+          is how a faster scene becomes a broken one.
+        </p>
+
         <p class="section-title">The benches, and what they fail</p>
         <div class="tblwrap">
           <table>
@@ -349,6 +365,8 @@
               <tr><td>focus-sharpness.sh</td><td>A slab that stopped being DOM: the text falls apart once the camera is on top of it</td><td class="n">2.09× against 1.03× on the fixture</td></tr>
               <tr><td>rest-point.sh</td><td>A scene still moving where the next one has to attach. Its thresholds were absolute to begin with, tuned on this machine, and every one of them failed the move to Linux</td><td class="n">edges under 30% of mid-scene</td></tr>
               <tr><td>click-gap.sh</td><td>A press and its consequence fused onto one frame, or so far apart that it stops reading as a consequence and starts reading as lag</td><td class="n">f271 and f276, five frames</td></tr>
+              <tr><td>tempo.py</td><td>A scene that was shortened rather than sped up. If the beats scale, frame <i>f</i> of the short render is frame <i>f/k</i> of the long one; compared that way the two differ by 287 px against 5379 without normalising. The residual is not slop — it is the signature of the thresholds that deliberately did not scale</td><td class="n">18.7× advantage, 4 required</td></tr>
+              <tr><td>fixture-trim.sh</td><td>Measures nothing. Truncates a scene to the short duration instead of retiming it, which is what lowering the duration produced before any of this existed</td><td class="n">120 frames, beats left in place</td></tr>
               <tr><td>contrast-floor.py</td><td>Content attenuated so far that it stops being a plane behind and becomes dirt on the background. Two wrong versions before this one: the first measured the composer placeholder, which is deliberately faint and sits at 2.93:1 before any attenuation at all; the second measured the right content in a place whose position depends on how the messages wrap, and on Linux the crop landed on empty background</td><td class="n">4.17:1, 3.84 on Linux, against 1.71</td></tr>
               <tr><td>demo-check.py</td><td>A demonstration on this page that has stopped demonstrating its own entry. The difference between showing a thesis and not showing it is almost always temporal, and a screenshot cannot see it, so this one scrubs</td><td class="n">15 entries, frame by frame</td></tr>
               <tr><td>fixture-screenshot.sh</td><td>Measures nothing. It builds the scene the bench above has to fail, and without it that bench is a promise</td><td class="n">first frame magnified 2.26×</td></tr>

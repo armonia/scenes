@@ -53,6 +53,19 @@ command -v tesseract >/dev/null 2>&1 || {
 FPS=30
 FAIL=0
 
+# I FOTOGRAMMI DA GUARDARE SI SCALANO CON LA DURATA, e questo pezzo e' nato da
+# un fallimento: sul provino della scena a 300 fotogrammi invece di 450 il banco
+# cercava la battitura a f170 e lo streaming a f430, cioe' fuori dalla scena, e
+# concludeva che i tempi non c'erano. Da quando le battute interne scalano con
+# `durationInFrames` (vedi primitives/tempo.ts) un banco con i frame scritti a
+# mano misura una scena che non esiste piu'.
+BASE=450
+N=$(ffprobe -v error -count_frames -select_streams v:0       -show_entries stream=nb_read_frames -of csv=p=0 "$SRC" | tr -dc '0-9')
+case "${N:-}" in ''|*[!0-9]*) echo "non riesco a contare i fotogrammi di $SRC" >&2; exit 3 ;; esac
+sc() { python3 -c "print(round($1 * $N / $BASE))"; }
+F_TYPE1=$(sc 170); F_TYPE2=$(sc 210); F_SENT=$(sc 300)
+F_S1=$(sc 340); F_S2=$(sc 385); F_S3=$(sc 430)
+
 # Le parole della risposta che l'OCR regge bene: niente punteggiatura attaccata,
 # niente parole di tre lettere che l'OCR pesca ovunque.
 RESPONSE_WORDS="trovati punti chiamata server sposto refresh token dentro guard solo"
@@ -81,18 +94,19 @@ hits() {
 echo "I quattro tempi di $(basename "$SRC")"
 echo
 
-# TEMPO 1 e 2: il campo si riempie. A 170 il prompt e' cominciato ma non
-# finito, a 210 c'e' tutto: se i due conteggi coincidono, non sta digitando.
-t1=$(hits "$(ocr_at 170)" "$PROMPT_WORDS")
-t2=$(hits "$(ocr_at 210)" "$PROMPT_WORDS")
-printf '  digita        frame 170: %s parole   frame 210: %s parole' "$t1" "$t2"
+# TEMPO 1 e 2: il campo si riempie. Al primo campione il prompt e' cominciato
+# ma non finito, al secondo c'e' tutto: se i due conteggi coincidono, non sta
+# digitando.
+t1=$(hits "$(ocr_at "$F_TYPE1")" "$PROMPT_WORDS")
+t2=$(hits "$(ocr_at "$F_TYPE2")" "$PROMPT_WORDS")
+printf '  digita        frame %s: %s parole   frame %s: %s parole' "$F_TYPE1" "$t1" "$F_TYPE2" "$t2"
 if [ "$t2" -gt "$t1" ]; then echo "   ok"; else echo "   FERMO"; FAIL=1; fi
 
 # TEMPO 3: l'invio. Dopo il click il prompt e' ancora in quadro, ma come
 # messaggio, e il campo torna al segnaposto.
-sent=$(ocr_at 300)
+sent=$(ocr_at "$F_SENT")
 t3=$(hits "$sent" "$PROMPT_WORDS")
-printf '  invia         frame 300: %s parole del prompt in quadro' "$t3"
+printf '  invia         frame %s: %s parole del prompt in quadro' "$F_SENT" "$t3"
 if [ "$t3" -ge 3 ]; then echo "   ok"; else echo "   IL MESSAGGIO NON C'E'"; FAIL=1; fi
 case "$sent" in
   *"chiedi qualcosa"*) echo "                il campo e' tornato al segnaposto   ok";;
@@ -100,10 +114,10 @@ case "$sent" in
 esac
 
 # TEMPO 4: lo streaming. Tre momenti, e devono crescere.
-s1=$(hits "$(ocr_at 340)" "$RESPONSE_WORDS")
-s2=$(hits "$(ocr_at 385)" "$RESPONSE_WORDS")
-s3=$(hits "$(ocr_at 430)" "$RESPONSE_WORDS")
-printf '  streaming     frame 340: %s   frame 385: %s   frame 430: %s' "$s1" "$s2" "$s3"
+s1=$(hits "$(ocr_at "$F_S1")" "$RESPONSE_WORDS")
+s2=$(hits "$(ocr_at "$F_S2")" "$RESPONSE_WORDS")
+s3=$(hits "$(ocr_at "$F_S3")" "$RESPONSE_WORDS")
+printf '  streaming     frame %s: %s   frame %s: %s   frame %s: %s' "$F_S1" "$s1" "$F_S2" "$s2" "$F_S3" "$s3"
 if [ "$s3" -gt "$s2" ] && [ "$s2" -gt "$s1" ]; then
   echo "   ok"
 elif [ "$s3" -eq 0 ]; then
