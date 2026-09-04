@@ -470,7 +470,11 @@ with sync_playwright() as pw:
         }""", [code, f])
     p_a, p_b = wgt("TYP-08", 16), wgt("TYP-08", 66)
     p_c = wgt("TYP-08", 130)
-    check("TYP-08", p_a[0] < 380 and p_b[0] > 760 and p_b[1] > p_a[1] * 1.04 and p_c[0] > 760,
+    # QUANTO cresca la larghezza e' affare della famiglia, non della voce: su
+    # questa macchina l'11 per cento, sul Linux della CI il 3,6. Il banco chiede
+    # che cresca, non di quanto - una soglia sul valore misurerebbe il font
+    # installato sulla macchina invece del comportamento del peso.
+    check("TYP-08", p_a[0] < 380 and p_b[0] > 760 and p_b[1] > p_a[1] * 1.025 and p_c[0] > 760,
           "peso da %.0f a %.0f, e la prima parola da %.0f a %.0f px; nella seconda meta' resta a %.0f"
           % (p_a[0], p_b[0], p_a[1], p_b[1], p_c[0]))
 
