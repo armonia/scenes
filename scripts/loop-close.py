@@ -65,9 +65,12 @@ import pathlib
 import statistics
 import sys
 
-import numpy as np
 from PIL import Image
 from playwright.sync_api import sync_playwright
+
+# Niente numpy: sul runner della CI non c'e', e per confrontare due immagini da
+# 200x112 in scala di grigi bastano i byte. E' la stessa scelta di
+# contrast-floor.py, e vale un pacchetto in meno da installare.
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 if len(sys.argv) > 1:
@@ -103,10 +106,10 @@ with sync_playwright() as pw:
             "([i,f])=>{const it=document.querySelectorAll('.stage')[i].__it;"
             " it.manual=f; it.last=-1; it.mv.draw(f,it.S);}", [i, f])
         im = Image.open(io.BytesIO(st.screenshot())).convert("L").resize((W, H))
-        return np.asarray(im, dtype=np.int16)
+        return im.tobytes()
 
     def d(a, b):
-        return int((np.abs(a - b) > DIFF).sum())
+        return sum(1 for x, y in zip(a, b) if abs(x - y) > DIFF)
 
     print("%-8s %6s %10s %10s %9s" % ("voce", "dur", "passo ai capi", "giunta", "rapporto"))
     for i, c in enumerate(codes):
