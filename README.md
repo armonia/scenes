@@ -111,6 +111,51 @@ not an addition.
 Six scenes now, 1460 frames, 48.7 seconds, five measured joins: 557, 64, 55, 29
 and 15 pixels.
 
+## Ten of thirty demos tore on every pass
+
+The page's demos run on a loop. Ten of them were one-way animations — a camera
+that pushes in and stays in, a graph that draws itself and stays drawn, a board
+that fills and stays full — so the last frame had nothing to do with the first
+and every pass ended in a hard cut. On a page whose entire subject is why you do
+not cut. `GIU-04` changed 28 per cent of the frame at the join.
+
+Nobody reads that as "the demo restarted". It reads as the site stuttering,
+which is exactly how it was reported.
+
+The fix is one shared idea rather than ten patches: a round-trip profile, and a
+virtual clock for the demos whose state is a function of a running frame rather
+than of a 0-to-1 parameter — a board filling in has no `t` to invert, it has a
+clock to run backwards. The return leg is not part of the movement and the
+readout says so: better a declared leg home than a tear every pass. Two demos
+did not need a rewind and got something truer instead: the streaming answer
+scrolls up and out the way the app would, and the shared-word sentence swaps back
+in the opposite direction, so the loop is `join → pose → join`.
+
+`loop-close.py` measures it, and finding the right question took three wrong
+ones. Against the demo's *typical* motion, the demos that sit still between
+discrete beats have a median of zero and every join looks infinite. Against the
+demo's *largest* step, a demo that also cuts internally takes its own cut as the
+reference and absolves itself — `CHR-02` scored 652 against 652, the same defect
+counted twice. The question that works is simpler: **is the last frame one step
+away from the first, or somewhere else entirely?** Compare the wrap against a
+normal one-frame step taken at the same place in the loop.
+
+It measures the wrap and *not* the cuts in the middle, and that is a real limit
+rather than an oversight. No metric I tried separates a cut from a **fade**.
+Counting pixels over a threshold, a linear fade spikes halfway through — that is
+where most pixels cross at once — so the bench flagged a line of text leaving the
+frame, which is the most continuous thing on the page. With a mean difference the
+spike goes away and the measure becomes so sensitive it flags everything. The
+mid-loop cut in `CHR-02` was found by looking, not by measuring.
+
+One more defect, and it was the one that showed. `TYP-02` grew its keyword by
+changing its font size inside a single flex line — and changing the size changes
+the box, so the line recomposed, the wrap point moved, and halfway through the
+growth the whole sentence jumped 147 pixels. Exactly the opposite of what the
+entry claims. The keyword now has a row of its own and grows with a `scale()`,
+which does not touch layout, so the other words move 0.00 px — measured, not
+asserted. It is also closer to the references, where the enormous word is alone.
+
 ## Typography, where the sentence is the film
 
 Four entries with no interface on screen at all. They come from three reference
@@ -247,6 +292,7 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/click-gap.sh [scene.mp4]                      # does the UI answer the click, or fire with it
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/demo-check.py [page.html]                     # do the catalogue demos still show their thesis
+./scripts/loop-close.py [page.html]                     # does every demo loop close, or tear every pass
 ./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
 ./scripts/tempo.py [long.mp4 short.mp4]                 # does shortening a scene retime it or just trim it
 ./scripts/fixture-tempo.sh                              # render the two retimed fixtures

@@ -382,6 +382,7 @@
               <tr><td>focus-sharpness.sh</td><td>A slab that stopped being DOM: the text falls apart once the camera is on top of it</td><td class="n">2.09× against 1.03× on the fixture</td></tr>
               <tr><td>rest-point.sh</td><td>A scene still moving where the next one has to attach. Its thresholds were absolute to begin with, tuned on this machine, and every one of them failed the move to Linux</td><td class="n">edges under 30% of mid-scene</td></tr>
               <tr><td>click-gap.sh</td><td>A press and its consequence fused onto one frame, or so far apart that it stops reading as a consequence and starts reading as lag</td><td class="n">f271 and f276, five frames</td></tr>
+              <tr><td>loop-close.py</td><td>A demo whose loop tears every pass. Ten of thirty were one-way animations, so the last frame had nothing to do with the first — on a page about not cutting. It measures the wrap and not the cuts in the middle, because no metric tried could separate a cut from a fade</td><td class="n">10 torn, now 0</td></tr>
               <tr><td>tempo.py</td><td>A scene that was shortened rather than sped up. If the beats scale, frame <i>f</i> of the short render is frame <i>f/k</i> of the long one; compared that way the two differ by 287 px against 5379 without normalising. The residual is not slop — it is the signature of the thresholds that deliberately did not scale</td><td class="n">18.7× advantage, 4 required</td></tr>
               <tr><td>fixture-trim.sh</td><td>Measures nothing. Truncates a scene to the short duration instead of retiming it, which is what lowering the duration produced before any of this existed</td><td class="n">120 frames, beats left in place</td></tr>
               <tr><td>contrast-floor.py</td><td>Content attenuated so far that it stops being a plane behind and becomes dirt on the background. Two wrong versions before this one: the first measured the composer placeholder, which is deliberately faint and sits at 2.93:1 before any attenuation at all; the second measured the right content in a place whose position depends on how the messages wrap, and on Linux the crop landed on empty background</td><td class="n">4.17:1, 3.84 on Linux, against 1.71</td></tr>
@@ -745,6 +746,31 @@ requestAnimationFrame(loop);
 
 /* ============================================================ i movimenti */
 function C(S,col,idx){ for(var i=0;i<S.cards.length;i++){ var c=S.cards[i]; if(c.col===col&&c.idx===idx) return c; } }
+/* ANDATA E RITORNO, e il motivo per cui esiste.
+   Queste demo girano in ciclo. Le animazioni a senso unico - una camera che
+   entra e resta dentro, un grafico che si disegna e resta disegnato - finiscono
+   in uno stato che non ha niente a che vedere con quello di partenza, quindi a
+   ogni giro c'e' uno stacco secco. Dieci voci su trenta lo facevano, e su una
+   pagina che spiega perche' gli stacchi non si fanno.
+   Il ritorno non e' parte del movimento e la HUD lo dice: e' il ciclo che si
+   chiude. Meglio una gamba di rientro dichiarata che uno strappo ogni giro. */
+function trip(f,dur,up,hold){
+  if(f<=up) return E.inout(cl(f/up));
+  if(f<=up+hold) return 1;
+  return 1-E.inout(cl((f-up-hold)/Math.max(1,dur-1-up-hold)));
+}
+function back(f,up,hold){ return f>up+hold; }
+/* Un TEMPO VIRTUALE che va avanti fino a `up`, sosta, e torna a zero. Serve
+   dove lo stato non e' una funzione di un parametro 0..1 ma di un frame che
+   scorre - una board che si popola: li' non c'e' un `t` da invertire, c'e' un
+   orologio da far tornare indietro. */
+function vtime(q,H,up,hold){
+  if(q<=up) return q;
+  if(q<=up+hold) return up;
+  return up*(1-E.inout(cl((q-up-hold)/Math.max(1,H-1-up-hold))));
+}
+var RET="   ← the return leg: this is the loop closing, not the movement";
+
 function bez(A,Cp,B,u){ var m=1-u; return {x:m*m*A.x+2*m*u*Cp.x+u*u*B.x, y:m*m*A.y+2*m*u*Cp.y+u*u*B.y}; }
 function depth(S){
   S.hdr.style.transform="translateZ(6px)";
@@ -769,9 +795,10 @@ var ANSWER="Parto dalla lastra ferma nella posa finale, il cursore entra in arco
 
 var M={};
 
-M.push={dur:150,draw:function(f,S){
-  var t=E.inout(cl((f-6)/108)), p=mix(START,END,t); pose(S,p);
-  S.hud("yaw "+p.yaw.toFixed(1)+"  pitch "+p.pitch.toFixed(1)+"  pushZ "+Math.round(p.z)+"  slideX "+Math.round(p.x));
+M.push={dur:170,draw:function(f,S){
+  var t=trip(f,170,108,26), p=mix(START,END,t); pose(S,p);
+  S.hud("yaw "+p.yaw.toFixed(1)+"  pitch "+p.pitch.toFixed(1)+"  pushZ "+Math.round(p.z)+"  slideX "+Math.round(p.x)
+    +(back(f,108,26)?RET:""));
 }};
 
 /* --- CAM-02: la parallasse alla distanza a cui si vede -----------------
@@ -823,14 +850,15 @@ M.orbit={dur:250,draw:function(f,S){
 M.macro={dur:210,
  init:function(S,stage){ depth(S); S.stageEl=stage; },
  draw:function(f,S){
-   var t=E.inout(cl((f-10)/150)), z=48+1180*t;
+   var t=trip(f,210,132,26), z=48+1180*t;
    /* La traslazione esce da centreOn come in CAM-06: coi numeri fissi della
       repo, su un palco di larghezza diversa, la camera passa accanto alla card. */
    var r=S.stageEl.getBoundingClientRect(), base=(r.width/1920)*1.04;
    var cx=colX(1)+COL_W/2, cy=cardY(COLUMNS[1].cards,0)+ACTIVE_CARD_H/2;
    var tx=1200-cx, ty=(0.46-0.5)*r.height/base+370-cy;
    pose(S,{yaw:-9+9*t,pitch:2.5-2.5*t,z:z,x:tx*t,y:ty*t});
-   S.hud("pushZ "+Math.round(z)+"   focus-sharpness.sh reads 2.09× against the same content magnified from the wide shot");
+   S.hud("pushZ "+Math.round(z)+"   focus-sharpness.sh reads 2.09× against the same content magnified from the wide shot"
+     +(back(f,132,26)?RET:""));
  }};
 
 M.attn={dur:250,draw:function(f,S){
@@ -943,8 +971,19 @@ M.stream={dur:260,
    var prog=cl(ip(f,[24,110],[0,0.42],E.out)+(f>130?ip(f,[130,214],[0,0.58],E.lin):0));
    var n=Math.floor(prog*S.words.length);
    S.stream.textContent=S.words.slice(0,n).join(" ");
+   /* A risposta finita il blocco esce dal campo e il thread torna vuoto, che e'
+      quello che fa l'app. Il ciclo si chiude su un composer vuoto come quello da
+      cui e' partito, invece di ripartire cancellando di colpo una risposta
+      scritta. E non e' un riavvolgimento: nessuno vede il testo scriversi
+      all'indietro. */
+   var exit=E.inout(cl((f-214)/30));
+   var gone=f>=246;
+   S.stream.textContent=gone?"":S.words.slice(0,n).join(" ");
+   S.stream.style.transform=gone?"none":"translateY("+(-exit*46).toFixed(1)+"px)";
+   S.stream.style.opacity=gone?"1":(1-exit).toFixed(3);
    var stall=f>=110&&f<=130;
-   S.hud("words "+n+"/"+S.words.length+(stall?"   stall":"")+"   the count must GROW across the window, not merely be non-zero");
+   S.hud("words "+n+"/"+S.words.length+(stall?"   stall":"")+(f>=214&&!gone?"   the thread moves on":"")
+     +"   the count must GROW across the window, not merely be non-zero");
  }};
 
 M.metric={dur:170,draw:function(f,S){
@@ -978,12 +1017,14 @@ M.insert={dur:250,
      : "gap at f20, landing at f38: 18 frames of lead, so the space opens before the row gets there");
  }};
 
-M.handoff={dur:250,
+M.handoff={dur:310,
  init:function(S){ svgPath(S,"M1130 196 Q1409 78 1687 196","rgba(77,148,255,.38)","9 12"); },
  draw:function(f,S){
    pose(S,{yaw:-9,pitch:2.5,z:60,x:0,y:0});
-   var lift=E.out(cl((f-14)/26)), fly=E.inout(cl((f-40)/86)),
-       open=E.out(cl((f-30)/40)), close=E.out(cl((f-56)/44));
+   /* Andata e ritorno: la card attraversa, si posa, e poi il gesto si annulla
+      e la board torna nello stato in cui il ciclo l'aveva trovata. */
+   var lift=trip(f,310,40,120)*1, fly=trip(f,310,126,60),
+       open=trip(f,310,70,110), close=trip(f,310,100,80);
    var card=C(S,1,0), sx=colX(1), dx=colX(2), step=ACTIVE_CARD_H+CARD_GAP;
    card.el.style.left=(sx+(dx-sx)*fly)+"px";
    card.el.style.top=(141-Math.sin(Math.PI*fly)*104)+"px";
@@ -995,7 +1036,7 @@ M.handoff={dur:250,
    var c2=C(S,1,1);
    c2.el.style.top=(c2.y-step*close)+"px";
    S.adds[1].el.style.top=(S.adds[1].y-step*close)+"px";
-   S.cols[1].cnt.textContent=f>=100?"1":"2";
+   S.cols[1].cnt.textContent=(fly>=0.5)?"1":"2";
    S.cols[2].cnt.textContent=f>=100?"3":"2";
    S.hud("gap f30 · flight f40-126 · close f56   handoff-travel.sh wants a monotonic centroid across half a column");
  }};
@@ -1031,7 +1072,10 @@ M.reflow={dur:250,
  },
  draw:function(f,S){
    pose(S,{yaw:-9,pitch:2.4,z:120,x:0,y:0});
-   var second=f>=125, q=second?f-125:f;
+   /* Il tempo della meta' va avanti e poi torna: senza, la seconda meta'
+      trovava la board gia' posata e ripartiva dal vuoto, cioe' uno stacco secco
+      a meta' ciclo - il difetto piu' visibile di tutta la pagina. */
+   var second=f>=125, q=vtime(second?f-125:f,125,86,14);
    /* Il cambiamento: la card attiva si posa. Tutto il resto data da qui. */
    var land=E.out(cl((q-8)/30));
    S.act.el.style.transform="translateZ(40px) translateY("+((1-land)*-58).toFixed(1)+"px)";
@@ -1079,12 +1123,15 @@ M.spill={dur:222,draw:function(f,S){
   S.hud("the colour spilling onto the floor is the screen dominant one on that frame, not a light chosen by hand");
 }};
 
-M.seam={dur:240,draw:function(f,S){
-  var p=f<120?mix(START,END,E.inout(cl(f/108)))
-              :mix(END,{yaw:-9,pitch:2.5,z:440,x:-170,y:70},E.inout(cl((f-120)/112)));
+M.seam={dur:300,draw:function(f,S){
+  var B={yaw:-9,pitch:2.5,z:440,x:-170,y:70};
+  var p = f<120 ? mix(START,END,E.inout(cl(f/108)))
+        : f<210 ? mix(END,B,E.inout(cl((f-120)/86)))
+                : mix(B,START,E.inout(cl((f-214)/84)));
   pose(S,p);
   var at=f>=117&&f<=123;
-  S.hud((f<120?"UIMockup":"CardHandoff")+"   join at f120"+(at?"  ← now":"")+"   seam.sh: 557 px against 37,103 for the control cut, 67×");
+  S.hud((f<120?"UIMockup":(f<210?"CardHandoff":"back to the first pose"))+"   join at f120"+(at?"  ← now":"")
+    +"   seam.sh: 557 px against 37,103 for the control cut, 67×"+(f>=210?RET:""));
 }};
 
 M.rest={dur:260,draw:function(f,S){
@@ -1097,10 +1144,11 @@ M.rest={dur:260,draw:function(f,S){
     : "   eased: it goes to zero at the far pose, and that frame is where the next scene attaches"));
 }};
 
-M.through={dur:240,draw:function(f,S){
-  var t=f/239, at=Math.abs(f-120)<4;
+M.through={dur:280,draw:function(f,S){
+  var t=trip(f,280,190,20), at=Math.abs(f-95)<4;
   pose(S,{yaw:-22+26*t,pitch:4.2-2.2*t,z:340*t,x:660-660*t,y:0});
-  S.hud("a normal edit would put the cut at f120"+(at?"  ← passing now":"")+". The camera does not stop, so there is nothing to hide");
+  S.hud("a normal edit would put the cut at f95"+(at?"  ← passing now":"")+". The camera does not stop, so there is nothing to hide"
+    +(back(f,190,20)?RET:""));
 }};
 
 /* --- CAM-06: il solo punto del quadro che non scappa sotto una spinta in Z --- */
@@ -1116,8 +1164,8 @@ M.centre={dur:210,
  },
  draw:function(f,S){
    /* Prima meta': si spinge e basta. Seconda: si spinge compensando. */
-   var second=f>=105, q=(second?f-105:f)/98;
-   var t=E.inout(cl((q-0.06)/0.82)), z=48+1180*t;
+   var second=f>=105, qf=second?f-105:f;
+   var t=trip(qf,105,64,12), z=48+1180*t;
    var comp=second?t:0;
    /* La compensazione si calcola, e il termine che tutti dimenticano e' il
       secondo: l'origine della prospettiva sta al 46% dell'altezza, non al 50%,
@@ -1184,22 +1232,33 @@ M.dwell={dur:187, kind:"type",
 var TCLAIM = ["One", "shot.", "Forty-eight", "seconds."];
 
 M.big={dur:220, kind:"type",
- init:function(T){ T.words(TCLAIM); },
+ init:function(T){
+   T.words(TCLAIM);
+   /* LA PAROLA CHIAVE STA SU UNA RIGA SUA, e cresce con una TRASFORMAZIONE.
+      Prima cresceva cambiandole il corpo dentro una riga sola, e cambiare il
+      corpo cambia la larghezza della casella: la riga flex si ricomponeva, il
+      punto di a capo si spostava, e a meta' crescita tutta la frase saltava di
+      centoquarantasette pixel. Era il difetto piu' visibile della famiglia, ed
+      era esattamente il contrario di quello che la voce dichiara.
+      Una scale() non tocca il layout, quindi le altre parole non hanno proprio
+      modo di muoversi; e la riga propria e' anche piu' vicina alle reference,
+      dove la parola enorme sta da sola. */
+   T.spans[0].style.flexBasis="100%";
+   T.spans[0].style.textAlign="center";
+   T.spans[0].style.transformOrigin="50% 60%";
+ },
  draw:function(f,T){
    var second=f>=110, q=second?f-110:f;
    var inP=E.out(cl(q/26)), grow=E.inout(cl((q-30)/44)), out=E.inout(cl((q-96)/14));
+   var k=second?1:1+1.6*grow;
    T.spans.forEach(function(sp,i){
-     var key=i===0;
-     /* Nella seconda meta' la parola chiave non cresce: la frase resta tutta
-        allo stesso corpo, che e' il caso da guardare. */
-     var k=(key&&!second)?1+1.6*grow:1;
      sp.style.opacity=(inP*(1-out)).toFixed(3);
-     sp.style.fontSize=(k*100).toFixed(1)+"%";
-     sp.style.transform="translateY("+((1-inP)*0.22).toFixed(3)+"em)";
+     sp.style.transform=(i===0?"scale("+k.toFixed(3)+") ":"")
+       +"translateY("+((1-inP)*0.22).toFixed(3)+"em)";
    });
    T.hud(second
      ? "every word at the same size: nothing in the line is the subject"
-     : "the keyword at "+(1+1.6*grow).toFixed(2)+"× the rest   one word per beat becomes enormous, and the others stay where they were");
+     : "the keyword at "+k.toFixed(2)+"× the rest   it scales with a transform, so the others cannot move even if they wanted to");
  }};
 
 /* --- TYP-03: colore solo sulla parola chiave --- */
@@ -1270,8 +1329,12 @@ M.stays={dur:260, kind:"type",
    });
 
    if(second){
-     T.oldw.style.opacity=sw<0.5?"1":"0";
-     T.neww.style.opacity=sw<0.5?"0":"1";
+     /* La seconda meta' va nel VERSO OPPOSTO: la prima sostituisce join con
+        pose, questa rimette join al suo posto. Cosi' il ciclo torna dove e'
+        partito invece di riportare indietro la parola di scatto all'ultimo
+        fotogramma. */
+     T.oldw.style.opacity=sw<0.5?"0":"1";
+     T.neww.style.opacity=sw<0.5?"1":"0";
      T.oldw.style.transform="none"; T.neww.style.transform="none";
    } else {
      /* Solo la parola che cambia cambia: la vecchia sale e se ne va, poi la
@@ -1295,12 +1358,14 @@ var CHAIN=[
   {n:"CardHandoff", from:END,                            to:{yaw:-4,pitch:1.2,z:96,x:0,y:0}},
   {n:"CardFocus",   from:{yaw:-4,pitch:1.2,z:96,x:0,y:0},to:{yaw:0,pitch:0,z:1180,x:70,y:173.5}}
 ];
-M.chain={dur:330,
+M.chain={dur:430,
  init:function(S,stage){
    var cv=el("canvas","graph"); cv.width=580; cv.height=290; stage.appendChild(cv); S.g=cv;
  },
  draw:function(f,S){
-   var seg=f<110?0:(f<220?1:2), local=(f-seg*110)/109;
+   /* La catena si percorre in avanti e poi si torna al principio: il grafico
+      si ridisegna all'indietro invece di sparire di colpo a fine ciclo. */
+   var g=trip(f,430,330,20)*3, seg=Math.min(2,Math.floor(g)), local=g-seg;
    var t=E.inout(cl(local)), L=CHAIN[seg];
    var p=mix(L.from,L.to,t); pose(S,p);
    /* Il grafico: tre curve sull'intera catena piu' la testina. */
@@ -1345,11 +1410,14 @@ M.backdrop={dur:220,draw:function(f,S){
 }};
 
 /* --- CHR-04: prima e dopo senza divisorio --- */
-M.ba={dur:250,init:depth,draw:function(f,S){
-  pose(S,{yaw:-10+3*E.sine(cl(f/249)),pitch:2.4,z:40+60*E.sine(cl(f/249)),x:120-240*E.sine(cl(f/249)),y:0});
+M.ba={dur:300,init:depth,draw:function(f,S){
+  var w=Math.sin(Math.PI*cl(f/299));
+  pose(S,{yaw:-10+3*w,pitch:2.4,z:40+60*w,x:120-240*w,y:0});
   /* Due card passano da Backlog a In review, sfalsate. Nessun wipe, nessuno
      slider: lo stato cambia sotto una camera che non si ferma. */
-  var m1=E.inout(cl((f-52)/70)), m2=E.inout(cl((f-88)/70));
+  /* Le due card passano di colonna e poi tornano: senza il rientro l'ultimo
+     fotogramma trovava la board in uno stato che il primo non ha mai avuto. */
+  var m1=trip(f,300,122,50), m2=trip(f,300,158,26);
   var a=C(S,0,2), b=C(S,0,1), dst=colX(2), step=CARD_H+CARD_GAP;
   a.el.style.left=(a.x+(dst-a.x)*m1)+"px";
   a.el.style.top=(a.y+(357-a.y)*m1-Math.sin(Math.PI*m1)*70)+"px";
@@ -1359,7 +1427,7 @@ M.ba={dur:250,init:depth,draw:function(f,S){
   b.el.style.transform="translateZ("+(26+90*Math.sin(Math.PI*m2))+"px)";
   S.cols[0].cnt.textContent=String(3-(m1>=.5?1:0)-(m2>=.5?1:0));
   S.cols[2].cnt.textContent=String(2+(m1>=.5?1:0)+(m2>=.5?1:0));
-  var mt=E.out(cl((f-120)/80));
+  var mt=trip(f,300,200,20);
   S.metric.textContent=Math.round(128-64*mt)+" ms";
   S.metric.style.color=mt>0.9?"#34d399":"#e6e8ec";
   S.hud("no divider and no slider: the before and the after are the same shot at two different moments");
@@ -1563,8 +1631,8 @@ var CAT=[
 
 {fam:"typ",code:"TYP-02",t:"One word, enormous",demo:"big",src:"scale contrast",
  a:"One word per beat becomes enormous and the rest of the line stays where it was. The size difference is what says which word the sentence is about.",
- b:"A scale factor on one span, not a font size on the line. The others keep their box, so the line does not reflow and nothing else moves while the keyword grows.",
- c:"2.6 times the rest, over 44 frames, after the line has composed. The second half of the demo runs at 1.0, which is the case worth looking at.",
+ b:"A transform on one span, not a font size. That distinction is the entry: a font size changes the element's box and the line recomposes around it, a scale does not, and only one of the two leaves the other words where they were.",
+ c:"2.6 times the rest, over 44 frames, after the line has composed. The second half runs at 1.0, which is the case worth looking at. The keyword has a row of its own and grows with a transform, and both of those are repairs: it used to grow by changing its font size inside one line, which changes the box, which recomposes the line — halfway through the growth the whole sentence jumped 147 pixels, the exact opposite of what this entry claims. A scale() does not touch layout, so the others now move 0.00 px.",
  d:"demo-check.py compares the rendered height of the keyword against the others: 2.6 times in the first half, 1.0 in the second. When every word is the same size no word is the subject, and that is not a matter of taste — it is what the frame is failing to say."},
 
 {fam:"typ",code:"TYP-03",t:"Colour on one word only",demo:"only",src:"the accent as a pointer",
