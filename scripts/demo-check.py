@@ -154,7 +154,9 @@ with sync_playwright() as pw:
 
     # CAM-04 - la discesa deve ingrandire la card e tenerla nel quadro.
     # Caso peggiore: la camera passa accanto al soggetto e il fondo resta nero.
-    a0, a1 = at("CAM-04", 4), at("CAM-04", dur("CAM-04") - 1)
+    # Il culmine, non l'ultimo fotogramma: da quando la demo torna indietro per
+    # chiudere il ciclo, l'ultimo fotogramma e' di nuovo il campo largo.
+    a0, a1 = at("CAM-04", 4), at("CAM-04", 132)
     c1 = a1["active"]
     inside = abs(c1["x"] - a1["sw"] / 2) < a1["sw"] / 2 and abs(c1["y"] - a1["sh"] * 0.46) < a1["sh"] / 2
     check("CAM-04", a1["active"]["w"] > a0["active"]["w"] * 2 and inside,
@@ -170,8 +172,8 @@ with sync_playwright() as pw:
     def drift(f):
         s = at("CAM-06", f)
         return ((s["mk"]["x"] - s["sw"] / 2) ** 2 + (s["mk"]["y"] - s["sh"] * 0.46) ** 2) ** 0.5
-    check("CAM-06", drift(103) > 60 and drift(d - 3) < 4,
-          "deriva del soggetto dall'origine: %d px senza compensazione, %d px con" % (drift(103), drift(d - 3)))
+    check("CAM-06", drift(64) > 60 and drift(105 + 64) < 4,
+          "deriva del soggetto dall'origine: %d px senza compensazione, %d px con" % (drift(64), drift(105 + 64)))
 
     # CUR-03 - la seconda meta' e' lo stesso clic senza risposta.
     p1 = any(at("CUR-03", f).get("press") for f in range(40, 70))
@@ -209,13 +211,18 @@ with sync_playwright() as pw:
     # Ogni card e' a posto quando ha finito di salire: l'ordine di arrivo e' la
     # regola di scaglionamento, e le due meta' devono avere ordini diversi.
     def arrival(base):
-        end = {(c["col"], c["idx"]): c["y"] for c in at("CHR-02", base + 118)["cards"]}
+        # LE PARTENZE, non gli arrivi. La meta' adesso e' andata e ritorno, e
+        # vicino all'inversione l'orologio decelera: misurando l'arrivo, le card
+        # si ammucchiavano tutte negli ultimi fotogrammi e l'ordine si
+        # appiattiva. Il fotogramma in cui una card SI STACCA dalla posizione di
+        # partenza non ha quel problema.
+        start = {(c["col"], c["idx"]): c["y"] for c in at("CHR-02", base)["cards"]}
         out = {}
-        for f in range(base + 118, base, -1):
+        for f in range(base, base + 86):
             for c in at("CHR-02", f)["cards"]:
                 k = (c["col"], c["idx"])
-                if abs(c["y"] - end[k]) > 1.5:
-                    out.setdefault(k, f - base)
+                if k not in out and abs(c["y"] - start[k]) > 1.5:
+                    out[k] = f - base
         return out
     a1, a2 = arrival(0), arrival(125)
     ord1 = [k for k, v in sorted(a1.items(), key=lambda kv: kv[1])]
@@ -341,9 +348,13 @@ with sync_playwright() as pw:
 
     # TYP-02 - una parola sola, enorme.
     def hratio(code, f):
+        # L'ALTEZZA RESA, non il corpo dichiarato. Da quando la parola chiave
+        # cresce con una scale() invece che col font-size - che era il difetto:
+        # cambiare il corpo ricomponeva la riga - il font-size resta 100% e
+        # solo il rettangolo cresce.
         sp = ty(code, f)["spans"]
-        key = sp[0]["size"]
-        rest = max(s["size"] for s in sp[1:])
+        key = sp[0]["h"]
+        rest = max(s["h"] for s in sp[1:])
         return key / rest
     r1 = max(hratio("TYP-02", f) for f in range(60, 100, 6))
     r2 = max(hratio("TYP-02", f) for f in range(170, 210, 6))

@@ -237,9 +237,18 @@ jobs:
       # cinque di distanza - che uno screenshot non puo' vedere.
       - name: le dimostrazioni mostrano ancora la loro tesi?
         run: |
-          python3 -m pip install --quiet --disable-pip-version-check playwright
+          # pillow serve a loop-close.py per decodificare gli screenshot: e' l'unico
+          # banco che guarda dei pixel del browser invece del DOM.
+          python3 -m pip install --quiet --disable-pip-version-check playwright pillow
           python3 -m playwright install --with-deps chromium
           ./scripts/demo-check.py
+
+          # E i cicli si devono chiudere. Le demo girano in loop: se l'ultimo
+          # fotogramma non somiglia al primo, ogni giro ha uno stacco secco, e a
+          # chi guarda non arriva "questa riparte", arriva "il sito scatta".
+          # Dieci voci su trenta lo facevano, su una pagina che spiega perche'
+          # gli stacchi non si fanno.
+          ./scripts/loop-close.py
 
           # E il banco deve bocciare il suo caso peggiore: una copia della
           # pagina in cui CHR-03 fa scattare i tre eventi a frame distinti in
@@ -277,6 +286,22 @@ jobs:
             echo "demo-check.py boccia la copia guasta tipografica ma non nomina TYP-01:" >&2
             cat /tmp/gt.log >&2; exit 1; }
           echo "demo-check.py boccia anche una voce tipografica senza contrasto."
+
+          # loop-close.py deve bocciare un ciclo che non si chiude: si rimette
+          # CAM-01 a senso unico, cioe' com'era prima di avere la gamba di
+          # rientro, e il banco deve accorgersene e nominarla.
+          sed 's/var t=trip(f,170,108,26), p=mix(START,END,t)/var t=E.inout(cl((f-6)\/108)), p=mix(START,END,t)/' \
+            showcase/dist/grammatica.html > /tmp/guasta-loop.html
+          if cmp -s showcase/dist/grammatica.html /tmp/guasta-loop.html; then
+            echo "la copia guasta del ciclo e' identica all'originale: la sed non ha trovato niente." >&2
+            exit 1
+          fi
+          rc=0; ./scripts/loop-close.py /tmp/guasta-loop.html > /tmp/gl.log 2>&1 || rc=$?
+          [ "$rc" != 0 ] || { echo "loop-close.py promuove una demo a senso unico." >&2; cat /tmp/gl.log >&2; exit 1; }
+          grep -q 'CAM-01' /tmp/gl.log || {
+            echo "loop-close.py boccia la copia guasta ma non nomina CAM-01:" >&2
+            cat /tmp/gl.log >&2; exit 1; }
+          echo "loop-close.py boccia un ciclo che non si chiude, come deve."
 
       # I render restano scaricabili dalla run anche quando il deploy non parte,
       # cosi' su una PR si guarda il video invece di fidarsi del diff.
