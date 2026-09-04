@@ -158,7 +158,7 @@ asserted. It is also closer to the references, where the enormous word is alone.
 
 ## Typography, where the sentence is the film
 
-Four entries with no interface on screen at all. They come from three reference
+Ten entries with no interface on screen at all. They come from three reference
 films the type direction was read off — a SaaS promo, a Spotify spot, an Apple
 Business Essentials piece — and their common DNA: the typography *is* the film,
 one phrase per beat, always centred, heavy sans with tight tracking, scale
@@ -186,6 +186,40 @@ the demo. And the corollary is the useful part: to gain reading time *without*
 slowing the cut down, tighten the entry stagger and lengthen only the dwell.
 Widening the stagger looks like generosity and is theft, because every frame it
 takes comes out of the only stretch where anybody is reading.
+
+Six more went in after the first four were looked at, and they split into how a
+line *arrives* and where it *sits*.
+
+Arriving: a **mask** that uncovers each word from behind the edge of its own box
+— the most common technique in the reference work, and the reason is that a mask
+does not move the text, the word is already in place and only gets revealed. The
+**grain of the stagger**, letter by letter against word by word: 23 entry moments
+against 7 on the same sentence, which is the difference between a line that pours
+and a line that lands in blocks. **Tracking** closing from 0.225em, the only
+entrance that brings nothing in from off-frame — the sentence is all there and
+only stops holding its breath. And **weight** landing from 300 to 800.
+
+Two of those corrected the entry that described them, which is the point of
+measuring. The weight one claimed weight was the axis that changes a word's ink
+without changing the room it takes; the render disagreed in the first frame,
+because the long line fitted on one row at 300 and wrapped at 800. It is now two
+words, the width growth is stated (12 per cent) rather than denied, and the
+lesson is written down: on a long line you either keep it short or lock the
+width. Tracking had the same shape of problem one floor down — wide spacing
+pushed the line onto three rows and tight spacing onto two, so the composition
+redid itself mid-animation. Tracking *is* a layout property, which is the entry;
+the demo is two words so the effect does not eat the composition.
+
+Sitting: **the companion on another axis** — the small rotated line running up
+the side in spaced capitals, which is what the references put next to every main
+sentence. It does not compete because it is not on the axis the eye is following;
+set flat underneath, the same words become a subtitle, and a subtitle is a second
+thing to read. And **the sentence on the plane**, which is the entry that ties
+this family to the rest of the repo: the type lives in the slab's own
+perspective instead of sitting on the frame. If the film is an inclined object
+seen by a camera, a sentence lying flat on the glass comes from a different film.
+The bench measures it the cheapest way there is — on the plane the two ends of
+the line differ (0.909), flat they are identical (1.000).
 
 The page grew a second kind of stage for these. Type demos do not mount the slab
 — mounting it and then covering it would render a kanban behind a word for
