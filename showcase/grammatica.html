@@ -396,7 +396,7 @@
               <tr><td>focus-sharpness.sh</td><td>A slab that stopped being DOM: the text falls apart once the camera is on top of it</td><td class="n">2.09× against 1.03× on the fixture</td></tr>
               <tr><td>rest-point.sh</td><td>A scene still moving where the next one has to attach. Its thresholds were absolute to begin with, tuned on this machine, and every one of them failed the move to Linux</td><td class="n">edges under 30% of mid-scene</td></tr>
               <tr><td>click-gap.sh</td><td>A press and its consequence fused onto one frame, or so far apart that it stops reading as a consequence and starts reading as lag</td><td class="n">f271 and f276, five frames</td></tr>
-              <tr><td>loop-close.py</td><td>A demo whose loop tears every pass. Ten of thirty were one-way animations, so the last frame had nothing to do with the first — on a page about not cutting. It measures the wrap and not the cuts in the middle, because no metric tried could separate a cut from a fade</td><td class="n">10 torn, now 0</td></tr>
+              <tr><td>loop-close.py</td><td>A demo whose loop tears every pass, or whose second half restarts from scratch instead of continuing the first. Hunting for the mid-loop cut did not work — a cut and a fade look alike to every metric tried — so each two-part demo declares the frame it changes on and the bench looks there, which is the bargain <code>seamAfter</code> already strikes for the scenes</td><td class="n">11 torn, now 0</td></tr>
               <tr><td>tempo.py</td><td>A scene that was shortened rather than sped up. If the beats scale, frame <i>f</i> of the short render is frame <i>f/k</i> of the long one; compared that way the two differ by 287 px against 5379 without normalising. The residual is not slop — it is the signature of the thresholds that deliberately did not scale</td><td class="n">18.7× advantage, 4 required</td></tr>
               <tr><td>fixture-trim.sh</td><td>Measures nothing. Truncates a scene to the short duration instead of retiming it, which is what lowering the duration produced before any of this existed</td><td class="n">120 frames, beats left in place</td></tr>
               <tr><td>contrast-floor.py</td><td>Content attenuated so far that it stops being a plane behind and becomes dirt on the background. Two wrong versions before this one: the first measured the composer placeholder, which is deliberately faint and sits at 2.93:1 before any attenuation at all; the second measured the right content in a place whose position depends on how the messages wrap, and on Linux the crop landed on empty background</td><td class="n">4.17:1, 3.84 on Linux, against 1.71</td></tr>
@@ -837,7 +837,7 @@ M.push={dur:170,draw:function(f,S){
    vede, e una voce che promette di piu' di quello che mostra e' la cosa da
    non fare. Da vicino gli stessi numeri, non gonfiati, ne valgono quattordici.
    Il carrello del film si fa spinti dentro, non da fuori. */
-M.truck={dur:220,
+M.truck={dur:220, half:110,
  init:function(S){
    depth(S);
    /* La parallasse si misura una volta, sui due estremi della corsa, con e
@@ -891,7 +891,7 @@ M.macro={dur:210,
      +(back(f,132,26)?RET:""));
  }};
 
-M.attn={dur:250,draw:function(f,S){
+M.attn={dur:250, half:125,draw:function(f,S){
   pose(S,END);
   var a=E.inout(cl((f-16)/40)), b=E.inout(cl((f-120)/40)), c=E.inout(cl((f-206)/40));
   var o=1-0.38*a-0.37*b; o=o+(1-o)*c;
@@ -920,7 +920,7 @@ M.arc={dur:170,
    S.hud("u "+u.toFixed(3)+"   max overshoot 7.5%   in red, the same time on a straight line at constant speed");
  }};
 
-M.hesit={dur:250,
+M.hesit={dur:250, half:125,
  init:function(S){ S.composer.style.opacity="1"; S.ctext.textContent=PROMPT;
    S.stream.style.opacity="1"; S.stream.textContent="Ho la lastra ferma nella posa finale, con la board popolata e il pannello aperto sulla card attiva. La camera sta a yaw -9 e pitch 2,5, quindi la scena dopo entra da lì senza stacco. Dimmi durata e direzione di ingresso e ti do il piano dei frame.";
    S.msgu0.style.opacity="1"; S.msgu0.textContent="Fammi vedere la board con la card attiva.";
@@ -941,7 +941,7 @@ M.hesit={dur:250,
      : "parked from f50 · wait 20f · press f70   now: "+(q<50?"approach":(q<70?"waiting "+(q-50)+"f":(q<80?"press":"release"))));
  }};
 
-M.click={dur:230,
+M.click={dur:230, half:115,
  init:function(S){ S.composer.style.opacity="1"; S.ctext.textContent=PROMPT;
    S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?"; },
  draw:function(f,S){
@@ -949,10 +949,16 @@ M.click={dur:230,
    var second=f>=115, q=second?f-115:f, down=q>=48&&q<58;
    S.cur.style.opacity="1"; S.cur.style.left="1878px"; S.cur.style.top=(1116+(down?7:0))+"px";
    S.send.className="send"+(down&&!second?" press":"");
-   var eff=second?0:cl((q-50)/12);
+   /* La risposta arriva e poi SI RISOLVE, invece di restare li' fino a che la
+      meta' finisce e sparire di colpo. Prima era cosi', ed era l'unico stacco
+      secco rimasto in tutta la pagina: 547 pixel in un fotogramma contro zero
+      nei vicini, cioe' il "check" che si vedeva scorrendo il sito.
+      Non e' un riavvolgimento - nessuno vede la riga scriversi all'indietro -
+      e' la lavorazione che finisce, che e' quello che fa l'app. */
+   var eff=second?0:(cl((q-50)/12)*(1-E.inout(cl((q-88)/14))));
    S.stream.style.opacity=eff.toFixed(3);
-   S.stream.textContent=(!second&&q>=50)?"In lavorazione":"";
-   S.stream.style.transform="translateY("+((1-E.out(eff))*26).toFixed(1)+"px)";
+   S.stream.textContent=(!second&&q>=50&&q<104)?"In lavorazione":"";
+   S.stream.style.transform="translateY("+((1-E.out(cl((q-50)/12)))*26).toFixed(1)+"px)";
    S.hud(second
      ? "the same press, with nothing answering: no pressed state, no line arriving. The hand is talking to a picture"
      : "press f48 · consequence f50 · 2 frames apart"+(q>=48&&q<50?"   ← in between right now":""));
@@ -1024,7 +1030,7 @@ M.metric={dur:170,draw:function(f,S){
   S.hud("128 ms · back out, 7.5% overshoot · tabular-nums, so the width never changes and nothing reflows");
 }};
 
-M.insert={dur:250,
+M.insert={dur:250, half:125,
  init:function(S){
    var d=el("div","card","left:"+colX(0)+"px;top:"+cardY(COLUMNS[0].cards,1)+"px;width:"+COL_W+"px;height:"+CARD_H+"px;opacity:0;z-index:5");
    var r1=el("div","r1");
@@ -1078,7 +1084,7 @@ M.handoff={dur:310,
    regole. Qui il cambiamento e' la card attiva che si posa, e tutto il
    resto della board si assesta intorno: sei card a sei distanze diverse in
    due dimensioni, dove i due ordini finalmente divergono. */
-M.reflow={dur:250,
+M.reflow={dur:250, half:125,
  init:function(S){
    depth(S);
    var a=C(S,1,0), ox=colX(1)+COL_W/2, oy=a.y+ACTIVE_CARD_H/2;
@@ -1120,7 +1126,7 @@ M.reflow={dur:250,
      : "delay = distance from the change / 1400 × 22f, "+S.rfSpan+"f of spread: it opens outward from the card, and it reads as a space");
  }};
 
-M.prop={dur:260,draw:function(f,S){
+M.prop={dur:260, half:130,draw:function(f,S){
   pose(S,{yaw:-9,pitch:2.5,z:60,x:0,y:0});
   var second=f>=130, q=second?f-130:f;
   var fn=second?30:35, fp=second?30:41;
@@ -1137,7 +1143,7 @@ M.prop={dur:260,draw:function(f,S){
     : "card f30 → count f35 → panel f41.  The two delays are the whole of what reads as cause");
 }};
 
-M.thick={dur:200,draw:function(f,S){
+M.thick={dur:200, half:100,draw:function(f,S){
   var t=E.sine(f<100?f/100:(200-f)/100), off=f>=100;
   pose(S,{yaw:-30+40*t,pitch:3,z:-300,x:0,y:0});
   S.edge.style.opacity=off?"0":"1";
@@ -1164,7 +1170,7 @@ M.seam={dur:300,draw:function(f,S){
     +"   seam.sh: 557 px against 37,103 for the control cut, 67×"+(f>=210?RET:""));
 }};
 
-M.rest={dur:260,draw:function(f,S){
+M.rest={dur:260, half:130,draw:function(f,S){
   var second=f>=130, q=second?f-130:f, ez=second?E.lin:E.inout;
   function s(u){ return ez(cl(u<65?u/64:(129-u)/64)); }
   var t=s(q), v=Math.abs(t-s(q-1))*100;
@@ -1182,7 +1188,7 @@ M.through={dur:280,draw:function(f,S){
 }};
 
 /* --- CAM-06: il solo punto del quadro che non scappa sotto una spinta in Z --- */
-M.centre={dur:210,
+M.centre={dur:210, half:105,
  init:function(S,stage){
    /* La croce blu sta sul centro della card attiva, in coordinate lastra. */
    var c=C(S,1,0);
@@ -1229,7 +1235,7 @@ M.centre={dur:210,
 var TLINE = ["Real", "UI,", "not", "a", "drawing", "of", "UI."];
 var TCHARS = TLINE.join(" ").length;
 
-M.dwell={dur:187, kind:"type",
+M.dwell={dur:187, half:104, kind:"type",
  init:function(T){ T.words(TLINE); },
  draw:function(f,T){
    /* Due meta': la prima tiene la frase 56 frame da ferma, la seconda 29.
@@ -1262,7 +1268,7 @@ M.dwell={dur:187, kind:"type",
 var TCLAIM = ["One", "shot.", "Forty-eight", "seconds."];
 var TSHORT = ["One", "shot."];
 
-M.big={dur:220, kind:"type",
+M.big={dur:220, half:110, kind:"type",
  init:function(T){
    T.words(TCLAIM);
    /* LA PAROLA CHIAVE STA SU UNA RIGA SUA, e cresce con una TRASFORMAZIONE.
@@ -1293,7 +1299,7 @@ M.big={dur:220, kind:"type",
  }};
 
 /* --- TYP-03: colore solo sulla parola chiave --- */
-M.only={dur:200, kind:"type",
+M.only={dur:200, half:100, kind:"type",
  init:function(T){ T.words(TCLAIM); },
  draw:function(f,T){
    var second=f>=100, q=second?f-100:f;
@@ -1314,7 +1320,7 @@ M.only={dur:200, kind:"type",
 var TA = ["Every", "join", "is", "measured."];
 var TB = ["Every", "pose", "is", "measured."];
 
-M.stays={dur:260, kind:"type",
+M.stays={dur:260, half:130, kind:"type",
  init:function(T){
    T.words(TA);
    /* Le due parole che si scambiano stanno nella STESSA casella, una nel flusso
@@ -1388,7 +1394,7 @@ M.stays={dur:260, kind:"type",
    che una maschera non muove il testo: la parola e' gia' al suo posto e viene
    solo scoperta. Una dissolvenza invece la fa comparire, e comparire e'
    sempre meno preciso che essere scoperti. */
-M.mask={dur:230, kind:"type",
+M.mask={dur:230, half:115, kind:"type",
  init:function(T){ T.words(TLINE); T.clip(); },
  draw:function(f,T){
    var second=f>=115, q=second?f-115:f;
@@ -1412,7 +1418,7 @@ M.mask={dur:230, kind:"type",
  }};
 
 /* --- TYP-06: lettera per lettera, o parola per parola ----------------- */
-M.letters={dur:250, kind:"type",
+M.letters={dur:250, half:125, kind:"type",
  init:function(T){
    /* Le lettere sono span dentro lo span della parola: cosi' lo scaglionamento
       fine non tocca la composizione della riga, che resta quella delle parole. */
@@ -1446,7 +1452,7 @@ M.letters={dur:250, kind:"type",
  }};
 
 /* --- TYP-07: la spaziatura che si chiude ------------------------------ */
-M.track={dur:220, kind:"type",
+M.track={dur:220, half:110, kind:"type",
  /* FRASE CORTA, e non e' un vezzo: a 0,225em di spaziatura la frase lunga
     andava a capo su tre righe e a spaziatura chiusa su due, quindi durante
     l'animazione la composizione si rifaceva. La spaziatura E' una proprieta' di
@@ -1470,7 +1476,7 @@ M.track={dur:220, kind:"type",
 /* --- TYP-08: il peso che atterra -------------------------------------- */
 
 
-M.weight={dur:210, kind:"type",
+M.weight={dur:210, half:105, kind:"type",
  init:function(T){ T.words(TSHORT); },
  draw:function(f,T){
    var second=f>=105, q=second?f-105:f;
@@ -1496,7 +1502,7 @@ M.weight={dur:210, kind:"type",
    un numero d'ordine. Non compete con la frase perche' sta su un ALTRO ASSE:
    l'occhio la vede senza doverla leggere prima. Messa piatta sotto la riga
    principale diventa un sottotitolo, cioe' una seconda cosa da leggere. */
-M.side={dur:230, kind:"type",
+M.side={dur:230, half:115, kind:"type",
  init:function(T){
    T.words(TCLAIM);
    T.side("Frame-locked · 1460 frames");
@@ -1531,7 +1537,7 @@ M.side={dur:230, kind:"type",
    appoggiata sul quadro. E' la voce che lega questa famiglia al resto del
    repo: se il film e' un oggetto inclinato ripreso da una camera, una frase
    piatta sul fotogramma viene da un altro film. */
-M.plane={dur:250, kind:"type",
+M.plane={dur:250, half:125, kind:"type",
  init:function(T,stage){
    T.words(TCLAIM);
    /* Corpo piu' piccolo che nelle altre voci: una riga che riempie il quadro

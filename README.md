@@ -140,13 +140,27 @@ counted twice. The question that works is simpler: **is the last frame one step
 away from the first, or somewhere else entirely?** Compare the wrap against a
 normal one-frame step taken at the same place in the loop.
 
-It measures the wrap and *not* the cuts in the middle, and that is a real limit
-rather than an oversight. No metric I tried separates a cut from a **fade**.
-Counting pixels over a threshold, a linear fade spikes halfway through — that is
-where most pixels cross at once — so the bench flagged a line of text leaving the
-frame, which is the most continuous thing on the page. With a mean difference the
-spike goes away and the measure becomes so sensitive it flags everything. The
-mid-loop cut in `CHR-02` was found by looking, not by measuring.
+It measures the cut in the middle too, and getting there took giving up on being
+clever. Half the entries show the right case and then the wrong one, and in the
+handover between the two they can restart from scratch — the same cut, somewhere
+else in the loop. Hunting for it did not work: a cut and a **fade** look too much
+alike. Counting pixels over a threshold, a linear fade spikes halfway through —
+that is where most pixels cross at once — so the bench flagged a line of text
+leaving the frame, which is the most continuous thing on the page. With a mean
+difference the spike goes away and the measure becomes so sensitive it flags
+everything.
+
+The answer was not a smarter metric, it was to stop guessing: every two-part demo
+**declares** the frame it changes on, and the bench looks there. It is the same
+bargain `seamAfter` strikes in `catalog.json` — the scene says where the join is
+and the bench measures it — and it holds for the same reason: a declared join can
+be measured exactly, a guessed one cannot.
+
+Pointed at the declared frames it found exactly one survivor, and it was the one
+being reported: `CUR-03` changed 547 pixels in a single frame against zero in its
+neighbours, because the answer to the click sat there until the half ran out and
+then vanished. It resolves now instead — the work finishes, which is what the app
+would do — and that is not a rewind: nobody sees the line write itself backwards.
 
 One more defect, and it was the one that showed. `TYP-02` grew its keyword by
 changing its font size inside a single flex line — and changing the size changes

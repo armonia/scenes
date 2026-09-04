@@ -303,6 +303,22 @@ jobs:
             cat /tmp/gl.log >&2; exit 1; }
           echo "loop-close.py boccia un ciclo che non si chiude, come deve."
 
+          # E deve bocciare anche uno stacco IN MEZZO al ciclo: si rimette CHR-02
+          # a ripartire dal vuoto nella seconda meta', cioe' com'era prima
+          # dell'orologio virtuale. E' il difetto che si vedeva scorrendo il sito.
+          sed 's/var second=f>=125, q=vtime(second?f-125:f,125,86,14);/var second=f>=125, q=second?f-125:f;/' \
+            showcase/dist/grammatica.html > /tmp/guasta-mezzo.html
+          if cmp -s showcase/dist/grammatica.html /tmp/guasta-mezzo.html; then
+            echo "la copia guasta di mezzo e' identica all'originale: la sed non ha trovato niente." >&2
+            exit 1
+          fi
+          rc=0; ./scripts/loop-close.py /tmp/guasta-mezzo.html > /tmp/gm.log 2>&1 || rc=$?
+          [ "$rc" != 0 ] || { echo "loop-close.py promuove una meta' che riparte da capo." >&2; cat /tmp/gm.log >&2; exit 1; }
+          grep -q 'CHR-02' /tmp/gm.log || {
+            echo "loop-close.py boccia la copia guasta ma non nomina CHR-02:" >&2
+            cat /tmp/gm.log >&2; exit 1; }
+          echo "loop-close.py boccia anche uno stacco in mezzo al ciclo."
+
       # I render restano scaricabili dalla run anche quando il deploy non parte,
       # cosi' su una PR si guarda il video invece di fidarsi del diff.
       - uses: actions/upload-artifact@v4
