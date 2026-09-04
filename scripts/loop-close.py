@@ -43,20 +43,23 @@ loro: una camera che scorre cambia migliaia di pixel per fotogramma, una parola
 che si accende poche decine. Una soglia in pixel assoluti boccerebbe le prime e
 promuoverebbe le seconde.
 
-QUESTO BANCO MISURA SOLO LA GIUNTA DEL CICLO, e non gli stacchi in mezzo. Ci ho
-provato, e non sono riuscito a tarare la cosa: uno stacco a meta' ciclo e' lo
-stesso difetto in un altro punto - CHR-02 faceva sparire una board intera in un
-fotogramma - ma nessuna delle misure che ho provato distingue uno stacco da una
-DISSOLVENZA. Contando i pixel sopra una soglia, una dissolvenza lineare produce
-un picco a meta' strada, dove la maggior parte dei pixel attraversa la soglia
-tutti insieme, e il banco segnalava come stacco l'uscita di campo di una riga di
-testo, che e' la cosa piu' continua che ci sia. Con la differenza media il picco
-sparisce ma la misura diventa cosi' sensibile che segnala tutto, e il pavimento
-che separerebbe le due cose non l'ho trovato.
+E ANCHE LA GIUNTA IN MEZZO, ma solo perche' la demo la dichiara. Meta' delle
+voci mostrano il caso giusto e poi quello sbagliato, e nel passaggio fra i due
+possono ripartire da capo azzerando tutto: e' lo stesso stacco, in un altro
+punto del ciclo.
 
-Quindi la giunta del ciclo la misura, e gli stacchi in mezzo restano da trovare
-a mano. E' meno di quello che serve, ed e' meglio di un verdetto che non regge:
-lo stacco interno di CHR-02 e' stato trovato guardando, non misurando.
+Cercarlo da soli non ha funzionato. Uno stacco e una DISSOLVENZA si somigliano
+troppo: contando i pixel sopra una soglia, una dissolvenza lineare produce un
+picco a meta' strada - dove la maggior parte dei pixel attraversa la soglia tutti
+insieme - e il banco segnalava come stacco l'uscita di campo di una riga di
+testo, che e' la cosa piu' continua che ci sia. Con la differenza media il picco
+sparisce ma la misura diventa cosi' sensibile che segnala tutto.
+
+La soluzione non e' stata una misura piu' furba, e' stata smettere di indovinare:
+ogni demo a due meta' DICHIARA il fotogramma in cui cambia, con `half`, e il
+banco va a guardare li'. E' lo stesso patto di `seamAfter` in catalog.json - la
+scena dice dove sta la giunta e il banco la misura - e vale la stessa ragione:
+una giunta dichiarata si puo' misurare esattamente, una da indovinare no.
 
 Uso:  ./scripts/loop-close.py [pagina.html]
 """
@@ -111,7 +114,7 @@ with sync_playwright() as pw:
     def d(a, b):
         return sum(1 for x, y in zip(a, b) if abs(x - y) > DIFF)
 
-    print("%-8s %6s %10s %10s %9s" % ("voce", "dur", "passo ai capi", "giunta", "rapporto"))
+    print("%-8s %6s %10s %10s %9s %8s %9s" % ("voce", "dur", "passo capi", "giunta", "rapp.", "in mezzo", "rapp."))
     for i, c in enumerate(codes):
         st = stages[i]
         st.scroll_into_view_if_needed()
@@ -125,18 +128,31 @@ with sync_playwright() as pw:
         ratio = wrap / passo if passo else (999.0 if wrap > IGNORA else 0.0)
 
         bad = wrap > IGNORA and ratio > SOGLIA
-        print("%-8s %6d %10d %10d %8.1fx%s" % (c, dur, passo, wrap, ratio, "   STRAPPA" if bad else ""))
-        if bad:
+
+        # La giunta interna, dove la demo dice che c'e'.
+        half = pg.evaluate("(i)=>document.querySelectorAll('.stage')[i].__it.mv.half || 0", i)
+        mid, rmid, bad_mid = 0, 0.0, False
+        if half:
+            mid = d(shot(st, i, half - 1), shot(st, i, half))
+            vic = max(d(shot(st, i, half - 4), shot(st, i, half - 3)),
+                      d(shot(st, i, half + 2), shot(st, i, half + 3)))
+            rmid = mid / vic if vic else (999.0 if mid > IGNORA else 0.0)
+            bad_mid = mid > IGNORA and rmid > SOGLIA
+
+        nota = "   STRAPPA" if bad else ("   STACCA a f%d" % half if bad_mid else "")
+        print("%-8s %6d %10d %10d %8.1fx %8d %8.1fx%s"
+              % (c, dur, passo, wrap, ratio, mid, rmid, nota))
+        if bad or bad_mid:
             fails.append((c, wrap, ratio))
 
     br.close()
 
 print()
 if fails:
-    print("cicli che strappano a ogni giro:", ", ".join(c for c, _, _ in fails), file=sys.stderr)
-    print("L'ultimo fotogramma di queste demo non somiglia al primo, quindi a ogni", file=sys.stderr)
-    print("giro c'e' uno stacco. Non legge come una demo che riparte, legge come", file=sys.stderr)
-    print("un sito che scatta.", file=sys.stderr)
+    print("cicli con uno stacco:", ", ".join(c for c, _, _ in fails), file=sys.stderr)
+    print("O l'ultimo fotogramma non somiglia al primo, o la seconda meta' riparte", file=sys.stderr)
+    print("da capo invece di continuare la prima. In tutti e due i casi non legge", file=sys.stderr)
+    print("come una demo che va avanti, legge come un sito che scatta.", file=sys.stderr)
     raise SystemExit(1)
 print("VERDETTO: tutte le dimostrazioni chiudono il proprio ciclo.")
 print("L'ultimo fotogramma vale quanto un fotogramma qualsiasi rispetto al primo.")

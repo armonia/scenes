@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <title>The grammar — scenes</title>
-    <meta name="description" content="Thirty movements for a software product commercial shot in one take. Each one runs a live demo, states the numbers it starts from, and names the bench that can fail it." />
+    <meta name="description" content="Thirty-six movements for a software product commercial shot in one take. Each one runs a live demo, states the numbers it starts from, and names the bench that can fail it." />
     <meta property="og:title" content="The grammar — scenes" />
     <meta property="og:description" content="The vocabulary behind armonia/scenes: continuous movements over real UI, no cuts, each with the measurement that can disprove it." />
     <style>
@@ -123,6 +123,20 @@
         font-weight: 800; letter-spacing: -0.035em; line-height: 0.94;
         text-align: center; font-size: 7.4cqw; color: var(--text); }
       .tw { display: inline-block; white-space: pre; }
+      /* La casella che ritaglia: la parola sale da sotto il suo stesso bordo.
+         overflow visibile sui discendenti sarebbe il difetto - "p" e "g"
+         verrebbero tagliate - quindi la casella e' piu' alta della riga e il
+         testo ci sta dentro con il suo respiro. */
+      .tclip { display: inline-block; overflow: hidden; padding: 0.14em 0 0.2em; }
+      .tclip > span { display: inline-block; }
+      /* La riga che accompagna, ruotata: sta sul fianco e non compete. */
+      .tside { position: absolute; left: 3cqw; top: 50%; transform-origin: 0 50%;
+        font-size: 1.5cqw; font-weight: 600; letter-spacing: 0.22em;
+        text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+      /* Il piano: la frase vive nella stessa prospettiva della lastra. */
+      .troom { position: absolute; inset: 0; perspective: 2400px; perspective-origin: 50% 46%; }
+      .tplane { position: absolute; inset: 0; display: flex; align-items: center;
+        justify-content: center; transform-style: preserve-3d; }
 
       /* the four fields, on the grid the index uses for the rules */
       .spec { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -271,20 +285,20 @@
     <div class="wrap">
       <header>
         <p class="eyebrow">The grammar</p>
-        <h1>Thirty movements,<br />no cuts.</h1>
+        <h1>Thirty-six movements,<br />no cuts.</h1>
         <p class="lede">
           The vocabulary the scenes are built from. A transition is something you
           pick between two finished clips; <strong>a movement carries the film
           from one state to the next with no join to hide</strong>. Every entry
           here runs a live demo, states the numbers it starts from, and names the
           bench that can fail it. Twenty-six of them run on the slab; the last
-          four have no interface on screen at all, because in those the sentence
+          ten have no interface on screen at all, because in those the sentence
           is the film.
         </p>
         <p class="lede" style="margin-top:18px;font-size:16px">
-          Twenty-six of the thirty name a bench that exists and runs in CI. The
-          other four name one that does not exist yet, and those are printed in
-          grey: a measurement nobody has written is a proposal, and this page
+          Thirty-two of the thirty-six name a bench that exists and runs in CI.
+          The other four name one that does not exist yet, and those are printed
+          in grey: a measurement nobody has written is a proposal, and this page
           would be doing the thing it warns against if it let the two look alike.
         </p>
         <div class="cta">
@@ -296,14 +310,14 @@
 
     <nav class="rail" aria-label="Filter by family">
       <div class="wrap railin">
-        <button class="chip" data-fam="all" aria-pressed="true">All <b>30</b></button>
+        <button class="chip" data-fam="all" aria-pressed="true">All <b>36</b></button>
         <button class="chip" data-fam="cam" aria-pressed="false">Camera <b>6</b></button>
         <button class="chip" data-fam="cur" aria-pressed="false">Cursor <b>4</b></button>
         <button class="chip" data-fam="txt" aria-pressed="false">Text <b>5</b></button>
         <button class="chip" data-fam="chr" aria-pressed="false">Choreography <b>4</b></button>
         <button class="chip" data-fam="mat" aria-pressed="false">Material <b>3</b></button>
         <button class="chip" data-fam="giu" aria-pressed="false">Joins <b>4</b></button>
-        <button class="chip" data-fam="typ" aria-pressed="false">Typography <b>4</b></button>
+        <button class="chip" data-fam="typ" aria-pressed="false">Typography <b>10</b></button>
         <span class="gap"></span>
         <button class="chip" id="pause" aria-pressed="false">Stop all</button>
       </div>
@@ -382,7 +396,7 @@
               <tr><td>focus-sharpness.sh</td><td>A slab that stopped being DOM: the text falls apart once the camera is on top of it</td><td class="n">2.09× against 1.03× on the fixture</td></tr>
               <tr><td>rest-point.sh</td><td>A scene still moving where the next one has to attach. Its thresholds were absolute to begin with, tuned on this machine, and every one of them failed the move to Linux</td><td class="n">edges under 30% of mid-scene</td></tr>
               <tr><td>click-gap.sh</td><td>A press and its consequence fused onto one frame, or so far apart that it stops reading as a consequence and starts reading as lag</td><td class="n">f271 and f276, five frames</td></tr>
-              <tr><td>loop-close.py</td><td>A demo whose loop tears every pass. Ten of thirty were one-way animations, so the last frame had nothing to do with the first — on a page about not cutting. It measures the wrap and not the cuts in the middle, because no metric tried could separate a cut from a fade</td><td class="n">10 torn, now 0</td></tr>
+              <tr><td>loop-close.py</td><td>A demo whose loop tears every pass, or whose second half restarts from scratch instead of continuing the first. Hunting for the mid-loop cut did not work — a cut and a fade look alike to every metric tried — so each two-part demo declares the frame it changes on and the bench looks there, which is the bargain <code>seamAfter</code> already strikes for the scenes</td><td class="n">11 torn, now 0</td></tr>
               <tr><td>tempo.py</td><td>A scene that was shortened rather than sped up. If the beats scale, frame <i>f</i> of the short render is frame <i>f/k</i> of the long one; compared that way the two differ by 287 px against 5379 without normalising. The residual is not slop — it is the signature of the thresholds that deliberately did not scale</td><td class="n">18.7× advantage, 4 required</td></tr>
               <tr><td>fixture-trim.sh</td><td>Measures nothing. Truncates a scene to the short duration instead of retiming it, which is what lowering the duration produced before any of this existed</td><td class="n">120 frames, beats left in place</td></tr>
               <tr><td>contrast-floor.py</td><td>Content attenuated so far that it stops being a plane behind and becomes dirt on the background. Two wrong versions before this one: the first measured the composer placeholder, which is deliberately faint and sits at 2.93:1 before any attenuation at all; the second measured the right content in a place whose position depends on how the messages wrap, and on Linux the crop landed on empty background</td><td class="n">4.17:1, 3.84 on Linux, against 1.71</td></tr>
@@ -626,6 +640,22 @@ function buildType(){
     T.text=arr;
     return T.spans;
   };
+  /* Ogni parola dentro una casella che ritaglia. Serve a TYP-05, e si costruisce
+     una volta: rifarlo a ogni fotogramma rifarebbe il layout. */
+  T.clip=function(){
+    T.inner=T.spans.map(function(sp){
+      var txt=sp.textContent; sp.textContent="";
+      sp.className="tw tclip";
+      var inn=el("span",null,null,txt); sp.appendChild(inn); return inn;
+    });
+    return T.inner;
+  };
+  /* La riga di fianco, ruotata di novanta gradi. */
+  T.side=function(txt,deg){
+    var e=el("div","tside",null,txt);
+    e.style.transform="rotate("+(deg===undefined?-90:deg)+"deg) translateX(-50%)";
+    wrap.appendChild(e); T.sideEl=e; return e;
+  };
   T.reset=function(){
     T.spans.forEach(function(sp){
       sp.style.opacity="1"; sp.style.transform="none"; sp.style.color="";
@@ -807,7 +837,7 @@ M.push={dur:170,draw:function(f,S){
    vede, e una voce che promette di piu' di quello che mostra e' la cosa da
    non fare. Da vicino gli stessi numeri, non gonfiati, ne valgono quattordici.
    Il carrello del film si fa spinti dentro, non da fuori. */
-M.truck={dur:220,
+M.truck={dur:220, half:110,
  init:function(S){
    depth(S);
    /* La parallasse si misura una volta, sui due estremi della corsa, con e
@@ -861,7 +891,7 @@ M.macro={dur:210,
      +(back(f,132,26)?RET:""));
  }};
 
-M.attn={dur:250,draw:function(f,S){
+M.attn={dur:250, half:125,draw:function(f,S){
   pose(S,END);
   var a=E.inout(cl((f-16)/40)), b=E.inout(cl((f-120)/40)), c=E.inout(cl((f-206)/40));
   var o=1-0.38*a-0.37*b; o=o+(1-o)*c;
@@ -890,7 +920,7 @@ M.arc={dur:170,
    S.hud("u "+u.toFixed(3)+"   max overshoot 7.5%   in red, the same time on a straight line at constant speed");
  }};
 
-M.hesit={dur:250,
+M.hesit={dur:250, half:125,
  init:function(S){ S.composer.style.opacity="1"; S.ctext.textContent=PROMPT;
    S.stream.style.opacity="1"; S.stream.textContent="Ho la lastra ferma nella posa finale, con la board popolata e il pannello aperto sulla card attiva. La camera sta a yaw -9 e pitch 2,5, quindi la scena dopo entra da lì senza stacco. Dimmi durata e direzione di ingresso e ti do il piano dei frame.";
    S.msgu0.style.opacity="1"; S.msgu0.textContent="Fammi vedere la board con la card attiva.";
@@ -911,7 +941,7 @@ M.hesit={dur:250,
      : "parked from f50 · wait 20f · press f70   now: "+(q<50?"approach":(q<70?"waiting "+(q-50)+"f":(q<80?"press":"release"))));
  }};
 
-M.click={dur:230,
+M.click={dur:230, half:115,
  init:function(S){ S.composer.style.opacity="1"; S.ctext.textContent=PROMPT;
    S.msgu.style.opacity="1"; S.msgu.textContent="Ripartiamo dalla board. Cosa hai pronto?"; },
  draw:function(f,S){
@@ -919,10 +949,16 @@ M.click={dur:230,
    var second=f>=115, q=second?f-115:f, down=q>=48&&q<58;
    S.cur.style.opacity="1"; S.cur.style.left="1878px"; S.cur.style.top=(1116+(down?7:0))+"px";
    S.send.className="send"+(down&&!second?" press":"");
-   var eff=second?0:cl((q-50)/12);
+   /* La risposta arriva e poi SI RISOLVE, invece di restare li' fino a che la
+      meta' finisce e sparire di colpo. Prima era cosi', ed era l'unico stacco
+      secco rimasto in tutta la pagina: 547 pixel in un fotogramma contro zero
+      nei vicini, cioe' il "check" che si vedeva scorrendo il sito.
+      Non e' un riavvolgimento - nessuno vede la riga scriversi all'indietro -
+      e' la lavorazione che finisce, che e' quello che fa l'app. */
+   var eff=second?0:(cl((q-50)/12)*(1-E.inout(cl((q-88)/14))));
    S.stream.style.opacity=eff.toFixed(3);
-   S.stream.textContent=(!second&&q>=50)?"In lavorazione":"";
-   S.stream.style.transform="translateY("+((1-E.out(eff))*26).toFixed(1)+"px)";
+   S.stream.textContent=(!second&&q>=50&&q<104)?"In lavorazione":"";
+   S.stream.style.transform="translateY("+((1-E.out(cl((q-50)/12)))*26).toFixed(1)+"px)";
    S.hud(second
      ? "the same press, with nothing answering: no pressed state, no line arriving. The hand is talking to a picture"
      : "press f48 · consequence f50 · 2 frames apart"+(q>=48&&q<50?"   ← in between right now":""));
@@ -994,7 +1030,7 @@ M.metric={dur:170,draw:function(f,S){
   S.hud("128 ms · back out, 7.5% overshoot · tabular-nums, so the width never changes and nothing reflows");
 }};
 
-M.insert={dur:250,
+M.insert={dur:250, half:125,
  init:function(S){
    var d=el("div","card","left:"+colX(0)+"px;top:"+cardY(COLUMNS[0].cards,1)+"px;width:"+COL_W+"px;height:"+CARD_H+"px;opacity:0;z-index:5");
    var r1=el("div","r1");
@@ -1048,7 +1084,7 @@ M.handoff={dur:310,
    regole. Qui il cambiamento e' la card attiva che si posa, e tutto il
    resto della board si assesta intorno: sei card a sei distanze diverse in
    due dimensioni, dove i due ordini finalmente divergono. */
-M.reflow={dur:250,
+M.reflow={dur:250, half:125,
  init:function(S){
    depth(S);
    var a=C(S,1,0), ox=colX(1)+COL_W/2, oy=a.y+ACTIVE_CARD_H/2;
@@ -1090,7 +1126,7 @@ M.reflow={dur:250,
      : "delay = distance from the change / 1400 × 22f, "+S.rfSpan+"f of spread: it opens outward from the card, and it reads as a space");
  }};
 
-M.prop={dur:260,draw:function(f,S){
+M.prop={dur:260, half:130,draw:function(f,S){
   pose(S,{yaw:-9,pitch:2.5,z:60,x:0,y:0});
   var second=f>=130, q=second?f-130:f;
   var fn=second?30:35, fp=second?30:41;
@@ -1107,7 +1143,7 @@ M.prop={dur:260,draw:function(f,S){
     : "card f30 → count f35 → panel f41.  The two delays are the whole of what reads as cause");
 }};
 
-M.thick={dur:200,draw:function(f,S){
+M.thick={dur:200, half:100,draw:function(f,S){
   var t=E.sine(f<100?f/100:(200-f)/100), off=f>=100;
   pose(S,{yaw:-30+40*t,pitch:3,z:-300,x:0,y:0});
   S.edge.style.opacity=off?"0":"1";
@@ -1134,7 +1170,7 @@ M.seam={dur:300,draw:function(f,S){
     +"   seam.sh: 557 px against 37,103 for the control cut, 67×"+(f>=210?RET:""));
 }};
 
-M.rest={dur:260,draw:function(f,S){
+M.rest={dur:260, half:130,draw:function(f,S){
   var second=f>=130, q=second?f-130:f, ez=second?E.lin:E.inout;
   function s(u){ return ez(cl(u<65?u/64:(129-u)/64)); }
   var t=s(q), v=Math.abs(t-s(q-1))*100;
@@ -1152,7 +1188,7 @@ M.through={dur:280,draw:function(f,S){
 }};
 
 /* --- CAM-06: il solo punto del quadro che non scappa sotto una spinta in Z --- */
-M.centre={dur:210,
+M.centre={dur:210, half:105,
  init:function(S,stage){
    /* La croce blu sta sul centro della card attiva, in coordinate lastra. */
    var c=C(S,1,0);
@@ -1199,7 +1235,7 @@ M.centre={dur:210,
 var TLINE = ["Real", "UI,", "not", "a", "drawing", "of", "UI."];
 var TCHARS = TLINE.join(" ").length;
 
-M.dwell={dur:187, kind:"type",
+M.dwell={dur:187, half:104, kind:"type",
  init:function(T){ T.words(TLINE); },
  draw:function(f,T){
    /* Due meta': la prima tiene la frase 56 frame da ferma, la seconda 29.
@@ -1230,8 +1266,9 @@ M.dwell={dur:187, kind:"type",
 
 /* --- TYP-02: una parola sola, enorme --- */
 var TCLAIM = ["One", "shot.", "Forty-eight", "seconds."];
+var TSHORT = ["One", "shot."];
 
-M.big={dur:220, kind:"type",
+M.big={dur:220, half:110, kind:"type",
  init:function(T){
    T.words(TCLAIM);
    /* LA PAROLA CHIAVE STA SU UNA RIGA SUA, e cresce con una TRASFORMAZIONE.
@@ -1262,7 +1299,7 @@ M.big={dur:220, kind:"type",
  }};
 
 /* --- TYP-03: colore solo sulla parola chiave --- */
-M.only={dur:200, kind:"type",
+M.only={dur:200, half:100, kind:"type",
  init:function(T){ T.words(TCLAIM); },
  draw:function(f,T){
    var second=f>=100, q=second?f-100:f;
@@ -1283,7 +1320,7 @@ M.only={dur:200, kind:"type",
 var TA = ["Every", "join", "is", "measured."];
 var TB = ["Every", "pose", "is", "measured."];
 
-M.stays={dur:260, kind:"type",
+M.stays={dur:260, half:130, kind:"type",
  init:function(T){
    T.words(TA);
    /* Le due parole che si scambiano stanno nella STESSA casella, una nel flusso
@@ -1350,6 +1387,185 @@ M.stays={dur:260, kind:"type",
    T.hud(second
      ? "the whole line replaced: the three words the two phrases share leave and come back too"
      : "one word out, then the other in — never both at once   three words stay put and do not move a pixel");
+ }};
+
+/* --- TYP-05: la maschera che scopre la riga ---------------------------
+   La tecnica piu' usata nel kinetic tipografico di livello, e la ragione e'
+   che una maschera non muove il testo: la parola e' gia' al suo posto e viene
+   solo scoperta. Una dissolvenza invece la fa comparire, e comparire e'
+   sempre meno preciso che essere scoperti. */
+M.mask={dur:230, half:115, kind:"type",
+ init:function(T){ T.words(TLINE); T.clip(); },
+ draw:function(f,T){
+   var second=f>=115, q=second?f-115:f;
+   var out=E.inout(cl((q-86)/22));
+   T.spans.forEach(function(sp,i){
+     var t=E.out(cl((q-6-i*3.4)/26));
+     if(second){
+       /* La stessa entrata fatta in dissolvenza: la parola non e' scoperta,
+          e' accesa. Il testo non si muove ma nemmeno arriva da nessuna parte. */
+       T.inner[i].style.transform="none";
+       T.inner[i].style.opacity=t.toFixed(3);
+     } else {
+       T.inner[i].style.transform="translateY("+((1-t)*112).toFixed(1)+"%)";
+       T.inner[i].style.opacity="1";
+     }
+     sp.style.opacity=(1-out).toFixed(3);
+   });
+   T.hud(second
+     ? "the same entry as a fade: the word is switched on where it already was, and nothing is uncovered"
+     : "each word rises from behind the edge of its own box   a mask does not move the text, it reveals it");
+ }};
+
+/* --- TYP-06: lettera per lettera, o parola per parola ----------------- */
+M.letters={dur:250, half:125, kind:"type",
+ init:function(T){
+   /* Le lettere sono span dentro lo span della parola: cosi' lo scaglionamento
+      fine non tocca la composizione della riga, che resta quella delle parole. */
+   T.words(TLINE);
+   T.ch=[];
+   T.spans.forEach(function(sp){
+     var txt=sp.textContent; sp.textContent="";
+     for(var i=0;i<txt.length;i++){
+       var c=el("span",null,"display:inline-block;white-space:pre",txt[i]);
+       sp.appendChild(c); T.ch.push(c);
+     }
+   });
+ },
+ draw:function(f,T){
+   var second=f>=125, q=second?f-125:f;
+   var out=E.inout(cl((q-92)/24)), k=0;
+   T.spans.forEach(function(sp,w){
+     for(var j=0;j<sp.children.length;j++){
+       /* Prima meta': ogni lettera ha il suo ritardo. Seconda: tutte le lettere
+          di una parola entrano insieme, e il ritardo e' per parola. */
+       var lag=second? w*7 : (k)*1.15;
+       var t=E.out(cl((q-8-lag)/22));
+       sp.children[j].style.opacity=((1-out)*t).toFixed(3);
+       sp.children[j].style.transform="translateY("+((1-t)*0.34).toFixed(3)+"em)";
+       k++;
+     }
+   });
+   T.hud(second
+     ? "word by word: four entry moments, and the line arrives in blocks"
+     : "letter by letter, 1.15 frames apart   twenty-nine moments instead of seven, and the line pours instead of landing");
+ }};
+
+/* --- TYP-07: la spaziatura che si chiude ------------------------------ */
+M.track={dur:220, half:110, kind:"type",
+ /* FRASE CORTA, e non e' un vezzo: a 0,225em di spaziatura la frase lunga
+    andava a capo su tre righe e a spaziatura chiusa su due, quindi durante
+    l'animazione la composizione si rifaceva. La spaziatura E' una proprieta' di
+    layout - e' proprio quello che la voce dice - percio' o la riga ci sta larga
+    o l'effetto si mangia la composizione. */
+ init:function(T){ T.words(TSHORT); },
+ draw:function(f,T){
+   var second=f>=110, q=second?f-110:f;
+   var inP=E.out(cl(q/22)), set=E.inout(cl((q-14)/52)), out=E.inout(cl((q-88)/16));
+   /* La spaziatura parte larga e si chiude. E' l'unica entrata che non muove
+      niente da fuori campo: la frase e' gia' tutta li' dal primo fotogramma,
+      cambia solo quanto respira. */
+   var tr=second?0:(1-set)*0.26;
+   T.line.style.letterSpacing=(-0.035+tr).toFixed(4)+"em";
+   T.spans.forEach(function(sp){ sp.style.opacity=(inP*(1-out)).toFixed(3); });
+   T.hud(second
+     ? "no tracking move: the line is simply switched on at its final spacing"
+     : "letter-spacing from 0.225em to -0.035em over 52 frames   nothing enters from off-frame, the sentence only stops holding its breath");
+ }};
+
+/* --- TYP-08: il peso che atterra -------------------------------------- */
+
+
+M.weight={dur:210, half:105, kind:"type",
+ init:function(T){ T.words(TSHORT); },
+ draw:function(f,T){
+   var second=f>=105, q=second?f-105:f;
+   var inP=E.out(cl(q/20)), w=E.inout(cl((q-12)/48)), out=E.inout(cl((q-82)/16));
+   /* Da 300 a 800. E il peso CAMBIA ANCHE L'INGOMBRO: a 800 le stesse parole
+      sono piu' larghe. La prima versione di questa voce sosteneva il contrario
+      e il render la smentiva subito - con la frase lunga, a 300 stava su una
+      riga e a 800 andava a capo. Per questo qui la frase e' corta: l'inchiostro
+      si vede cambiare senza che la composizione si rifaccia. Su una riga lunga
+      un'animazione di peso o la si tiene corta o le si blocca la larghezza. */
+   var val=second?800:Math.round(300+500*w);
+   T.line.style.fontWeight=String(val);
+   T.spans.forEach(function(sp){ sp.style.opacity=(inP*(1-out)).toFixed(3); });
+   var w0=T.spans[0].getBoundingClientRect().width;
+   T.hud(second
+     ? "already at 800 from the first frame: the sentence arrives finished"
+     : "weight "+val+" of 800   the first word is "+w0.toFixed(0)+" px wide: the ink grows and so does the room it takes");
+ }};
+
+/* --- TYP-09: la riga che accompagna, da un altro orientamento ---------
+   Nelle reference la frase principale non e' mai sola: di fianco corre una
+   riga piccola, ruotata, in maiuscoletto spaziato - una data, una categoria,
+   un numero d'ordine. Non compete con la frase perche' sta su un ALTRO ASSE:
+   l'occhio la vede senza doverla leggere prima. Messa piatta sotto la riga
+   principale diventa un sottotitolo, cioe' una seconda cosa da leggere. */
+M.side={dur:230, half:115, kind:"type",
+ init:function(T){
+   T.words(TCLAIM);
+   T.side("Frame-locked · 1460 frames");
+ },
+ draw:function(f,T){
+   var second=f>=115, q=second?f-115:f;
+   var inP=E.out(cl(q/24)), sideIn=E.out(cl((q-16)/30)), out=E.inout(cl((q-88)/18));
+   T.spans.forEach(function(sp){
+     sp.style.opacity=(inP*(1-out)).toFixed(3);
+     sp.style.transform="translateY("+((1-inP)*0.2).toFixed(3)+"em)";
+   });
+   var e=T.sideEl;
+   e.style.opacity=(sideIn*(1-out)).toFixed(3);
+   if(second){
+     /* Il caso da guardare: la stessa riga messa piatta sotto la principale.
+        Da li' in poi e' un sottotitolo, e un sottotitolo si legge. */
+     e.style.left="50%"; e.style.top="66%";
+     e.style.transform="translateX(-50%) translateY("+((1-sideIn)*10).toFixed(1)+"px)";
+     e.style.fontSize="1.9cqw";
+   } else {
+     e.style.left="3cqw"; e.style.top="50%";
+     e.style.transform="rotate(-90deg) translateX(-50%) translateY("+((1-sideIn)*-14).toFixed(1)+"px)";
+     e.style.fontSize="1.5cqw";
+   }
+   T.hud(second
+     ? "the same line set flat under the sentence: now it is a subtitle, and a subtitle has to be read"
+     : "the companion runs up the left edge at -90°   it is seen without being read, because it is not on the axis the eye is following");
+ }};
+
+/* --- TYP-10: la frase sul piano --------------------------------------
+   La tipografia sta nella stessa prospettiva della lastra invece che
+   appoggiata sul quadro. E' la voce che lega questa famiglia al resto del
+   repo: se il film e' un oggetto inclinato ripreso da una camera, una frase
+   piatta sul fotogramma viene da un altro film. */
+M.plane={dur:250, half:125, kind:"type",
+ init:function(T,stage){
+   T.words(TCLAIM);
+   /* Corpo piu' piccolo che nelle altre voci: una riga che riempie il quadro
+      non lascia vedere niente della prospettiva, perche' i suoi due capi
+      finiscono fuori. */
+   T.line.style.fontSize="5.2cqw";
+   var room=el("div","troom"), plane=el("div","tplane");
+   /* La riga esistente si trasloca dentro il piano: cosi' e' lo stesso
+      elemento, con lo stesso corpo, e l'unica differenza fra le due meta'
+      e' la trasformazione del genitore. */
+   room.appendChild(plane); plane.appendChild(T.line); T.wrap.appendChild(room);
+   T.plane=plane;
+ },
+ draw:function(f,T){
+   var second=f>=125, q=second?f-125:f;
+   var inP=E.out(cl(q/26)), out=E.inout(cl((q-92)/20));
+   var t=E.inout(cl((q-10)/70));
+   T.spans.forEach(function(sp){ sp.style.opacity=(inP*(1-out)).toFixed(3); });
+   if(second){
+     /* Piatta sul quadro: nessuna prospettiva, nessuna appartenenza. */
+     T.plane.style.transform="translateZ(0) rotateY(0deg) rotateX(0deg)";
+   } else {
+     /* Gli stessi angoli della lastra a fine UIMockup: yaw -9, pitch 2,5. */
+     T.plane.style.transform="translateZ("+(40+120*t).toFixed(0)+"px) rotateY("+(-30+11*t).toFixed(2)+"deg) rotateX(3deg)";
+   }
+   T.hud(second
+     ? "flat on the frame: the same sentence, and nothing says it belongs to the same room as the slab"
+     : "yaw "+(-30+11*t).toFixed(1)+"° pitch 3° on the same perspective as the slab   the type is in the room, not on the glass");
  }};
 
 /* --- GIU-04: le tre grandezze della camera lungo tutta la catena --- */
@@ -1469,7 +1685,7 @@ var FAMS=[
  {k:"chr",n:"Choreography inside one shot",d:"The layout moving on its own, without anyone cutting."},
  {k:"mat",n:"The material of the slab",d:"Three details that decide whether what is on screen is an object or a backdrop."},
  {k:"giu",n:"The joins",d:"What this repo has and nothing else does: how two scenes attach without it showing."},
- {k:"typ",n:"Typography as the subject",d:"Four entries where the film is the sentence and there is no interface on screen. Same rule as the rest: the sentence transforms, it does not cut."}
+ {k:"typ",n:"Typography as the subject",d:"Ten entries where the film is the sentence and there is no interface on screen. How a line arrives, how much of it is the subject, and where it sits — including on the slab's own inclined plane, which is what stops it being a caption from another film."}
 ];
 
 var CAT=[
@@ -1646,6 +1862,42 @@ var CAT=[
  b:"The two words that swap live in the SAME box, one in the flow and one absolutely on top of it. The one in the flow gives the width, so the centred line does not reflow and the words that stay have no reason to shift. They are the same length on purpose: with different widths the line recomposes and the words that are supposed to stay put move, which kills the thesis on its own.",
  c:"One word out of four changes, over 30 frames. The other three do not move a pixel. The second half replaces the whole line and slides it out and back, which is what an edit does when it has nothing to keep.",
  d:"demo-check.py measures the screen position of the three shared words across the change: under a pixel of movement in the first half against 40 or more in the second. If the words that are supposed to stay are moving, the sentence is cutting and only pretending not to."},
+
+{fam:"typ",code:"TYP-05",t:"The mask that uncovers the line",demo:"mask",src:"a clipping box per word",
+ a:"Each word rises from behind the edge of its own box. A mask does not move the text: the word is already in place and only gets uncovered.",
+ b:"One clipping box per word, and the word translated inside it. The box is taller than the line because a box cut to the line height eats the descenders — the p and the g go first, and it reads as a rendering fault rather than as a reveal.",
+ c:"112 per cent of the box height, 26 frames per word, 3.4 frames of stagger. The second half runs the same entry as an opacity fade, which is the case worth looking at.",
+ d:"demo-check.py measures how far the word travels inside its own box: 83 px while being uncovered, 0 while being faded in. Not its height — the clipping box never changes height, that is its job — and not its absolute offset either, because the box has padding at the top and the word sits ten pixels below the edge even at rest. It is the travel that separates being uncovered from being switched on."},
+
+{fam:"typ",code:"TYP-06",t:"Letter by letter, or word by word",demo:"letters",src:"the grain of the stagger",
+ a:"The same line can arrive in twenty-nine moments or in seven. Letters make it pour; words make it land in blocks. Neither is better — they are different speeds of the same sentence.",
+ b:"The letters are spans inside the word's span, so the fine stagger does not touch how the line composes: the layout is still made of words. Splitting the line into characters at the top level would let it wrap mid-word.",
+ c:"1.15 frames between letters against 7 between words. Under about one frame per letter the stagger stops reading and becomes a fade; over three it becomes a typewriter.",
+ d:"demo-check.py counts the distinct frames on which something first becomes visible: 29 against 7 on the same sentence. If the two halves count the same, the grain is not doing anything."},
+
+{fam:"typ",code:"TYP-07",t:"The tracking that closes",demo:"track",src:"letter-spacing",
+ a:"The line starts wide and closes to its final spacing. It is the only entrance that brings nothing in from off-frame: the sentence is all there from the first frame, and what changes is how much it breathes.",
+ b:"One property on the line, not a transform per word. It costs a reflow per frame, which at this word count is free, and it is the reason the effect cannot be faked with transforms: tracking is a layout property.",
+ c:"From 0.225em to -0.035em over 52 frames, and one word goes from 272 px to 170. The line is two words on purpose: with the long claim, wide tracking pushed it onto three rows and tight tracking onto two, so the composition redid itself in the middle of the animation. Tracking is a layout property — which is the entry — so either the line fits wide or the effect eats the composition.",
+ d:"demo-check.py measures the rendered width of ONE word and not the line's box: if the line wraps, the box measures the widest row and closing the tracking appears to widen it. A word carries its own spacing and has no such problem. 272 px to 170 against a constant 170."},
+
+{fam:"typ",code:"TYP-08",t:"The weight that lands",demo:"weight",src:"font-weight 300 to 800",
+ a:"The sentence arrives light and gains weight. What the render says, and the first version of this entry denied, is that the room it takes grows with it.",
+ b:"A weight on the line. On a family with real weights it interpolates in steps; on a variable face it is continuous. Either way the advance widths change with it, which is a layout problem and not the family's: on a long line the sentence rewraps halfway through the animation. This demo uses two words so the ink change is visible without the composition redoing itself. On a real line you either keep it short or lock the width.",
+ c:"300 to 800 over 48 frames. The first word grows 11 per cent here and 3.6 in CI, on the same page: how much a family spends on weight is the family's business, and that difference is the reason you cannot assume a number. The second half is at 800 from the first frame, which is how most sentences arrive when nobody decided otherwise.",
+ d:"demo-check.py reads the computed weight through the entry, 300 rising to 800 against a constant 800, and measures the width along with it. The width is not a failure condition, it is the finding: it grows, and the entry that claimed otherwise was corrected by looking at the render rather than by arguing. The bench asks that it grow and not by how much — a threshold on the amount would be measuring which fonts are installed rather than what weight does."},
+
+{fam:"typ",code:"TYP-09",t:"The companion, on another axis",demo:"side",src:"a rotated secondary line",
+ a:"The main sentence is never alone in the references: a small line runs up the side, rotated, in spaced capitals — a date, a category, an order number. It does not compete, because it is on a different axis: the eye takes it in without having to read it first.",
+ b:"Rotated -90 degrees against its own left edge, at a fifth of the body size, with tracking opened right up. The rotation is the point and not the decoration: the same words set flat under the sentence become a subtitle, and a subtitle is a second thing to read.",
+ c:"-90 degrees, 1.5cqw against 7.4 for the main line, 0.22em of tracking, uppercase. The second half sets it flat and centred underneath, which is the case worth looking at.",
+ d:"demo-check.py measures the angle of the companion's rendered box and its distance from the main line's reading axis. Rotated it is at 90 degrees and off to the side; flat it is at zero and directly under, which is where a subtitle goes."},
+
+{fam:"typ",code:"TYP-10",t:"The sentence on the plane",demo:"plane",src:"the slab's own perspective",
+ a:"The typography lives in the same perspective as the slab instead of sitting on the frame. It is the entry that ties this family to the rest of the repo: if the film is an inclined object seen by a camera, a sentence lying flat on the frame comes from a different film.",
+ b:"The line moves inside a plane that carries the slab's yaw and pitch, in the same perspective container. It is the same element with the same body: the only difference between the two halves is the transform on its parent.",
+ c:"yaw -30 closing to -19, pitch 3, inside the range the slab's own poses cover — UIMockup starts at -18. At the slab's closing angles the foreshortening is real and invisible: the two ends of the line differ by a couple of per cent, which measures but does not read. The second half sets the plane flat, which is what type does when nobody puts it anywhere.",
+ d:"demo-check.py compares the rendered width of the first word against the last: on the plane they differ, because perspective makes the near end larger, and flat they are the same. It is the cheapest test for whether type is in the room or on the glass."},
 
 {fam:"giu",code:"GIU-04",t:"Monotonic derivative",demo:"chain",src:"the three boundary poses",
  a:"Across the whole chain yaw, pitch and push always move the same way. Not fussiness: the eye follows the derivative of the movement, and a reversal at a join reads as a cut even when the pixels of the two frames match.",

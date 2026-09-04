@@ -140,13 +140,27 @@ counted twice. The question that works is simpler: **is the last frame one step
 away from the first, or somewhere else entirely?** Compare the wrap against a
 normal one-frame step taken at the same place in the loop.
 
-It measures the wrap and *not* the cuts in the middle, and that is a real limit
-rather than an oversight. No metric I tried separates a cut from a **fade**.
-Counting pixels over a threshold, a linear fade spikes halfway through — that is
-where most pixels cross at once — so the bench flagged a line of text leaving the
-frame, which is the most continuous thing on the page. With a mean difference the
-spike goes away and the measure becomes so sensitive it flags everything. The
-mid-loop cut in `CHR-02` was found by looking, not by measuring.
+It measures the cut in the middle too, and getting there took giving up on being
+clever. Half the entries show the right case and then the wrong one, and in the
+handover between the two they can restart from scratch — the same cut, somewhere
+else in the loop. Hunting for it did not work: a cut and a **fade** look too much
+alike. Counting pixels over a threshold, a linear fade spikes halfway through —
+that is where most pixels cross at once — so the bench flagged a line of text
+leaving the frame, which is the most continuous thing on the page. With a mean
+difference the spike goes away and the measure becomes so sensitive it flags
+everything.
+
+The answer was not a smarter metric, it was to stop guessing: every two-part demo
+**declares** the frame it changes on, and the bench looks there. It is the same
+bargain `seamAfter` strikes in `catalog.json` — the scene says where the join is
+and the bench measures it — and it holds for the same reason: a declared join can
+be measured exactly, a guessed one cannot.
+
+Pointed at the declared frames it found exactly one survivor, and it was the one
+being reported: `CUR-03` changed 547 pixels in a single frame against zero in its
+neighbours, because the answer to the click sat there until the half ran out and
+then vanished. It resolves now instead — the work finishes, which is what the app
+would do — and that is not a rewind: nobody sees the line write itself backwards.
 
 One more defect, and it was the one that showed. `TYP-02` grew its keyword by
 changing its font size inside a single flex line — and changing the size changes
@@ -158,7 +172,7 @@ asserted. It is also closer to the references, where the enormous word is alone.
 
 ## Typography, where the sentence is the film
 
-Four entries with no interface on screen at all. They come from three reference
+Ten entries with no interface on screen at all. They come from three reference
 films the type direction was read off — a SaaS promo, a Spotify spot, an Apple
 Business Essentials piece — and their common DNA: the typography *is* the film,
 one phrase per beat, always centred, heavy sans with tight tracking, scale
@@ -186,6 +200,40 @@ the demo. And the corollary is the useful part: to gain reading time *without*
 slowing the cut down, tighten the entry stagger and lengthen only the dwell.
 Widening the stagger looks like generosity and is theft, because every frame it
 takes comes out of the only stretch where anybody is reading.
+
+Six more went in after the first four were looked at, and they split into how a
+line *arrives* and where it *sits*.
+
+Arriving: a **mask** that uncovers each word from behind the edge of its own box
+— the most common technique in the reference work, and the reason is that a mask
+does not move the text, the word is already in place and only gets revealed. The
+**grain of the stagger**, letter by letter against word by word: 23 entry moments
+against 7 on the same sentence, which is the difference between a line that pours
+and a line that lands in blocks. **Tracking** closing from 0.225em, the only
+entrance that brings nothing in from off-frame — the sentence is all there and
+only stops holding its breath. And **weight** landing from 300 to 800.
+
+Two of those corrected the entry that described them, which is the point of
+measuring. The weight one claimed weight was the axis that changes a word's ink
+without changing the room it takes; the render disagreed in the first frame,
+because the long line fitted on one row at 300 and wrapped at 800. It is now two
+words, the width growth is stated (12 per cent) rather than denied, and the
+lesson is written down: on a long line you either keep it short or lock the
+width. Tracking had the same shape of problem one floor down — wide spacing
+pushed the line onto three rows and tight spacing onto two, so the composition
+redid itself mid-animation. Tracking *is* a layout property, which is the entry;
+the demo is two words so the effect does not eat the composition.
+
+Sitting: **the companion on another axis** — the small rotated line running up
+the side in spaced capitals, which is what the references put next to every main
+sentence. It does not compete because it is not on the axis the eye is following;
+set flat underneath, the same words become a subtitle, and a subtitle is a second
+thing to read. And **the sentence on the plane**, which is the entry that ties
+this family to the rest of the repo: the type lives in the slab's own
+perspective instead of sitting on the frame. If the film is an inclined object
+seen by a camera, a sentence lying flat on the glass comes from a different film.
+The bench measures it the cheapest way there is — on the plane the two ends of
+the line differ (0.909), flat they are identical (1.000).
 
 The page grew a second kind of stage for these. Type demos do not mount the slab
 — mounting it and then covering it would render a kanban behind a word for

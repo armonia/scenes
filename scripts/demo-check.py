@@ -385,6 +385,122 @@ with sync_playwright() as pw:
     check("TYP-04", w1 < 1.0 and w2 > 20,
           "spostamento delle tre parole in comune: %.2f px sostituendo una parola, %.0f px sostituendo la riga" % (w1, w2))
 
+    # TYP-05 - scoprire non e' accendere.
+    # Il caso peggiore: se la parola comparisse invece di essere scoperta, la
+    # sua altezza resa sarebbe piena dal primo fotogramma e cambierebbe solo
+    # l'opacita'.
+    # La casella che ritaglia non cambia mai altezza - e' il suo mestiere -
+    # quindi non e' li' che si vede la differenza. Quello che si misura e' di
+    # quanto la parola sia SPOSTATA dentro la casella: scoprendola parte fuori
+    # e sale, in dissolvenza sta ferma al suo posto dal primo fotogramma.
+    def offset(code, lo, hi):
+        vals = []
+        for f in range(lo, hi, 2):
+            vals.append(pg.evaluate("""([c,f])=>{
+              const h=[...document.querySelectorAll('.mv')];
+              const i=h.findIndex(m=>(m.querySelector('.code')||{}).textContent.trim()===c);
+              const st=document.querySelectorAll('.stage')[i], it=st.__it;
+              it.manual=f; it.last=-1; it.mv.draw(f,it.S);
+              const box=st.querySelectorAll('.tline > .tclip')[3];
+              const inn=box.firstElementChild;
+              return inn.getBoundingClientRect().top - box.getBoundingClientRect().top;
+            }""", [code, f]))
+        return min(vals), max(vals)
+    o1 = offset("TYP-05", 8, 50)
+    o2 = offset("TYP-05", 123, 165)
+    # L'ESCURSIONE, non il valore: la casella ha un padding in cima, quindi la
+    # parola sta comunque una decina di pixel sotto il suo bordo anche da ferma.
+    # Quello che distingue lo scoprire dall'accendere e' di quanto si MUOVE.
+    r1, r2 = o1[1] - o1[0], o2[1] - o2[0]
+    check("TYP-05", r1 > 40 and r2 < 3,
+          "escursione della parola dentro la sua casella: %.0f px scoprendola, %.0f px in dissolvenza"
+          % (r1, r2))
+
+    # TYP-06 - il grano dello scaglionamento.
+    def moments(code, lo, hi):
+        seen, first = set(), {}
+        for f in range(lo, hi):
+            st = ty(code, f)
+            for j, sp in enumerate(st["spans"]):
+                pass
+        return seen, first
+    def entries(code, lo, hi):
+        # I fotogrammi distinti in cui QUALCOSA diventa visibile per la prima
+        # volta: e' il numero di momenti d'ingresso, che e' la tesi della voce.
+        prev = None
+        out = set()
+        for f in range(lo, hi):
+            cur = pg.evaluate("""([c,f])=>{
+              const h=[...document.querySelectorAll('.mv')];
+              const i=h.findIndex(m=>(m.querySelector('.code')||{}).textContent.trim()===c);
+              const st=document.querySelectorAll('.stage')[i], it=st.__it;
+              it.manual=f; it.last=-1; it.mv.draw(f,it.S);
+              return [...st.querySelectorAll('.tline .tw > span')].map(e=>parseFloat(getComputedStyle(e).opacity)>0.06?1:0);
+            }""", [code, f])
+            if prev is not None and any(c and not p for c, p in zip(cur, prev)):
+                out.add(f)
+            prev = cur
+        return len(out)
+    e1, e2 = entries("TYP-06", 4, 60), entries("TYP-06", 129, 185)
+    check("TYP-06", e1 > e2 * 2.5,
+          "momenti d'ingresso distinti: %d lettera per lettera, %d parola per parola" % (e1, e2))
+
+    # TYP-07 - la spaziatura si chiude, quindi la riga si stringe.
+    # La larghezza di UNA parola, non il riquadro della riga: se la riga va a
+    # capo il riquadro misura la riga piu' larga e la spaziatura che si chiude
+    # risulta allargarla. La parola porta dentro la propria spaziatura e non ha
+    # quel problema.
+    def linew(code, f):
+        return ty(code, f)["spans"][1]["w"]
+    w_a, w_b = linew("TYP-07", 18), linew("TYP-07", 70)
+    w_c, w_d = linew("TYP-07", 128), linew("TYP-07", 180)
+    check("TYP-07", w_a > w_b * 1.12 and abs(w_c - w_d) < 2,
+          "larghezza della parola: da %.0f a %.0f px chiudendo la spaziatura, %.0f contro %.0f senza"
+          % (w_a, w_b, w_c, w_d))
+
+    # TYP-08 - il peso sale, e la larghezza con lui.
+    def wgt(code, f):
+        return pg.evaluate("""([c,f])=>{
+          const h=[...document.querySelectorAll('.mv')];
+          const i=h.findIndex(m=>(m.querySelector('.code')||{}).textContent.trim()===c);
+          const st=document.querySelectorAll('.stage')[i], it=st.__it;
+          it.manual=f; it.last=-1; it.mv.draw(f,it.S);
+          const l=st.querySelector('.tline'), s=st.querySelector('.tline > .tw');
+          return [parseFloat(getComputedStyle(l).fontWeight), s.getBoundingClientRect().width];
+        }""", [code, f])
+    p_a, p_b = wgt("TYP-08", 16), wgt("TYP-08", 66)
+    p_c = wgt("TYP-08", 130)
+    # QUANTO cresca la larghezza e' affare della famiglia, non della voce: su
+    # questa macchina l'11 per cento, sul Linux della CI il 3,6. Il banco chiede
+    # che cresca, non di quanto - una soglia sul valore misurerebbe il font
+    # installato sulla macchina invece del comportamento del peso.
+    check("TYP-08", p_a[0] < 380 and p_b[0] > 760 and p_b[1] > p_a[1] * 1.025 and p_c[0] > 760,
+          "peso da %.0f a %.0f, e la prima parola da %.0f a %.0f px; nella seconda meta' resta a %.0f"
+          % (p_a[0], p_b[0], p_a[1], p_b[1], p_c[0]))
+
+    # TYP-09 - la compagna sta su un altro asse.
+    def side(code, f):
+        return pg.evaluate("""([c,f])=>{
+          const h=[...document.querySelectorAll('.mv')];
+          const i=h.findIndex(m=>(m.querySelector('.code')||{}).textContent.trim()===c);
+          const st=document.querySelectorAll('.stage')[i], it=st.__it, sr=st.getBoundingClientRect();
+          it.manual=f; it.last=-1; it.mv.draw(f,it.S);
+          const e=st.querySelector('.tside'), r=e.getBoundingClientRect();
+          return {tall: r.height > r.width, x:(r.left+r.width/2-sr.left)/sr.width};
+        }""", [code, f])
+    s1, s2 = side("TYP-09", 70), side("TYP-09", 185)
+    check("TYP-09", s1["tall"] and s1["x"] < 0.2 and (not s2["tall"]) and abs(s2["x"] - 0.5) < 0.1,
+          "compagna: verticale al %.0f%% della larghezza, contro orizzontale al %.0f%%"
+          % (s1["x"] * 100, s2["x"] * 100))
+
+    # TYP-10 - sul piano i due capi della riga non sono uguali.
+    def fore(code, f):
+        sp = ty(code, f)["spans"]
+        return sp[0]["h"] / sp[-1]["h"]
+    f1, f2 = fore("TYP-10", 90), fore("TYP-10", 215)
+    check("TYP-10", abs(f1 - 1) > 0.05 and abs(f2 - 1) < 0.01,
+          "rapporto fra il primo e l'ultimo capo della riga: %.3f sul piano, %.3f da piatta" % (f1, f2))
+
     br.close()
 
 print()
