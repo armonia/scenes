@@ -321,30 +321,51 @@ with sync_playwright() as pw:
             tcache[k] = pg.evaluate(PROBE_TYPE, [code, f])
         return tcache[k]
 
-    # TYP-01 - la sosta, cioe' i fotogrammi in cui la frase e' su e ferma.
+    # LE FINESTRE SI LEGGONO DALLA PAGINA. Ogni voce a due meta' dichiara
+    # `half` e `dur`, e i controlli tipografici guardano [0, half) e
+    # [half, dur) invece di fotogrammi scritti a mano qui: riscrivendo i tempi
+    # delle voci, i numeri incollati nel banco erano rimasti quelli vecchi e
+    # misuravano meta' ciclo sbagliata.
+    def hd(code):
+        return pg.evaluate("""(c)=>{const h=[...document.querySelectorAll('.mv')];
+          const i=h.findIndex(m=>(m.querySelector('.code')||{}).textContent.trim()===c);
+          const mv=document.querySelectorAll('.stage')[i].__it.mv; return [mv.half, mv.dur];}""", code)
+
+    # TYP-01 - la sosta, cioe' i fotogrammi in cui una frase e' ferma al suo
+    # posto nella finestra.
     # Caso peggiore: due meta' con la stessa sosta non dimostrerebbero niente,
     # perche' la voce parla di quanto una sosta puo' accorciarsi prima che la
     # riga venga tolta mentre la si legge.
+    # Le due frasi si passano il turno scorrendo, quindi "ferma" e' la copia
+    # con scarto zero dal bordo della finestra. Non "ferma rispetto al
+    # fotogramma prima": la rotazione e' in seno e i suoi estremi si muovono di
+    # meno di un pixel, e contati come fermi allungavano la sosta di uno.
+    def rest(code, f):
+        return pg.evaluate("""([c,f])=>{
+          const h=[...document.querySelectorAll('.mv')];
+          const i=h.findIndex(m=>(m.querySelector('.code')||{}).textContent.trim()===c);
+          const st=document.querySelectorAll('.stage')[i], it=st.__it;
+          it.manual=f; it.last=-1; it.mv.draw(f,it.S);
+          const win=st.querySelector('.twin'), wr=win.getBoundingClientRect();
+          return [...win.querySelectorAll('.tcopy')].map(cp=>({
+            off: cp.getBoundingClientRect().top - wr.top,
+            text: [...cp.querySelectorAll('.tw')].map(w=>w.textContent).join(' ')}));
+        }""", [code, f])
     def dwell(code, lo, hi):
-        prev, run, best = None, 0, 0
+        run, best, text = 0, 0, ""
         for f in range(lo, hi):
-            s0 = ty(code, f)
-            up = all(sp["op"] > 0.985 for sp in s0["spans"])
-            still = prev is not None and all(
-                abs(a["x"] - b["x"]) < 0.4 and abs(a["y"] - b["y"]) < 0.4
-                for a, b in zip(s0["spans"], prev["spans"])
-            )
-            run = run + 1 if (up and still) else 0
-            best = max(best, run)
-            prev = s0
-        return best
-    chars = len("Real UI, not a drawing of UI.")
-    d1, d2 = dwell("TYP-01", 0, 104), dwell("TYP-01", 104, 187)
-    c1 = chars / (d1 / 30) if d1 else 0
-    c2 = chars / (d2 / 30) if d2 else 0
+            still = [c for c in rest(code, f) if abs(c["off"]) < 0.05]
+            run = run + 1 if still else 0
+            if run > best:
+                best, text = run, still[0]["text"]
+        return best, text
+    h1, D1 = hd("TYP-01")
+    (d1, t1), (d2, t2) = dwell("TYP-01", 0, h1), dwell("TYP-01", h1, D1)
+    c1 = len(t1) / (d1 / 30) if d1 else 0
+    c2 = len(t2) / (d2 / 30) if d2 else 0
     check("TYP-01", d1 > d2 * 1.4 and 14 < c1 < 17 and 22 < c2 < 30,
-          "sosta netta %df = %.1f c/s nella prima meta', %df = %.1f c/s nella seconda"
-          % (d1, c1, d2, c2))
+          "sosta netta %df = %.1f c/s nella prima meta', %df = %.1f c/s nella seconda (%d e %d caratteri)"
+          % (d1, c1, d2, c2, len(t1), len(t2)))
 
     # TYP-02 - una parola sola, enorme.
     def hratio(code, f):
@@ -373,15 +394,31 @@ with sync_playwright() as pw:
     # TYP-04 - le parole che restano non si muovono.
     # Gli indici 0, 2 e 3 sono le tre parole in comune fra le due frasi; l'1 e'
     # quella che cambia, e quella deve muoversi.
+    # Ogni parola e' una casella con due copie che scorrono in verticale: la
+    # casella non si muove mai, quindi quello che si misura e' lo scarto dal
+    # proprio posto delle copie che si vedono almeno in parte. Misurando la
+    # casella il banco avrebbe letto ferme anche le parole che rotolano.
     def drift(code, lo, hi):
-        base = ty(code, lo)["spans"]
         worst = 0
-        for f in range(lo, hi, 3):
-            sp = ty(code, f)["spans"]
-            for i in (0, 2, 3):
-                worst = max(worst, abs(sp[i]["x"] - base[i]["x"]))
+        for f in range(lo, hi, 2):
+            offs = pg.evaluate("""([c,f])=>{
+              const h=[...document.querySelectorAll('.mv')];
+              const i=h.findIndex(m=>(m.querySelector('.code')||{}).textContent.trim()===c);
+              const st=document.querySelectorAll('.stage')[i], it=st.__it;
+              it.manual=f; it.last=-1; it.mv.draw(f,it.S);
+              return [...st.querySelectorAll('.tline > .tw')].map(box=>{
+                const br=box.getBoundingClientRect();
+                return Math.max(0, ...[...box.children].map(ch=>{
+                  const r=ch.getBoundingClientRect();
+                  const seen=Math.min(r.bottom,br.bottom)-Math.max(r.top,br.top) > 0;
+                  return seen ? Math.abs(new DOMMatrixReadOnly(getComputedStyle(ch).transform).m42) : 0;
+                }));
+              });
+            }""", [code, f])
+            worst = max(worst, offs[0], offs[2], offs[3])
         return worst
-    w1, w2 = drift("TYP-04", 40, 118), drift("TYP-04", 170, 248)
+    h4, D4 = hd("TYP-04")
+    w1, w2 = drift("TYP-04", 0, h4), drift("TYP-04", h4, D4)
     check("TYP-04", w1 < 1.0 and w2 > 20,
           "spostamento delle tre parole in comune: %.2f px sostituendo una parola, %.0f px sostituendo la riga" % (w1, w2))
 
@@ -406,7 +443,7 @@ with sync_playwright() as pw:
               return inn.getBoundingClientRect().top - box.getBoundingClientRect().top;
             }""", [code, f]))
         return min(vals), max(vals)
-    o1 = offset("TYP-05", 8, 50)
+    o1 = offset("TYP-05", 4, 50)
     o2 = offset("TYP-05", 123, 165)
     # L'ESCURSIONE, non il valore: la casella ha un padding in cima, quindi la
     # parola sta comunque una decina di pixel sotto il suo bordo anche da ferma.
@@ -441,7 +478,8 @@ with sync_playwright() as pw:
                 out.add(f)
             prev = cur
         return len(out)
-    e1, e2 = entries("TYP-06", 4, 60), entries("TYP-06", 129, 185)
+    h6, D6 = hd("TYP-06")
+    e1, e2 = entries("TYP-06", 0, h6), entries("TYP-06", h6, D6)
     check("TYP-06", e1 > e2 * 2.5,
           "momenti d'ingresso distinti: %d lettera per lettera, %d parola per parola" % (e1, e2))
 
@@ -488,16 +526,19 @@ with sync_playwright() as pw:
           const e=st.querySelector('.tside'), r=e.getBoundingClientRect();
           return {tall: r.height > r.width, x:(r.left+r.width/2-sr.left)/sr.width};
         }""", [code, f])
-    s1, s2 = side("TYP-09", 70), side("TYP-09", 185)
-    check("TYP-09", s1["tall"] and s1["x"] < 0.2 and (not s2["tall"]) and abs(s2["x"] - 0.5) < 0.1,
-          "compagna: verticale al %.0f%% della larghezza, contro orizzontale al %.0f%%"
-          % (s1["x"] * 100, s2["x"] * 100))
+    # La tesi e' l'ASSE, quindi si misura l'orientamento. La posizione della
+    # didascalia stesa non e' piu' al centro: sta in basso a sinistra, perche'
+    # e' li' che la rotazione sul perno non attraversa la frase.
+    s1, s2 = side("TYP-09", 40), side("TYP-09", 155)
+    check("TYP-09", s1["tall"] and s1["x"] < 0.1 and (not s2["tall"]),
+          "compagna: verticale sul fianco al %.0f%% della larghezza, poi stesa in orizzontale"
+          % (s1["x"] * 100))
 
     # TYP-10 - sul piano i due capi della riga non sono uguali.
     def fore(code, f):
         sp = ty(code, f)["spans"]
         return sp[0]["h"] / sp[-1]["h"]
-    f1, f2 = fore("TYP-10", 90), fore("TYP-10", 215)
+    f1, f2 = fore("TYP-10", 90), fore("TYP-10", 190)
     check("TYP-10", abs(f1 - 1) > 0.05 and abs(f2 - 1) < 0.01,
           "rapporto fra il primo e l'ultimo capo della riga: %.3f sul piano, %.3f da piatta" % (f1, f2))
 

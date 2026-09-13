@@ -129,7 +129,7 @@ clock to run backwards. The return leg is not part of the movement and the
 readout says so: better a declared leg home than a tear every pass. Two demos
 did not need a rewind and got something truer instead: the streaming answer
 scrolls up and out the way the app would, and the shared-word sentence swaps back
-in the opposite direction, so the loop is `join → pose → join`.
+in the opposite direction, so the loop is `click → drag → click`.
 
 `loop-close.py` measures it, and finding the right question took three wrong
 ones. Against the demo's *typical* motion, the demos that sit still between
@@ -190,26 +190,26 @@ shared ones do not move a pixel while the one that changes is replaced.
 
 **The dwell is measured, and it is the entry that matters.** How long a line
 stays is not chosen by eye but in characters per second of *net* dwell — the
-stretch in which the sentence is already composed and still, after the last word
-has landed. Large type holds 15 to 16; over 20 the line is taken away while you
-are still reading it. The declared window and the net dwell are not the same
-number — with a staggered entry there are six frames between them — which is
-exactly why the bench measures the net figure on the rendering instead of
-trusting the constant. It reads 15.5 c/s against 24.9 across the two halves of
-the demo. And the corollary is the useful part: to gain reading time *without*
-slowing the cut down, tighten the entry stagger and lengthen only the dwell.
-Widening the stagger looks like generosity and is theft, because every frame it
-takes comes out of the only stretch where anybody is reading.
+stretch in which the sentence is complete and still, after it has arrived and
+before it starts to leave. Large type holds 15 to 16; over 20 the line is taken
+away while you are still reading it. In the demo two lines of 29 characters hand
+over inside a window, the one leaving rising past the top edge while the next
+rises in from below, and they stand still for 56 frames and for 35: the bench
+counts the frames in which a line sits exactly in its place and reads 15.5 c/s
+against 24.9. The corollary is the useful part: to gain reading time *without*
+slowing the edit down, keep the transition short and lengthen only the dwell.
+Every frame the transition takes comes out of the only stretch where anybody is
+reading.
 
 Six more went in after the first four were looked at, and they split into how a
 line *arrives* and where it *sits*.
 
 Arriving: a **mask** that uncovers each word from behind the edge of its own box
-— the most common technique in the reference work, and the reason is that a mask
-does not move the text, the word is already in place and only gets revealed. The
-**grain of the stagger**, letter by letter against word by word: 23 entry moments
-against 7 on the same sentence, which is the difference between a line that pours
-and a line that lands in blocks. **Tracking** closing from 0.225em, the only
+— the most common technique in the reference work, and the reason is that the
+edge stays still while the word crosses it, so the word is uncovered rather than
+switched on. The **grain of the stagger**, letter by letter against word by word:
+16 entry moments against 5 on the same words, which is the difference between a
+line that pours and a line that lands in blocks. **Tracking** closing from 0.225em, the only
 entrance that brings nothing in from off-frame — the sentence is all there and
 only stops holding its breath. And **weight** landing from 300 to 800.
 
@@ -217,7 +217,9 @@ Two of those corrected the entry that described them, which is the point of
 measuring. The weight one claimed weight was the axis that changes a word's ink
 without changing the room it takes; the render disagreed in the first frame,
 because the long line fitted on one row at 300 and wrapped at 800. It is now two
-words, the width growth is stated (12 per cent) rather than denied, and the
+words, the width growth is stated (11 per cent here, 3.6 on the CI's Linux,
+because how much a family spends on weight is its own business) rather than
+denied, and the
 lesson is written down: on a long line you either keep it short or lock the
 width. Tracking had the same shape of problem one floor down — wide spacing
 pushed the line onto three rows and tight spacing onto two, so the composition
@@ -227,8 +229,8 @@ the demo is two words so the effect does not eat the composition.
 Sitting: **the companion on another axis** — the small rotated line running up
 the side in spaced capitals, which is what the references put next to every main
 sentence. It does not compete because it is not on the axis the eye is following;
-set flat underneath, the same words become a subtitle, and a subtitle is a second
-thing to read. And **the sentence on the plane**, which is the entry that ties
+laid flat, the same words become a caption, and a caption is a second thing to
+read. And **the sentence on the plane**, which is the entry that ties
 this family to the rest of the repo: the type lives in the slab's own
 perspective instead of sitting on the frame. If the film is an inclined object
 seen by a camera, a sentence lying flat on the glass comes from a different film.
@@ -243,16 +245,91 @@ sized in `cqw` and not pixels, because in a real composition the type is a
 fraction of the frame, and the proportion between word and frame *is* the content
 of these entries.
 
-One defect worth recording, because it is the same shape as others in here.
-`TYP-04` first cross-faded the two swapping words in the same box, and at the
-midpoint you saw `join` and `pose` overlapping — which does not read as one word
-replacing another, it reads as a rendering error. The substitution is sequential
-now: the old one leaves, then the new one arrives, and the two frames of empty
-box between them are a beat rather than a hole. The box keeps its width the whole
-time because the outgoing word stays in the flow while invisible, so the three
-words that are supposed to stay put have no reason to move — and `demo-check.py`
-measures that they move 0.00 px, against 77 in the half that replaces the whole
-line.
+One defect worth recording, because it is the same shape as others in here, and
+it took three tries. `TYP-04` first cross-faded the two swapping words in the
+same box, and at the midpoint you saw `join` and `pose` on top of each other —
+which does not read as one word replacing another, it reads as a rendering
+error. The second try made the swap sequential with the new word laid over the
+old one, and `pose` is wider than `join`: two words of four letters are not the
+same width, and for 118 frames out of 260 it covered `is`. Now every word lives
+in a clipping box that is a grid cell as wide as the wider of its two words, with
+both copies inside, and handing over is moving both up on the same stroke — one
+leaves through the top edge while the other comes in through the bottom. That
+made the pair itself a measurement: in a cell as wide as `pose`, `join` — 154 px
+against 215 on a 100 px body — floated in a gap on both sides, in the half that
+is supposed to be right. The words are `click` and `drag` now, 200.6 and 200.9
+px, and whatever another font leaves over goes into the narrower one's tracking.
+The three words that are supposed to stay put move 0.00 px, against 89 in the
+half that hands over every box.
+
+### What the sentences did in playback
+
+Two rounds of fixes on this family went out with every bench green, and scrolling
+the site still showed words on top of words, sentences that went away and came
+back, and things that jumped. None of those is a thesis failing, so
+`demo-check.py` could not see them, and none is a torn loop, so `loop-close.py`
+could not either. `type-check.py` looks for exactly those, on every frame of every
+typography demo, at several widths, reading the rendered DOM rather than pixels —
+with pixels a fade and a cut look too much alike, with properties a fade changes
+opacity by a few hundredths a frame and a cut by all of it. What it checks:
+
+- **Covering**: no two visible units of text overlap, and none sits under the
+  readout. How much of a unit is visible is the part left inside every box that
+  clips it, times its opacity; the first version looked at opacity alone, and a
+  word rising from behind its box edge — eleven pixels of seventy-four uncovered
+  on its first frame — read as a snap from nothing to everything.
+- **Frame**: no visible text outside the stage.
+- **A whole word**: on every frame at least one word is on screen in full.
+- **Snaps**: nothing changes by a large step in one frame while it is visible —
+  how much of it shows, where it is, what colour it is.
+- **At rest**: with reduced motion emulated, the one frame each demo shows is
+  identical to the frame before and the frame after.
+
+Pointed at the page as it was deployed, it failed all ten entries. `TYP-02`
+covered its second row for 59 frames and left the frame for 63, `TYP-03` switched
+colour in one frame, `TYP-04` had `pose` over `is`, and every one of the ten had
+stretches of up to 23 frames with nothing on screen, because each went away
+between its right case and its wrong one.
+
+The **whole word** rule is the one worth explaining, because the obvious rule came
+first and was not enough. Making sure the frame never went fully black was easy —
+stagger the exits and the entrances so there is always something — and the
+sentences kept leaving and coming back anyway, in waves: in `TYP-01` a fifth of
+the sentence was on screen for half a second, twice a loop, and in `TYP-04` the
+most visible word was at 23 per cent for a frame. What the eye reads as "the sentence is gone" is not a
+black frame, it is having nothing whole to read. So where a demo needs a line to
+change, the line now hands over instead of leaving: two lines in one window in
+`TYP-01`, two copies in one box per word in `TYP-04`. Where a demo is about how a
+line *arrives*, and arriving needs it to be missing first, part of the sentence
+stays: in `TYP-05` and `TYP-06`, "Real UI," holds while the rest comes and goes.
+
+Three smaller ones came out of the same pass. On a phone the readout, which is in
+pixels, covers a sixth of the stage's height, and `TYP-09`'s caption laid flat sat
+on the frame counter for 130 frames out of 230 — it never sits lower than 34 px now.
+And every demo's frame was read from `performance.now()` inside the animation
+callback, which runs after the refresh by an amount that changes every time — 2.1
+ms on median and up to 3.7, measured in headless Chrome with the typography on
+screen. With 30 fps demos on a 60 Hz screen, when the boundary between two frames
+falls near a refresh that delay decides which side it is on: 3.3 per cent of
+frames stayed up for one refresh or three instead of two. The frame is read from
+the callback's own timestamp now, which falls on the refresh, and the same count
+is 0.7.
+
+The last one is for whoever never sees the motion. With reduced motion on — an
+accessibility setting plenty of phones have enabled — every demo shows a single
+frame until the scrub is dragged, and that frame was 55 per cent of the way
+through the loop for all of them. On the typography it landed in the middle of a
+transition: in `TYP-01` a line cut by the edge of the window, in `TYP-05` and
+`TYP-06` words half faded, in `TYP-02` the keyword still large under a readout
+saying it was back to normal size. A demo can declare its frame at rest now, in
+`still`, and every typography entry does; the bench checks it with reduced motion
+emulated, so it also measures that the page honours the setting.
+
+Its negative controls are five copies of the built page, each broken in one of
+those ways — a keyword scaled from its centre, a line faded out while it gains
+weight, a colour switched in one frame, the caption back at `4cqw`, and a still
+frame moved into the middle of a fade — and the script has to fail each and name
+the entry.
 
 ## Speed is a number in `catalog.json`
 
@@ -341,6 +418,7 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/demo-check.py [page.html]                     # do the catalogue demos still show their thesis
 ./scripts/loop-close.py [page.html]                     # does every demo loop close, or tear every pass
+./scripts/type-check.py [page.html]                     # does the type cover, leave the frame, vanish, snap, or stop mid-move
 ./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
 ./scripts/tempo.py [long.mp4 short.mp4]                 # does shortening a scene retime it or just trim it
 ./scripts/fixture-tempo.sh                              # render the two retimed fixtures

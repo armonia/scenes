@@ -274,7 +274,7 @@ jobs:
           # E lo stesso sul lato tipografico, che ha un palco diverso e quindi
           # una sonda diversa: qui si rendono uguali le due soste di TYP-01, cioe'
           # si toglie il contrasto sul quale la voce si regge.
-          sed 's/dwell=second?41:62/dwell=62/' \
+          sed 's/var DW = {A:56, B:35, R:22};/var DW = {A:56, B:56, R:22};/' \
             showcase/dist/grammatica.html > /tmp/guasta-typ.html
           if cmp -s showcase/dist/grammatica.html /tmp/guasta-typ.html; then
             echo "la copia guasta tipografica e' identica all'originale: la sed non ha trovato niente." >&2
@@ -318,6 +318,40 @@ jobs:
             echo "loop-close.py boccia la copia guasta ma non nomina CHR-02:" >&2
             cat /tmp/gm.log >&2; exit 1; }
           echo "loop-close.py boccia anche uno stacco in mezzo al ciclo."
+
+          # E la tipografia si deve poter leggere mentre gira: niente parole una
+          # sopra l'altra o sotto la HUD, niente fuori quadro, sempre una parola
+          # intera sullo schermo, niente che scatti mentre si vede. Due larghezze
+          # perche' sul telefono la riga va a capo e la HUD, che e' in pixel,
+          # occupa un sesto del palco: due dei difetti trovati c'erano solo li'.
+          ./scripts/type-check.py --widths 390,1440
+
+          # Cinque copie guaste, una per regola, e il banco deve bocciarle tutte
+          # nominando la voce e il motivo. Ognuna rimette un difetto che la
+          # pagina ha avuto davvero.
+          guasta_tipo() { # nome, sed, voce, larghezza, motivo atteso
+            sed "$2" showcase/dist/grammatica.html > "/tmp/guasta-$1.html"
+            if cmp -s showcase/dist/grammatica.html "/tmp/guasta-$1.html"; then
+              echo "la copia guasta $1 e' identica all'originale: la sed non ha trovato niente." >&2
+              exit 1
+            fi
+            rc=0; ./scripts/type-check.py "/tmp/guasta-$1.html" --only "$3" --widths "$4" > "/tmp/guasta-$1.log" 2>&1 || rc=$?
+            [ "$rc" != 0 ] || { echo "type-check.py promuove la copia guasta $1." >&2; cat "/tmp/guasta-$1.log" >&2; exit 1; }
+            grep "ROTTA $3" "/tmp/guasta-$1.log" | grep -q "$5" || {
+              echo "type-check.py boccia la copia guasta $1 ma non per $5 su $3:" >&2
+              cat "/tmp/guasta-$1.log" >&2; exit 1; }
+            echo "type-check.py boccia $3 per $5, come deve."
+          }
+          # la parola chiave che cresce dal centro copre la riga sotto
+          guasta_tipo copertura 's/display:inline-block;transform-origin:50% 100%/display:inline-block;transform-origin:50% 50%/' TYP-02 1440 copertura
+          # la frase che sparisce mentre prende peso
+          guasta_tipo vuoto 's/T.line.style.fontWeight=String(val);/T.line.style.fontWeight=String(val); T.line.style.opacity=String(1-w);/' TYP-08 1440 'senza una parola intera'
+          # il colore acceso in un fotogramma
+          guasta_tipo scatto 's/mixc(TNEU,TINT\[0\],a)/mixc(TNEU,TINT[0],a>0.5?1:0)/' TYP-03 1440 scatti
+          # la didascalia stesa sopra il contatore, sul telefono
+          guasta_tipo hud 's/bottom: max(4cqw, 34px);/bottom: 4cqw;/' TYP-09 390 'sotto la HUD'
+          # col movimento ridotto, il fotogramma fermo a meta' di una dissolvenza
+          guasta_tipo fermo 's/M.mask={dur:MK.D, half:MK.F1, still:60, kind:"type",/M.mask={dur:MK.D, half:MK.F1, still:114, kind:"type",/' TYP-05 1440 'movimento ridotto'
 
       # I render restano scaricabili dalla run anche quando il deploy non parte,
       # cosi' su una PR si guarda il video invece di fidarsi del diff.
