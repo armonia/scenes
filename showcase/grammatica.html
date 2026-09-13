@@ -424,7 +424,7 @@
               <tr><td>rest-point.sh</td><td>A scene still moving where the next one has to attach. Its thresholds were absolute to begin with, tuned on this machine, and every one of them failed the move to Linux</td><td class="n">edges under 30% of mid-scene</td></tr>
               <tr><td>click-gap.sh</td><td>A press and its consequence fused onto one frame, or so far apart that it stops reading as a consequence and starts reading as lag</td><td class="n">f271 and f276, five frames</td></tr>
               <tr><td>loop-close.py</td><td>A demo whose loop tears every pass, or whose second half restarts from scratch instead of continuing the first. Hunting for the mid-loop cut did not work — a cut and a fade look alike to every metric tried — so each two-part demo declares the frame it changes on and the bench looks there, which is the bargain <code>seamAfter</code> already strikes for the scenes</td><td class="n">11 torn, now 0</td></tr>
-              <tr><td>type-check.py</td><td>Type that covers other type or the readout, leaves the frame, snaps while it is visible, or goes away altogether. The first fix of the typography family made sure the frame never went black, and the sentences kept leaving and coming back anyway, in waves — in TYP-01 a fifth of the sentence was on screen for half a second, twice a loop. What reads as the sentence being gone is having nothing whole to read, so that is the rule: on every frame at least one word is on screen in full</td><td class="n">10 of 10 failing on the previous page, 0 now, at four widths</td></tr>
+              <tr><td>type-check.py</td><td>Type that covers other type or the readout, leaves the frame, snaps while it is visible, or goes away altogether. The first fix of the typography family made sure the frame never went black, and the sentences kept leaving and coming back anyway, in waves — in TYP-01 a fifth of the sentence was on screen for half a second, twice a loop. What reads as the sentence being gone is having nothing whole to read, so that is the rule: on every frame at least one word is on screen in full. And with reduced motion, where a demo shows a single frame, that frame has to be at rest</td><td class="n">10 of 10 failing on the previous page, 0 now, at four widths</td></tr>
               <tr><td>tempo.py</td><td>A scene that was shortened rather than sped up. If the beats scale, frame <i>f</i> of the short render is frame <i>f/k</i> of the long one; compared that way the two differ by 287 px against 5379 without normalising. The residual is not slop — it is the signature of the thresholds that deliberately did not scale</td><td class="n">18.7× advantage, 4 required</td></tr>
               <tr><td>fixture-trim.sh</td><td>Measures nothing. Truncates a scene to the short duration instead of retiming it, which is what lowering the duration produced before any of this existed</td><td class="n">120 frames, beats left in place</td></tr>
               <tr><td>contrast-floor.py</td><td>Content attenuated so far that it stops being a plane behind and becomes dirt on the background. Two wrong versions before this one: the first measured the composer placeholder, which is deliberately faint and sits at 2.93:1 before any attenuation at all; the second measured the right content in a place whose position depends on how the messages wrap, and on Linux the crop landed on empty background</td><td class="n">4.17:1, 3.84 on Linux, against 1.71</td></tr>
@@ -742,7 +742,7 @@ function mount(stage,mv,code){
     it.base=(r.width/1920)*1.04;
     rig.style.transform="scale("+it.base.toFixed(4)+")";
     room.style.perspective=(2600*it.base).toFixed(1)+"px";
-    it.last=-1; draw(it, RM?Math.round(mv.dur*0.55):cur(it));
+    it.last=-1; draw(it, RM?still(mv):cur(it));
   });
   ro.observe(stage);
 
@@ -806,6 +806,13 @@ function mountType(stage,mv){
    ritardo decide da che parte sta: il 3,3% dei fotogrammi restava a schermo
    per uno o tre refresh invece di due, contro lo 0,7 col timestamp. Il modulo
    positivo perche' il timestamp del primo refresh puo' precedere t0. */
+/* Il fotogramma che vede chi ha chiesto meno movimento, ed e' l'unico che vede
+   finche' non trascina lo scrub. Il 55% del ciclo cadeva a caso: sulle voci
+   tipografiche a meta' di un passaggio - una riga tagliata dal bordo della
+   finestra, parole a mezza dissolvenza, la parola chiave ancora grande sotto
+   la scritta che la dice tornata normale. Chi ha un fotogramma fermo da
+   mostrare lo dichiara in `still`. */
+function still(mv){ return mv.still!=null ? mv.still : Math.round(mv.dur*0.55); }
 function cur(it,now){
   var n=Math.floor((((now==null?performance.now():now)-it.t0)/1000)*FPS);
   return ((n%it.mv.dur)+it.mv.dur)%it.mv.dur;
@@ -819,7 +826,7 @@ function draw(it,f){
 }
 var io=new IntersectionObserver(function(es){
   es.forEach(function(e){ var it=e.target.__it; if(!it) return; it.vis=e.isIntersecting;
-    if(e.isIntersecting){ it.last=-1; draw(it, it.manual!=null?it.manual:(RM?Math.round(it.mv.dur*0.55):cur(it))); } });
+    if(e.isIntersecting){ it.last=-1; draw(it, it.manual!=null?it.manual:(RM?still(it.mv):cur(it))); } });
 },{rootMargin:"260px 0px"});
 
 function loop(ts){
@@ -1330,7 +1337,7 @@ DW.a2 = DW.a1 + DW.R + DW.B - 1;     /* ultimo fotogramma fermo della seconda */
 DW.D  = DW.a2 + DW.R;
 DW.H  = DW.a1 + DW.R / 2;
 
-M.dwell={dur:DW.D, half:DW.H, kind:"type",
+M.dwell={dur:DW.D, half:DW.H, still:30, kind:"type",
  init:function(T){ T.pair(TROWS, TROWS2); },
  draw:function(f,T){
    /* Seno, non la cubica della camera: la cubica a meta' corsa va al triplo
@@ -1362,7 +1369,7 @@ M.dwell={dur:DW.D, half:DW.H, kind:"type",
 var TCLAIM = ["One", "shot.", "Forty-eight", "seconds."];
 var TSHORT = ["One", "shot."];
 
-M.big={dur:220, half:110, kind:"type",
+M.big={dur:220, half:110, still:80, kind:"type",
  init:function(T){
    T.words(TCLAIM);
    var sp=T.spans[0], txt=sp.textContent;
@@ -1388,7 +1395,7 @@ var TINT=[[228,123,78],[69,196,133],[99,168,238],[237,196,82]];
 var TNEU=[231,235,239];
 function mixc(a,b,t){ return "rgb("+[0,1,2].map(function(i){ return Math.round(a[i]+(b[i]-a[i])*t); }).join(",")+")"; }
 
-M.only={dur:200, half:100, kind:"type",
+M.only={dur:200, half:100, still:60, kind:"type",
  init:function(T){ T.words(TCLAIM); },
  draw:function(f,T){
    var back=ramp(f,170,24);
@@ -1425,7 +1432,7 @@ M.only={dur:200, half:100, kind:"type",
 var TA = ["Every", "click", "is", "measured."];
 var TB = ["Every", "drag", "is", "measured."];
 
-M.stays={dur:260, half:130, kind:"type",
+M.stays={dur:260, half:130, still:110, kind:"type",
  init:function(T){
    T.words(TA);
    T.rolls=T.spans.map(function(sp,k){
@@ -1478,7 +1485,7 @@ var MK = {STAG:3.4, IN:26, OUT:22, GAP:2, M1:88, F2:184, FIX:2};
 MK.F1 = MK.M1 + MK.OUT + MK.GAP;
 MK.D  = MK.F2 + MK.OUT + MK.GAP;
 
-M.mask={dur:MK.D, half:MK.F1, kind:"type",
+M.mask={dur:MK.D, half:MK.F1, still:60, kind:"type",
  init:function(T){ T.words(TLINE); T.clip(); },
  draw:function(f,T){
    T.inner.forEach(function(inn,j){
@@ -1512,7 +1519,7 @@ var LT = {LS:1.15, WS:7, IN:22, OUT:16, O1:80, O2:190, FIX:2, UP:0.1, AWAY:0.08}
 LT.S2 = LT.O1 + 22;
 LT.D  = LT.O2 + 36;
 
-M.letters={dur:LT.D, half:LT.S2, kind:"type",
+M.letters={dur:LT.D, half:LT.S2, still:60, kind:"type",
  init:function(T){
    T.words(TLINE);
    T.ch=[];
@@ -1562,7 +1569,7 @@ M.letters={dur:LT.D, half:LT.S2, kind:"type",
    Frase corta: a spaziatura larga quella lunga andava su tre righe e a
    spaziatura chiusa su due, e la composizione si rifaceva a meta'
    animazione. La frase non esce mai: si chiude, resta, si riapre. */
-M.track={dur:220, half:110, kind:"type",
+M.track={dur:220, half:110, still:90, kind:"type",
  init:function(T){ T.words(TSHORT); },
  draw:function(f,T){
    var set = f<190 ? ramp(f,14,52) : 1-ramp(f,190,29);
@@ -1577,7 +1584,7 @@ M.track={dur:220, half:110, kind:"type",
    Due parole: il peso cambia anche l'ingombro, e su una riga lunga
    l'animazione rifarebbe la composizione. La frase non esce mai: prende
    peso, resta, lo perde. */
-M.weight={dur:210, half:105, kind:"type",
+M.weight={dur:210, half:105, still:90, kind:"type",
  init:function(T){ T.words(TSHORT); },
  draw:function(f,T){
    var w = f<180 ? ramp(f,12,48) : 1-ramp(f,180,29);
@@ -1595,7 +1602,7 @@ M.weight={dur:210, half:105, kind:"type",
    Il perno sta li' perche' la rotazione spazza solo quell'angolo, e la frase
    principale non viene mai attraversata. Nella prima versione la compagna
    spariva da un lato e ricompariva dall'altro. */
-M.side={dur:230, half:115, kind:"type",
+M.side={dur:230, half:115, still:50, kind:"type",
  init:function(T){
    T.words(TCLAIM);
    /* Corta di proposito. Con "Frame-locked · 1460 frames" la didascalia era
@@ -1619,7 +1626,7 @@ M.side={dur:230, half:115, kind:"type",
    sul quadro. Il piano si stende e torna inclinato, senza che la frase
    esca: la differenza fra le due meta' e' solo la trasformazione del
    genitore. */
-M.plane={dur:250, half:125, kind:"type",
+M.plane={dur:250, half:125, still:100, kind:"type",
  init:function(T,stage){
    T.words(TCLAIM);
    T.line.style.fontSize="5.2cqw";

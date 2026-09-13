@@ -282,6 +282,8 @@ opacity by a few hundredths a frame and a cut by all of it. What it checks:
 - **A whole word**: on every frame at least one word is on screen in full.
 - **Snaps**: nothing changes by a large step in one frame while it is visible —
   how much of it shows, where it is, what colour it is.
+- **At rest**: with reduced motion emulated, the one frame each demo shows is
+  identical to the frame before and the frame after.
 
 Pointed at the page as it was deployed, it failed all ten entries. `TYP-02`
 covered its second row for 59 frames and left the frame for 63, `TYP-03` switched
@@ -301,7 +303,7 @@ change, the line now hands over instead of leaving: two lines in one window in
 line *arrives*, and arriving needs it to be missing first, part of the sentence
 stays: in `TYP-05` and `TYP-06`, "Real UI," holds while the rest comes and goes.
 
-Two smaller ones came out of the same pass. On a phone the readout, which is in
+Three smaller ones came out of the same pass. On a phone the readout, which is in
 pixels, covers a sixth of the stage's height, and `TYP-09`'s caption laid flat sat
 on the frame counter for 130 frames out of 230 — it never sits lower than 34 px now.
 And every demo's frame was read from `performance.now()` inside the animation
@@ -313,10 +315,21 @@ frames stayed up for one refresh or three instead of two. The frame is read from
 the callback's own timestamp now, which falls on the refresh, and the same count
 is 0.7.
 
-Its negative controls are four copies of the built page, each broken in one of
+The last one is for whoever never sees the motion. With reduced motion on — an
+accessibility setting plenty of phones have enabled — every demo shows a single
+frame until the scrub is dragged, and that frame was 55 per cent of the way
+through the loop for all of them. On the typography it landed in the middle of a
+transition: in `TYP-01` a line cut by the edge of the window, in `TYP-05` and
+`TYP-06` words half faded, in `TYP-02` the keyword still large under a readout
+saying it was back to normal size. A demo can declare its frame at rest now, in
+`still`, and every typography entry does; the bench checks it with reduced motion
+emulated, so it also measures that the page honours the setting.
+
+Its negative controls are five copies of the built page, each broken in one of
 those ways — a keyword scaled from its centre, a line faded out while it gains
-weight, a colour switched in one frame, and the caption back at `4cqw` — and the
-script has to fail each and name the entry.
+weight, a colour switched in one frame, the caption back at `4cqw`, and a still
+frame moved into the middle of a fade — and the script has to fail each and name
+the entry.
 
 ## Speed is a number in `catalog.json`
 
@@ -405,7 +418,7 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
 ./scripts/demo-check.py [page.html]                     # do the catalogue demos still show their thesis
 ./scripts/loop-close.py [page.html]                     # does every demo loop close, or tear every pass
-./scripts/type-check.py [page.html]                     # does the type cover, leave the frame, vanish or snap
+./scripts/type-check.py [page.html]                     # does the type cover, leave the frame, vanish, snap, or stop mid-move
 ./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
 ./scripts/tempo.py [long.mp4 short.mp4]                 # does shortening a scene retime it or just trim it
 ./scripts/fixture-tempo.sh                              # render the two retimed fixtures

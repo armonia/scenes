@@ -326,7 +326,7 @@ jobs:
           # occupa un sesto del palco: due dei difetti trovati c'erano solo li'.
           ./scripts/type-check.py --widths 390,1440
 
-          # Quattro copie guaste, una per regola, e il banco deve bocciarle tutte
+          # Cinque copie guaste, una per regola, e il banco deve bocciarle tutte
           # nominando la voce e il motivo. Ognuna rimette un difetto che la
           # pagina ha avuto davvero.
           guasta_tipo() { # nome, sed, voce, larghezza, motivo atteso
@@ -350,6 +350,8 @@ jobs:
           guasta_tipo scatto 's/mixc(TNEU,TINT\[0\],a)/mixc(TNEU,TINT[0],a>0.5?1:0)/' TYP-03 1440 scatti
           # la didascalia stesa sopra il contatore, sul telefono
           guasta_tipo hud 's/bottom: max(4cqw, 34px);/bottom: 4cqw;/' TYP-09 390 'sotto la HUD'
+          # col movimento ridotto, il fotogramma fermo a meta' di una dissolvenza
+          guasta_tipo fermo 's/M.mask={dur:MK.D, half:MK.F1, still:60, kind:"type",/M.mask={dur:MK.D, half:MK.F1, still:114, kind:"type",/' TYP-05 1440 'movimento ridotto'
 
       # I render restano scaricabili dalla run anche quando il deploy non parte,
       # cosi' su una PR si guarda il video invece di fidarsi del diff.

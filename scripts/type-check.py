@@ -30,6 +30,15 @@ COSA MISURA, su ogni fotogramma di ogni voce tipografica, a piu' larghezze:
   SCATTO. Nessuna proprieta' salta in un fotogramma mentre si vede: quanto se
   ne vede, posizione, colore. TYP-03 cambiava colore in un fotogramma.
 
+  FERMO. Con il movimento ridotto - l'impostazione di accessibilita' che molti
+  telefoni hanno accesa - ogni demo mostra un fotogramma solo, e quel
+  fotogramma deve essere a riposo: uguale al precedente e al successivo. Era
+  il 55% del ciclo per tutte, e sulle voci tipografiche cadeva a meta' di un
+  passaggio: una riga tagliata dal bordo della finestra, parole a mezza
+  dissolvenza, la parola chiave ancora grande sotto la scritta che la diceva
+  tornata normale. Il banco lo guarda con il movimento ridotto emulato, quindi
+  misura anche che la pagina lo rispetti.
+
 COME LEGGE. Le proprieta' rese del DOM, non i pixel. Coi pixel una
 dissolvenza e uno stacco si somigliano troppo per distinguerli; con le
 proprieta' una dissolvenza cambia l'opacita' di pochi centesimi per
@@ -247,6 +256,41 @@ with sync_playwright() as pw:
                 print("  ok    %s  %d fotogrammi: niente coperture ne' fuori quadro, sempre una parola intera (al minimo %.0f%%), nessuno scatto"
                       % (code, dur, low[0] * 100))
         pg.close()
+
+    # FERMO: una sola larghezza basta, il fotogramma scelto non dipende da
+    # quella. La pagina lo disegna da se' quando il palco entra in vista.
+    ctx = br.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
+    pg = ctx.new_page()
+    pg.goto(PAGE.as_uri(), wait_until="load")
+    pg.wait_for_timeout(1200)
+    codes = [c for c in pg.eval_on_selector_all(".mvhead .code", "e=>e.map(x=>x.textContent.trim())")
+             if c.startswith("TYP") and (not ONLY or c in ONLY)]
+    print("movimento ridotto")
+    for code in codes:
+        idx = pg.evaluate("(c)=>[...document.querySelectorAll('.mv')].findIndex(m=>(m.querySelector('.code')||{}).textContent.trim()===c)", code)
+        pg.locator(".stage").nth(idx).scroll_into_view_if_needed()
+        pg.wait_for_timeout(250)
+        shown, dur = pg.evaluate("(i)=>{const it=document.querySelectorAll('.stage')[i].__it; return [it.last, it.mv.dur];}", idx)
+        around = [pg.evaluate(PROBE, [code, (shown + d) % dur]) for d in (-1, 0, 1)]
+        moving = []
+        ref = {u["id"]: u for u in around[1]["units"]}
+        for fr in (around[0], around[2]):
+            for u in fr["units"]:
+                r = ref.get(u["id"])
+                if r is None:
+                    continue
+                if (abs(u["vis"] - r["vis"]) > 0.01 or abs(u["x"] - r["x"]) > 0.5 or abs(u["y"] - r["y"]) > 0.5
+                        or u["color"] != r["color"]):
+                    moving.append(u["text"].strip())
+        wv = whole(around[1]["units"])
+        if shown < 0 or moving or wv < INTERA:
+            why = "nessun fotogramma disegnato" if shown < 0 else (
+                "a f%d si muove \"%s\"" % (shown, moving[0]) if moving else "a f%d non c'e' una parola intera" % shown)
+            print("  ROTTA %s  col movimento ridotto il fotogramma fermo non e' fermo: %s" % (code, why))
+            fails.append("%s col movimento ridotto" % code)
+        else:
+            print("  ok    %s  col movimento ridotto mostra f%d, a riposo" % (code, shown))
+    ctx.close()
     br.close()
 
 print()
@@ -254,4 +298,5 @@ if fails:
     print("voci tipografiche che non si leggono: " + ", ".join(fails))
     raise SystemExit(1)
 print("VERDETTO: nessuna parola ne copre un'altra o la HUD, nessuna esce dal quadro,")
-print("c'e' sempre una parola intera da leggere e niente scatta mentre si vede.")
+print("c'e' sempre una parola intera da leggere, niente scatta mentre si vede, e chi")
+print("chiede meno movimento vede un fotogramma a riposo.")
