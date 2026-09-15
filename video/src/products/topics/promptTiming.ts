@@ -17,8 +17,8 @@ import { PROMPT_INPUT_BASE } from "./tracks.ts";
  * La recita di PromptInput come dato: quando la mano arriva, quando si scrive,
  * quando parte l'invio, quando arrivano la bolla, i puntini e la risposta.
  *
- * Stava dentro PromptInput.tsx. E' qui, in un modulo puro, perche' click-gap.sh
- * e beats.sh devono sapere in che frame cercare il clic e le battute: prima se
+ * Stava dentro PromptInput.tsx. E' qui, in un modulo puro, perche' click-gap.py
+ * e beats.py devono sapere in che frame cercare il clic e le battute: prima se
  * li scrivevano da soli (450, 170, 210, 300...), copiati a mano dalla scena e
  * giusti solo alla durata di riferimento e nel 16:9.
  *
@@ -51,7 +51,7 @@ export const CARET_PERIOD = 15;
 
 /**
  * QUATTRO FRAME FRA IL COLPO E LA CONSEGUENZA, e non si scalano nemmeno questi.
- * click-gap.sh misura che stiano fra 1 e 8: e' la finestra in cui l'occhio lega
+ * click-gap.py misura che stiano fra 2 e 8: e' la finestra in cui l'occhio lega
  * il gesto al suo effetto, non una decisione di ritmo. A velocita' doppia
  * diventerebbero due, sul bordo di sparire.
  */
@@ -83,7 +83,7 @@ export const promptInputTimeline = (
    * a meta' durata servono il doppio dei caratteri al secondo. Scrivendolo
    * moltiplicato - come era la prima volta - una scena piu' corta si ritrovava
    * un dattilografo piu' LENTO, la spedizione slittava all'83 per cento della
-   * durata invece del 60, e `beats.sh` trovava il campo ancora pieno dove si
+   * durata invece del 60, e `beats.py` trovava il campo ancora pieno dove si
    * aspettava il segnaposto. Sbagliato di un reciproco, e visibile solo
    * misurando.
    *

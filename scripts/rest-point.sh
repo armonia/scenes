@@ -148,7 +148,7 @@ echo
 printf '  %-16s %10s %10s %12s\n' "scena" "inizio" "fine" "mezzo (ctrl)"
 
 # Niente mapfile e niente array associativi: sono bash 4, e `/usr/bin/env bash`
-# su macOS trova la 3.2. E' lo stesso inciampo che ha tenuto handoff-travel.sh
+# su macOS trova la 3.2. E' lo stesso inciampo che ha tenuto handoff-travel.py
 # fermo per mesi su questa piattaforma mentre in CI passava.
 rotte=""
 DICHIARANO=$(node "$ROOT/scripts/catalog.mjs" rest --ratio "$RATIO" | tr '\n' ' ')
@@ -196,7 +196,7 @@ while IFS= read -r slug; do
   # bordi e' "sotto FERMA_REL volte il mezzo", e con il mezzo a zero quella
   # soglia e' zero: qualunque granello di rumore sui bordi la sfonda, e il
   # banco dichiara mossa una scena che sta ferma. E' la stessa degenerazione
-  # che click-gap.sh aveva sulla mediana, e va intercettata prima di dare
+  # che click-gap.py aveva sulla mediana, e va intercettata prima di dare
   # verdetti, non dopo. Un fermo immagine cade esattamente qui.
   if [ "$dichiara" = si ] &&
      python3 -c "exit(0 if $mid < $MOTO_MIN else 1)"; then

@@ -52,7 +52,7 @@ export type CardHandoffProps = {
 };
 
 // I tempi, il percorso della mano e dove sta la card a ogni frame sono in
-// products/topics/handoff.ts: li legge anche handoff-travel.sh, e nei rapporti
+// products/topics/handoff.ts: li legge anche handoff-travel.py, e nei rapporti
 // verticali la traccia della camera segue la card nella finestra del
 // trascinamento.
 

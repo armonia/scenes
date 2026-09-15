@@ -263,7 +263,7 @@ export const TOOL_ROW_EXTRA_W = 2 * (16 + 1);
  * composer e' opaco e disegnato dopo, i messaggi sono ancorati in basso, e con
  * un margine costante l'ultimo messaggio finiva sotto di lui. La scena
  * prometteva quattro tempi e ne mostrava tre, con tutti i type check verdi.
- * L'ha trovato beats.sh. Un numero costante tornerebbe sbagliato al primo
+ * L'ha trovato beats.py. Un numero costante tornerebbe sbagliato al primo
  * ritocco del layout, quindi questo segue il composer.
  */
 export const THREAD_PAD_BOTTOM = SLAB_H - COMPOSER_Y + 24;

@@ -20,7 +20,7 @@ import { tempo } from "../../primitives/tempo.ts";
  *
  * Stava dentro CardHandoff.tsx. E' qui, in un modulo puro, perche' nei rapporti
  * verticali la camera segue la card durante il trascinamento (tracks.ts) e
- * handoff-travel.sh deve sapere dove la card si trova sulla lastra per
+ * handoff-travel.py deve sapere dove la card si trova sulla lastra per
  * separare il suo moto da quello della camera. Una seconda copia del percorso
  * dentro un banco resterebbe uguale a questa finche' nessuno tocca una delle due.
  *

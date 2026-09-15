@@ -13,6 +13,6 @@ export const checks = ({ ratio }) => [
     bench: "film-identity",
     target: `film-${ratio}`,
     role: "negativo",
-    cmd: `./scripts/film-identity.sh --ratio ${ratio} --offset 1 --must-fail`,
+    cmd: `./scripts/film-identity.sh --ratio ${ratio} --offset 1 --must-fail --veloce`,
   },
 ];

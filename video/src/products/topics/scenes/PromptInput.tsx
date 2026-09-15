@@ -74,7 +74,7 @@ export type PromptInputProps = {
 };
 
 // I frame della recita, la battitura, i testi e il percorso del cursore sono
-// in products/topics/promptTiming.ts: li leggono anche click-gap.sh e beats.sh.
+// in products/topics/promptTiming.ts: li leggono anche click-gap.py e beats.py.
 
 export const PromptInput: React.FC<PromptInputProps> = ({
   prompt = DEFAULT_PROMPT,
@@ -99,7 +99,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   /**
    * LA CAMERA SI FERMA A f132, e non alla fine della scena.
    *
-   * Non e' una scelta di gusto, e' venuta da un banco. `click-gap.sh` trova il
+   * Non e' una scelta di gusto, e' venuta da un banco. `click-gap.py` trova il
    * colpo e la conseguenza nel render cercando il fotogramma il cui conto di
    * pixel cambiati sfonda la mediana della finestra. Con la camera che scivola
    * per tutti i 450 frame, ogni fotogramma cambia molto e il clic non sfonda

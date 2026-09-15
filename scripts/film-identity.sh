@@ -23,10 +23,17 @@
 # start+f+1, cioe' una finestra che parte con un fotogramma di ritardo. Con
 # `--must-fail` il banco esce 0 solo se ogni finestra ha almeno un fotogramma
 # diverso: un banco che non vede un frame di scarto non vede nemmeno il difetto.
+# Il negativo guarda un fotogramma solo per finestra (`--veloce`), quello in cui
+# la camera della scena si muove di piu', che il manifest calcola dalla traccia.
+# I primi tentativi hanno scelto a occhio e hanno sbagliato due volte: l'ultimo
+# fotogramma di CardFocus e CardRelease e' fermo, quello di mezzo di PromptInput
+# cade fra due parole dello streaming, e in 4:5 anche il primo di PromptInput e'
+# uguale al secondo, perche' la camera parte da ferma. Dove la camera corre, un
+# frame di scarto cambia per forza l'immagine.
 #
 # Le finestre e gli id non sono scritti qui: li stampa `scripts/manifest.mjs film`.
 #
-# Uso:  ./scripts/film-identity.sh [--ratio 16x9|9x16|4x5] [--offset N] [--must-fail]
+# Uso:  ./scripts/film-identity.sh [--ratio 16x9|9x16|4x5] [--offset N] [--must-fail] [--veloce]
 #
 # Esce 0 se ogni fotogramma coincide (con --must-fail: se ogni finestra ne ha
 # uno diverso), 1 altrimenti, 2 se lo strumento non e' ripetibile, 3 se un
@@ -37,8 +44,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RATIO=16x9
 OFFSET=0
 MUST_FAIL=0
+VELOCE=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --veloce) VELOCE=1; shift ;;
     --ratio) RATIO="$2"; shift 2 ;;
     --offset) OFFSET="$2"; shift 2 ;;
     --must-fail) MUST_FAIL=1; shift ;;
@@ -57,7 +66,7 @@ python3 -c "
 import json,sys
 d=json.load(open(sys.argv[1]))
 print(d['film'])
-for w in d['windows']: print(w['id'], w['start'], w['frames'])
+for w in d['windows']: print(w['id'], w['start'], w['frames'], w['moving'])
 " "$TMP/film.json" > "$TMP/windows.txt" || { echo "manifest illeggibile" >&2; exit 3; }
 FILM=$(head -n 1 "$TMP/windows.txt")
 [ -n "$FILM" ] || { echo "il manifest non nomina il film" >&2; exit 3; }
@@ -84,11 +93,13 @@ echo "Il film $FILM contro le scene da sole$([ "$OFFSET" != 0 ] && echo ", fines
 DIFF=0
 WINDOWS_WITH_DIFF=0
 WINDOWS=0
-while read -r id start frames; do
+while read -r id start frames moving; do
   WINDOWS=$((WINDOWS + 1))
   line="  $(printf '%-18s' "$id") da f$start"
   here=0
-  for f in 0 $((frames / 2)) $((frames - 1)); do
+  scelti="0 $((frames / 2)) $((frames - 1))"
+  [ "$VELOCE" = 1 ] && scelti="$moving"
+  for f in $scelti; do
     ff=$((start + f + OFFSET))
     # Con lo spostamento l'ultimo fotogramma dell'ultima finestra cade fuori dal
     # film: non c'e' niente da confrontare, e non e' un render fallito.

@@ -62,11 +62,34 @@ const commands = {
   film: async () => {
     const { chainOrder, filmWindows } = await load("video/src/kit/film.ts");
     const { variantName } = await load("video/src/kit/stage.ts");
+    const { poseAt } = await load("video/src/kit/camera.ts");
+    const { TOPICS_TRACKS } = await load("video/src/products/topics/tracks.ts");
     const ratio = ratioArg();
     const windows = filmWindows(chainOrder(await catalogScenes()));
+    // Il fotogramma in cui la camera della scena si muove di piu': li' un frame di
+    // scarto cambia per forza l'immagine, e il negativo di film-identity lo usa.
+    // Ai bordi una scena puo' partire o finire ferma, e a meta' PromptInput cade
+    // fra due parole dello streaming.
+    const moving = (w) => {
+      const track = TOPICS_TRACKS[w.id](w.frames, ratio);
+      let best = 0;
+      let bestD = -1;
+      for (let f = 0; f < w.frames - 1; f++) {
+        const a = poseAt(track, f);
+        const b = poseAt(track, f + 1);
+        const d =
+          Math.abs(b.pushZ - a.pushZ) + Math.abs(b.slideX - a.slideX) + Math.abs(b.slideY - a.slideY) +
+          50 * (Math.abs(b.yaw - a.yaw) + Math.abs(b.pitch - a.pitch));
+        if (d > bestD) {
+          bestD = d;
+          best = f;
+        }
+      }
+      return best;
+    };
     return {
       film: variantName("TopicsFilm", ratio),
-      windows: windows.map((w) => ({ ...w, id: variantName(w.id, ratio) })),
+      windows: windows.map((w) => ({ ...w, id: variantName(w.id, ratio), moving: moving(w) })),
     };
   },
 
@@ -171,27 +194,6 @@ const commands = {
       out.push({ id: s.id, from, to: s.durationInFrames - 1, first, minMargin });
     }
     return out;
-  },
-
-  // La geometria che i banchi delle scene di Topics chiedevano a topics/geometry.ts con
-  // uno script node scritto dentro di se'. Stesso formato di uscita di prima,
-  // cosi' i banchi leggono con lo stesso `read`.
-  "handoff-band": async () => {
-    const t = await load("video/src/products/topics/benches.ts");
-    return t.handoffBand();
-  },
-  "focus-sharpness": async () => {
-    const g = (await load("video/src/products/topics/benches.ts")).cardFocusGeometry();
-    return [g.cw, g.ch, g.cx, g.cy, g.zoom, g.wx, g.wy, g.k].join(" ");
-  },
-  "fixture-screenshot": async () => {
-    const g = (await load("video/src/products/topics/benches.ts")).cardFocusGeometry();
-    return [g.cx, g.cy, g.wx, g.wy, g.k].join(" ");
-  },
-  // Su una riga: contrast-floor.py legge l'ultima riga dell'uscita.
-  "contrast-crop": async () => {
-    const t = await load("video/src/products/topics/benches.ts");
-    return JSON.stringify(t.contrastCrop());
   },
 
   // I casi su cui project-check.py confronta la proiezione con il DOM: due
