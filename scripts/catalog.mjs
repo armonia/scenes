@@ -32,18 +32,21 @@ const commands = {
 
   ids: () => scenes.forEach((s) => out(s.id)),
 
-  // I banchi che dipendono solo dal catalogo: il riempimento di ogni scena che
-  // lo dichiara, e la giunta di ogni coppia adiacente. Quelli specifici di una
-  // scena sola (focus-sharpness, handoff-travel) restano scritti nel workflow:
-  // non sono derivabili da un elenco, e fingere il contrario nasconderebbe che
-  // esistono.
   // Le scene che dichiarano di stare ferme sui bordi. rest-point.sh boccia solo
   // quelle: le altre le misura e basta.
   rest: () => scenes.filter((s) => s.restAtEdges).forEach((s) => out(s.slug)),
 
+  // I banchi che dipendono solo dal catalogo: la giunta di ogni coppia
+  // adiacente. Quelli specifici di una scena sola (focus-sharpness,
+  // handoff-travel) restano scritti nel workflow: non sono derivabili da un
+  // elenco, e fingere il contrario nasconderebbe che esistono.
+  //
+  // `fill` NON GENERA PIU' UN COMANDO. fill-measure.sh promuove anche una lastra
+  // arretrata (vedi la sua intestazione), quindi in questo elenco sarebbe un
+  // verde che non dice niente. Il campo resta nel catalogo: dichiara la promessa
+  // che il banco geometrico del riempimento verifichera'.
   measures: () => {
     for (const s of scenes) {
-      if (s.fill) out(`./scripts/fill-measure.sh video/out/${s.slug}.mp4`);
       if (s.seamAfter) {
         const prev = scenes.find((x) => x.id === s.seamAfter);
         if (!prev) {

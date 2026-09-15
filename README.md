@@ -407,9 +407,9 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/contact-sheet.sh out/prompt-input-vs-ref.png  # composition, frozen
 ./scripts/review-page.sh                                # composition + rhythm, moving
 ./scripts/beats.sh                                      # are all four beats on screen
-./scripts/fill-measure.sh video/out/prompt-input.mp4    # does it fill the frame
+./scripts/fill-measure.sh video/out/prompt-input.mp4    # border readout only, it cannot fail (see below)
 ./scripts/legibility.sh                                 # down to what size it reads
-./scripts/framelocked-verdict.sh                        # is it really frame-locked
+./scripts/framelocked-verdict.sh [Composition ...]      # is it really frame-locked
 ./scripts/seam.sh [A.mp4] [B.mp4]                       # is the join really cutless
 ./scripts/handoff-travel.sh                             # does the card actually cross
 ./scripts/focus-sharpness.sh                            # does the text survive the push-in
@@ -453,11 +453,33 @@ before send, the pace of the streaming response. A strip of frames cannot show
 any of that.
 
 `fill-measure.sh` and `legibility.sh` are the two defects that sank the first
-scene, turned into numbers. Measured on both renders: the frame is full on all
-four edges at every instant sampled (20 of 20 samples on `ui-mockup`), where the
-reference keeps two of four alive and the retired `OrbitLoop` none. Text
-survives downscaling at least as well as the reference, and better below 640px
-wide.
+scene, turned into numbers. Text survives downscaling at least as well as the
+reference, and better below 640px wide.
+
+The fill number, though, stopped meaning anything, and for a while nobody
+noticed because it kept saying 20 of 20. It counts a border strip as alive when
+its mean luminance is above 2, which separated a slab from the black background
+of the retired `OrbitLoop`. The scenes now sit on the app's own background, whose
+luminance is around 20, so every strip is alive whatever is in it. Measured: the
+first render of `ui-mockup` shrunk to 60 per cent, with the real background
+colour around it, reads 20 of 20. Texture does not rescue it either: the ratio
+between the local variance of a border strip and of the centre falls to 0.014 on
+`card-release` with the slab in frame and rises to 0.043 on `board-orbit`, where
+the borders show the background on purpose, because the attenuated plane behind
+the slab is the board drawn a second time and any pixel measure reads it as
+content. So the script is kept as a readout, it is out of the CI measurements,
+and `CAM-01` on the catalogue page is grey. Whether a slab covers the frame is a
+question for the geometry: project the slab at the sampled frames and require it
+to cover all four edges.
+
+`framelocked-verdict.sh` had the opposite problem. It measured the right thing
+and then exited 0 whatever it found, so a real divergence would have scrolled past
+in a green log. It exits 1 now, CI checks that it fails `FrameLockedProbeRandom`
+(the same probe with a `Math.random` inside), and it also runs on `PromptInput`
+at frames 150, 175 and 200, in the middle of the typing, which is where an
+unseeded random would break `TXT-01`. The random offset in that probe spans 400
+pixels and not 40: Chrome snaps the position to whole pixels, and at 40 two
+renders landed on the same pixel on the first try.
 
 `OrbitLoop` is what `UIMockup` replaced, and it is named here only as the
 baseline the measurements are read against. It is no longer a composition.
@@ -652,9 +674,11 @@ render that exists and a page that shows it cannot drift apart. Open
 playing
 (`UIMockup`, `CardHandoff`, `CardFocus`, `CardRelease`, `PromptInput`,
 `BoardOrbit`, in the order they join), the four rules, the
-license note. Beside it, `showcase/grammatica.html` is the catalogue: twenty-six
+license note. Beside it, `showcase/grammatica.html` is the catalogue: thirty-six
 movements with a live demo each, the numbers they start from, and the bench that
-can fail them. The demos are browser re-creations of the slab, not the renders,
+can fail them. Seven of those benches are printed in grey, because six have not
+been written and one needs material that is not in git; the page counts them from
+its own data, since the hand-written count said thirty-two when it was twenty-nine. The demos are browser re-creations of the slab, not the renders,
 which is the point of keeping them next to the renders rather than instead of
 them. Neither page carries a build step or a dependency, so what you open
 locally is what ships.

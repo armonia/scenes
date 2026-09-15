@@ -14,11 +14,18 @@ import { app, fontStack, monoStack, radius } from "../theme";
  * si vede negli hash dei PNG anche quando l'occhio non la coglie.
  *
  * Come si legge il verdetto: `scripts/framelocked-verdict.sh`.
+ *
+ * `jitter` E' IL CONTROLLO NEGATIVO DEL BANCO, non una variante da usare. Sposta
+ * il quadrato di una quantita' presa da Math.random, cioe' esattamente il guasto
+ * che il banco esiste per trovare: il video esce lo stesso, e due render dello
+ * stesso frame danno pixel diversi. Senza una sonda che il banco deve bocciare,
+ * il suo verde vorrebbe dire soltanto che e' arrivato in fondo.
  */
 
-export const FrameLockedProbe: React.FC<{ detachTicker?: boolean }> = ({
-  detachTicker = true,
-}) => {
+export const FrameLockedProbe: React.FC<{
+  detachTicker?: boolean;
+  jitter?: boolean;
+}> = ({ detachTicker = true, jitter = false }) => {
   const bar = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
 
@@ -42,6 +49,14 @@ export const FrameLockedProbe: React.FC<{ detachTicker?: boolean }> = ({
     }
     return tl;
   }, []);
+
+  // Il guasto voluto, vedi sopra: fuori dalla sonda negativa vale zero.
+  // L'INTERVALLO E' LARGO APPOSTA. Chrome allinea la posizione al pixel intero,
+  // quindi con 40 px due render avevano una probabilita' su 40 di finire nello
+  // stesso punto, e su un Mac e' successo al primo tentativo. Con 400 i tre
+  // frame del banco coincidono per caso una volta su 64 milioni.
+  // eslint-disable-next-line @remotion/deterministic-randomness
+  const offset = jitter ? Math.random() * 400 : 0;
 
   return (
     <AbsoluteFill style={{ background: app.bg, fontFamily: fontStack }}>
@@ -77,7 +92,7 @@ export const FrameLockedProbe: React.FC<{ detachTicker?: boolean }> = ({
           ref={box}
           style={{
             position: "absolute",
-            left: 880,
+            left: 880 + offset,
             top: 620,
             width: 160,
             height: 160,

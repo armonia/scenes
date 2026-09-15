@@ -15,7 +15,20 @@
 # orologio che passa fra l'una e l'altra a far emergere la deriva. Dentro un
 # singolo render i frame si susseguono troppo in fretta perche' si veda.
 #
-# Uso:  ./scripts/framelocked-verdict.sh
+# IL VERDETTO NON USCIVA. Fino a settembre 2026 lo script stampava "almeno un
+# frame diverge" e usciva 0 lo stesso: in CI una divergenza vera si sarebbe letta
+# nel log e sarebbe passata col verde, e nessuno legge un log verde. Adesso esce
+# 1, e la CI lo prova sulla sonda FrameLockedProbeRandom, che ha un Math.random
+# dentro e deve essere bocciata.
+#
+# Uso:
+#   ./scripts/framelocked-verdict.sh                  i due rami della sonda GSAP
+#   ./scripts/framelocked-verdict.sh PromptInput      una o piu' composition
+#   FRAMES="150 175 200" ./scripts/framelocked-verdict.sh PromptInput
+#
+# Esce 0 se ogni frame e' ripetibile e la timeline avanza, 1 se un frame
+# diverge o la timeline e' ferma, 3 se un render non e' uscito: in quel caso lo
+# strumento non ha misurato niente e un verdetto sulla scena sarebbe inventato.
 set -uo pipefail
 
 cd "$(dirname "$0")/../video" || exit 1
@@ -23,8 +36,13 @@ cd "$(dirname "$0")/../video" || exit 1
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-FRAMES=(30 61 92)
+# I frame si possono scegliere dall'ambiente perche' il momento che conta non e'
+# lo stesso in ogni composition: in PromptInput la digitazione, cioe' il posto
+# dove un caso non seminato si vedrebbe, parte al frame 132.
+# shellcheck disable=SC2206
+FRAMES=(${FRAMES:-30 61 92})
 FAIL=0
+NOMEASURE=0
 
 probe() {
   local comp="$1" label="$2"
@@ -45,7 +63,7 @@ probe() {
 
     if [ -z "$ha" ] || [ -z "$hb" ]; then
       echo "  frame $f: RENDER FALLITO"
-      FAIL=1
+      NOMEASURE=1
     elif [ "$ha" = "$hb" ]; then
       echo "  frame $f: ripetibile   $ha"
     else
@@ -76,14 +94,25 @@ probe() {
   fi
 }
 
-echo "FrameLocked: lo stesso frame renderizzato due volte, in due invocazioni."
+echo "Lo stesso frame renderizzato due volte, in due invocazioni. Frame: ${FRAMES[*]}"
 
-probe FrameLockedProbe "ticker STACCATO (come dice il §8)"
-probe FrameLockedProbeAttached "ticker ATTACCATO (il ramo che il §8 diceva rotto)"
+if [ "$#" -eq 0 ]; then
+  probe FrameLockedProbe "ticker STACCATO (come dice il §8)"
+  probe FrameLockedProbeAttached "ticker ATTACCATO (il ramo che il §8 diceva rotto)"
+else
+  for comp in "$@"; do
+    probe "$comp" "$comp"
+  done
+fi
 
 echo ""
-if [ "$FAIL" -eq 0 ]; then
-  echo "VERDETTO: nessuna divergenza in nessuno dei due rami."
-else
-  echo "VERDETTO: almeno un frame diverge. Vedi sopra quale ramo."
+if [ "$NOMEASURE" -eq 1 ]; then
+  echo "VERDETTO: nessuno. Almeno un render non e' uscito, quindi non ho misurato."
+  exit 3
 fi
+if [ "$FAIL" -eq 1 ]; then
+  echo "VERDETTO: almeno un frame diverge, o la timeline e' ferma. Vedi sopra dove."
+  exit 1
+fi
+echo "VERDETTO: ogni frame e' ripetibile e la timeline avanza."
+exit 0
