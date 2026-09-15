@@ -13,7 +13,7 @@
 # I BANCHI GIRANO PRIMA DEL DEPLOY, non dopo. Un sito pubblicato e poi trovato
 # rotto e' gia' stato visto da qualcuno.
 #
-# RIFARE I VIDEO E' L'UNICA COSA CHE COSTA (quattro minuti su quattro scene) e
+# RIFARE I VIDEO E' L'UNICA COSA CHE COSTA (sette minuti per rapporto) e
 # quasi ogni push non la richiede: correggere una riga della pagina o del README
 # non cambia un pixel dei render, che escono identici a quelli di prima. Quindi
 # i render passano da una cache la cui chiave e' il contenuto di tutto cio' che
@@ -26,6 +26,27 @@
 # con il salvataggio automatico di actions/cache. Altrimenti un render bocciato
 # finirebbe in cache, e la run dopo salterebbe i controlli che l'avevano
 # bocciato e lo pubblicherebbe.
+
+#
+# TRE JOB E NON UNO, e il motivo e' un conto. La run di main del 15 settembre 2026
+# durava 21 minuti in un job solo: render 7, misure 5, negativi 4, pagina 4. Con
+# i tre rapporti sarebbero stati piu' di cinquanta. Adesso:
+#   - `pagina` controlla le dimostrazioni e la proiezione, che non leggono i
+#     render, e parte subito;
+#   - `formato` gira tre volte in parallelo, una per rapporto: renderizza le
+#     scene e i provini del tempo di quel rapporto, esegue i controlli generati
+#     dal manifest (scripts/checks/*.mjs, eseguiti da expect.sh) e verifica che
+#     ogni banco abbia un negativo che fallisce (bench-coverage.py);
+#   - `deploy` aspetta tutti e quattro, assembla la pagina coi render del 16:9 e
+#     pubblica. La pagina resta sul 16:9: i verticali sono negli artefatti.
+#   - `film` gira tre volte in parallelo anche lui: renderizza il film di esempio
+#     (DemoFilm, 1350 frame) in quel rapporto, come artefatto da guardare, ed
+#     esegue i controlli del film (scripts/checks/film-demo.mjs). Sta fuori da
+#     `formato` per il tempo: un film intero costa quanto le scene. Il deploy non
+#     lo aspetta, perche' il film non e' sulla pagina; una PR con il film rotto
+#     resta comunque rossa.
+# Ogni rapporto ha la sua cache: un push che tocca solo la pagina non
+# ri-renderizza niente.
 
 name: render e deploy
 
@@ -41,260 +62,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  showcase:
+  pagina:
     runs-on: ubuntu-latest
-    # IL MARGINE ERA FINITO. La run completa di main del 13 settembre 2026 e'
-    # durata 23 minuti e 41 secondi contro un limite di 25: un solo banco in piu'
-    # l'avrebbe fatta scadere, e una run scaduta non pubblica niente. 40 e' il
-    # margine per i passi che vengono; la cura vera e' dividere il lavoro in job
-    # paralleli, non alzare ancora questo numero.
-    timeout-minutes: 40
-
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - name: chiave dei render
-        id: key
-        run: |
-          echo "value=renders-verificati-${{ hashFiles('video/src/**', 'video/package-lock.json', 'video/remotion.config.ts', 'video/tsconfig.json', 'video/eslint.config.mjs', 'scripts/**') }}" >> "$GITHUB_OUTPUT"
-
-      - name: render gia' verificati?
-        id: cache
-        uses: actions/cache/restore@v4
-        with:
-          path: video/out
-          key: ${{ steps.key.outputs.value }}
-
-      # Node 22 serve anche quando i render arrivano dalla cache: il passo della
-      # pagina chiede al manifest i casi della proiezione, e il manifest legge i
-      # moduli .ts del kit, che il Node preinstallato sul runner non sa leggere.
+      # Node 22 per il manifest (i casi della proiezione leggono i moduli .ts del
+      # kit e di Topics), senza dipendenze: quei moduli non importano Remotion.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: video/package-lock.json
 
-      # ImageMagick e ffmpeg servono ai banchi di misura, non al render.
-      # Chromium se lo porta Remotion.
-      - name: strumenti di misura
-        if: steps.cache.outputs.cache-hit != 'true'
+      # pillow serve a loop-close.py per decodificare gli screenshot: e' l'unico
+      # banco che guarda dei pixel del browser invece del DOM.
+      - name: il browser dei banchi
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq imagemagick ffmpeg tesseract-ocr
-
-      - name: dipendenze
-        if: steps.cache.outputs.cache-hit != 'true'
-        working-directory: video
-        run: npm ci
-
-      - name: typecheck e lint
-        if: steps.cache.outputs.cache-hit != 'true'
-        working-directory: video
-        run: npm run lint
-
-      # L'elenco delle scene non e' scritto qui: esce da catalog.json, lo stesso
-      # file da cui Root.tsx dichiara le composition e da cui la pagina prende
-      # la vetrina. Una scena aggiunta la' viene renderizzata, misurata e
-      # pubblicata senza toccare questo workflow.
-      # I comandi si scrivono in un file e si eseguono con lo stdin chiuso,
-      # invece di finire in `| sh`. Con il pipe, il primo comando che legge lo
-      # stdin (imagemagick lo fa) si mangia le righe successive dello script:
-      # nella run 33404856145 fill-measure ha inghiottito mezzo comando e la
-      # misura dopo e' morta con "cripts/seam.sh: not found".
-      - name: render
-        if: steps.cache.outputs.cache-hit != 'true'
-        working-directory: video
-        run: |
-          node ../scripts/catalog.mjs render > /tmp/render.sh
-          sh -e /tmp/render.sh < /dev/null
-
-      # Le misure che possono fallire. Se una scena e' rotta, il deploy non parte.
-      #
-      # Le generiche (la giunta di ogni coppia adiacente) arrivano dal catalogo.
-      # Le altre sono legate a una scena sola e restano scritte qui: derivarle da
-      # un elenco nasconderebbe che esistono.
-      - name: misure
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          ./scripts/framelocked-verdict.sh
-          # E sulla scena che digita, nei frame della digitazione: e' li' che un
-          # caso non seminato (TXT-01) romperebbe la ripetibilita'.
-          FRAMES="150 175 200" ./scripts/framelocked-verdict.sh PromptInput
-          node scripts/catalog.mjs measures > /tmp/misure.sh
-          sh -e /tmp/misure.sh < /dev/null
-          ./scripts/handoff-travel.sh
-          ./scripts/focus-sharpness.sh
-          ./scripts/rest-point.sh
-          ./scripts/click-gap.sh
-          ./scripts/beats.sh
-          ./scripts/contrast-floor.py
-
-          # CAM-06 FUORI DA TOPICS. Il bersaglio resta sull'origine della
-          # prospettiva mentre la camera avanza, su due lastre (Topics e la
-          # lastra sonda, chiara e verticale) e in tre rapporti. E' il primo
-          # banco che non guarda solo Topics in 16:9.
-          ./scripts/drift.py
-
-          # LA CAMERA COME DATO. Le tracce di products/topics/tracks.ts sono quelle che
-          # le scene passano al render: da li' si misura che la camera non torni
-          # mai indietro in moto (GIU-04) e che la lastra copra i quattro bordi
-          # del quadro su ogni frame (CAM-01), senza chiederlo ai pixel.
-          ./scripts/chain-check.py
-          ./scripts/fill-geom.py
-
-          # IL TEMPO. Le battute interne di una scena sono scritte rispetto a una
-          # durata di riferimento e `durationInFrames` le scala tutte, quindi
-          # cambiare la velocita' di una clip e' cambiare un numero in
-          # catalog.json. E' una promessa che si rompe in silenzio, e non si
-          # verifica guardando: due render alla stessa velocita' apparente hanno
-          # durate diverse.
-          ./scripts/fixture-tempo.sh
-          ./scripts/tempo.py
-
-          # E i banchi percettivi devono passare ANCHE sul render ritempificato.
-          # E' il vero controllo di regressione del tempo: se accorciando la
-          # scena il clic si scollasse dalla sua conseguenza, o un tempo finisse
-          # oltre l'ultimo fotogramma, si vedrebbe qui e non in montaggio.
-          ./scripts/click-gap.sh video/out/.fast-prompt-input.mp4
-          ./scripts/beats.sh video/out/.fast-prompt-input.mp4
-          ./scripts/contrast-floor.py video/out/.fast-prompt-input.mp4
-          ./scripts/handoff-travel.sh video/out/.fast-card-handoff.mp4
-
-      # Il banco nuovo va messo alla prova sul caso che deve bocciare, non solo
-      # sul render che deve promuovere. Senza questo passo "verde" vorrebbe dire
-      # soltanto che lo script e' arrivato in fondo.
-      - name: il banco boccia il suo caso peggiore?
-        if: steps.cache.outputs.cache-hit != 'true'
-        working-directory: .
-        run: |
-          # framelocked-verdict.sh deve bocciare la sonda con Math.random dentro.
-          # Fino a settembre 2026 stampava il verdetto ed usciva 0 comunque, e
-          # una divergenza vera sarebbe passata col verde.
-          rc=0; ./scripts/framelocked-verdict.sh FrameLockedProbeRandom > /tmp/fv.log 2>&1 || rc=$?
-          [ "$rc" = 1 ] || { echo "framelocked-verdict.sh sulla sonda con Math.random: atteso 1, ottenuto $rc" >&2; cat /tmp/fv.log >&2; exit 1; }
-          echo "framelocked-verdict.sh boccia la sonda con Math.random, come deve."
-
-          # drift.py deve bocciare i due guasti in TUTTE e sei le varianti, non in
-          # una: --must-fail esce 0 solo se ognuna esce dalla tolleranza. Senza lo
-          # spostamento il bersaglio parte gia' fuori posto; con l'origine
-          # sbagliata parte giusto e scappa mentre la camera avanza, che e'
-          # l'incidente raccontato dalla grammatica.
-          for guasto in '{"compensate": false}' '{"originMismatch": true}'; do
-            rc=0; ./scripts/drift.py --props "$guasto" --must-fail > /tmp/drift.log 2>&1 || rc=$?
-            [ "$rc" = 0 ] || { echo "drift.py con $guasto: almeno una variante promossa, o misura mancata (rc=$rc)" >&2; cat /tmp/drift.log >&2; exit 1; }
-          done
-          echo "drift.py boccia i due guasti in tutte e sei le varianti, come deve."
-
-          # chain-check.py deve accorgersi della stessa catena senza easing, dove
-          # le giunte non sono piu' ferme e le inversioni diventano in moto.
-          rc=0; ./scripts/chain-check.py --linear --must-fail > /tmp/cc.log 2>&1 || rc=$?
-          [ "$rc" = 0 ] || { echo "chain-check.py promuove una catena che si inverte in moto (rc=$rc)" >&2; cat /tmp/cc.log >&2; exit 1; }
-          echo "chain-check.py boccia la catena senza easing, come deve."
-
-          # fill-geom.py deve bocciare ogni scena con la camera arretrata: e' il
-          # difetto che fill-measure.sh sui pixel promuoveva.
-          rc=0; ./scripts/fill-geom.py --push-offset -1500 --must-fail > /tmp/fg.log 2>&1 || rc=$?
-          [ "$rc" = 0 ] || { echo "fill-geom.py promuove una lastra arretrata (rc=$rc)" >&2; cat /tmp/fg.log >&2; exit 1; }
-          echo "fill-geom.py boccia la lastra arretrata in ogni scena, come deve."
-
-          ./scripts/fixture-screenshot.sh
-          if ./scripts/focus-sharpness.sh video/out/.fixture-card-focus-screenshot.mp4 >/dev/null 2>&1; then
-            echo "focus-sharpness.sh promuove una scena fatta di screenshot: non misura niente." >&2
-            exit 1
-          fi
-          echo "focus-sharpness.sh boccia la fixture, come deve."
-
-          # rest-point.sh ha due modi di fallire e li deve distinguere: un
-          # ritaglio preso dal mezzo di una scena si muove ai bordi (esce 1), un
-          # fermo immagine non si muove da nessuna parte (esce 2). Se li
-          # confondesse, o li promuovesse, non misurerebbe niente.
-          #
-          # `cmd; rc=$?` QUI NON FUNZIONA. Questo passo gira con `bash -e`: il
-          # comando esce 1, che e' quello che vogliamo, e la shell se ne va prima
-          # di assegnare rc. Il controllo non veniva nemmeno eseguito e il passo
-          # falliva su un esito corretto. La forma `|| rc=$?` e' l'unica che
-          # sopravvive a -e, ed e' il motivo per cui il controllo di
-          # focus-sharpness qui sopra e' scritto come un `if`.
-          ffmpeg -nostdin -v error -ss 2 -t 2 -i video/out/card-focus.mp4 -y /tmp/mosso.mp4
-          rc=0; ./scripts/rest-point.sh /tmp/mosso.mp4 > /tmp/rp1.log 2>&1 || rc=$?
-          [ "$rc" = 1 ] || { echo "rest-point.sh su un ritaglio mosso: atteso 1, ottenuto $rc" >&2; cat /tmp/rp1.log >&2; exit 1; }
-
-          ffmpeg -nostdin -v error -i video/out/card-focus.mp4 -frames:v 1 -y /tmp/f.png
-          ffmpeg -nostdin -v error -loop 1 -i /tmp/f.png -t 3 -r 30 -pix_fmt yuv420p -y /tmp/fermo.mp4
-          rc=0; ./scripts/rest-point.sh /tmp/fermo.mp4 > /tmp/rp2.log 2>&1 || rc=$?
-          [ "$rc" = 2 ] || { echo "rest-point.sh su un fermo immagine: atteso 2, ottenuto $rc" >&2; cat /tmp/rp2.log >&2; exit 1; }
-          echo "rest-point.sh distingue una scena mossa da un fermo immagine."
-
-          # click-gap.sh su una scena senza clic non deve trovare la coppia
-          # colpo/conseguenza, e su un ritaglio in cui i fotogrammi fra i due
-          # sono stati tolti deve accorgersi che si sono fusi.
-          rc=0; ./scripts/click-gap.sh video/out/card-handoff.mp4 >/dev/null 2>&1 || rc=$?
-          [ "$rc" = 1 ] || { echo "click-gap.sh su card-handoff: atteso 1, ottenuto $rc" >&2; exit 1; }
-
-          ffmpeg -nostdin -v error -i video/out/prompt-input.mp4 \
-            -vf "select='lt(n\,271)+gte(n\,276)',setpts=N/FRAME_RATE/TB" \
-            -fps_mode passthrough -y /tmp/fuso.mp4
-          rc=0; ./scripts/click-gap.sh /tmp/fuso.mp4 > /tmp/cg.log 2>&1 || rc=$?
-          [ "$rc" = 1 ] || { echo "click-gap.sh sul ritaglio fuso: atteso 1, ottenuto $rc" >&2; cat /tmp/cg.log >&2; exit 1; }
-          echo "click-gap.sh boccia sia una scena senza clic sia i due eventi fusi."
-
-          # beats.sh senza OCR deve dire che non ha potuto misurare, e non
-          # bocciare la scena. Senza questa distinzione ha passato mesi a
-          # riportare "la risposta non si vede mai" su una macchina dove
-          # tesseract non era installato: una diagnosi sulla scena per un
-          # guasto dello strumento, lo stesso difetto di handoff-travel.sh.
-          # Si toglie di mezzo il solo tesseract, non tutto il PATH: svuotando
-          # il PATH sparirebbe anche bash e il verdetto sarebbe 127, cioe' un
-          # altro guasto, e il controllo non proverebbe la distinzione voluta.
-          TESS="$(command -v tesseract)"
-          sudo mv "$TESS" "$TESS.off"
-          rc=0; ./scripts/beats.sh >/dev/null 2>&1 || rc=$?
-          sudo mv "$TESS.off" "$TESS"
-          [ "$rc" = 3 ] || { echo "beats.sh senza tesseract: atteso 3 (non ho potuto misurare), ottenuto $rc" >&2; exit 1; }
-          echo "beats.sh distingue una scena rotta da uno strumento assente."
-
-          # contrast-floor.py deve bocciare la stessa scena attenuata troppo.
-          # E' l'unica prova che il pavimento a 0,62 sia un limite e non una
-          # decorazione: se anche 0,25 passasse, il banco non misurerebbe il
-          # pavimento, misurerebbe che il testo esiste.
-          ./scripts/fixture-attenuation.sh
-          rc=0; ./scripts/contrast-floor.py video/out/.fixture-attn-025.mp4 >/dev/null 2>&1 || rc=$?
-          [ "$rc" = 1 ] || { echo "contrast-floor.py sull'attenuazione a 0,25: atteso 1, ottenuto $rc" >&2; exit 1; }
-          echo "contrast-floor.py boccia l'attenuazione a 0,25, come deve."
-
-          # tempo.py deve bocciare una scena TAGLIATA invece che ritempificata:
-          # e' esattamente quello che si otteneva abbassando la durata prima che
-          # le battute la seguissero, ed e' il difetto che il banco cerca.
-          ./scripts/fixture-trim.sh
-          rc=0; ./scripts/tempo.py video/out/card-handoff.mp4 video/out/.fixture-trim.mp4 >/dev/null 2>&1 || rc=$?
-          [ "$rc" = 1 ] || { echo "tempo.py sul ritaglio non ritempificato: atteso 1, ottenuto $rc" >&2; exit 1; }
-          echo "tempo.py boccia una scena tagliata invece che ritempificata, come deve."
-
-
-      # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa
-      # run, o vengono da una che li aveva gia' misurati. Solo adesso si salvano.
-      - name: salva i render verificati
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: video/out
-          key: ${{ steps.key.outputs.value }}
-
-      - name: assembla
-        run: ./scripts/showcase-build.sh
-
-      # La pagina del catalogo cambia a ogni push che tocca una demo, e non
-      # passa dalla cache dei render: questo passo gira sempre. Misura le
-      # dimostrazioni, non i video, ed e' l'unico controllo che vede le
-      # differenze temporali - due eventi sullo stesso frame invece che a
-      # cinque di distanza - che uno screenshot non puo' vedere.
-      - name: le dimostrazioni mostrano ancora la loro tesi?
-        run: |
-          # pillow serve a loop-close.py per decodificare gli screenshot: e' l'unico
-          # banco che guarda dei pixel del browser invece del DOM.
           python3 -m pip install --quiet --disable-pip-version-check playwright pillow
           python3 -m playwright install --with-deps chromium
 
+      # Le dimostrazioni si misurano sul sorgente della pagina: showcase-build.sh
+      # la copia com'e' in showcase/dist, quindi il contenuto e' lo stesso, e questo
+      # job non deve aspettare i render per assemblarla.
+      - name: le dimostrazioni mostrano ancora la loro tesi?
+        run: |
           # La proiezione del kit (kit/project.ts) contro Chromium: due lastre,
           # tre stage, le sei pose della catena, cinque punti ciascuno. E deve
           # accorgersi di un'origine della prospettiva sbagliata nel CSS.
@@ -328,8 +119,8 @@ jobs:
           # dichiara. Se qui passasse, il verde qui sopra vorrebbe dire solo
           # che lo script e' arrivato in fondo.
           sed 's/var fn=second?30:35, fp=second?30:41;/var fn=35, fp=41;/' \
-            showcase/dist/grammatica.html > /tmp/guasta.html
-          if cmp -s showcase/dist/grammatica.html /tmp/guasta.html; then
+            showcase/grammatica.html > /tmp/guasta.html
+          if cmp -s showcase/grammatica.html /tmp/guasta.html; then
             echo "la copia guasta e' identica all'originale: la sed non ha trovato niente." >&2
             exit 1
           fi
@@ -347,8 +138,8 @@ jobs:
           # una sonda diversa: qui si rendono uguali le due soste di TYP-01, cioe'
           # si toglie il contrasto sul quale la voce si regge.
           sed 's/var DW = {A:56, B:35, R:22};/var DW = {A:56, B:56, R:22};/' \
-            showcase/dist/grammatica.html > /tmp/guasta-typ.html
-          if cmp -s showcase/dist/grammatica.html /tmp/guasta-typ.html; then
+            showcase/grammatica.html > /tmp/guasta-typ.html
+          if cmp -s showcase/grammatica.html /tmp/guasta-typ.html; then
             echo "la copia guasta tipografica e' identica all'originale: la sed non ha trovato niente." >&2
             exit 1
           fi
@@ -363,8 +154,8 @@ jobs:
           # CAM-01 a senso unico, cioe' com'era prima di avere la gamba di
           # rientro, e il banco deve accorgersene e nominarla.
           sed 's/var t=trip(f,170,108,26), p=mix(START,END,t)/var t=E.inout(cl((f-6)\/108)), p=mix(START,END,t)/' \
-            showcase/dist/grammatica.html > /tmp/guasta-loop.html
-          if cmp -s showcase/dist/grammatica.html /tmp/guasta-loop.html; then
+            showcase/grammatica.html > /tmp/guasta-loop.html
+          if cmp -s showcase/grammatica.html /tmp/guasta-loop.html; then
             echo "la copia guasta del ciclo e' identica all'originale: la sed non ha trovato niente." >&2
             exit 1
           fi
@@ -379,8 +170,8 @@ jobs:
           # a ripartire dal vuoto nella seconda meta', cioe' com'era prima
           # dell'orologio virtuale. E' il difetto che si vedeva scorrendo il sito.
           sed 's/var second=f>=125, q=vtime(second?f-125:f,125,86,14);/var second=f>=125, q=second?f-125:f;/' \
-            showcase/dist/grammatica.html > /tmp/guasta-mezzo.html
-          if cmp -s showcase/dist/grammatica.html /tmp/guasta-mezzo.html; then
+            showcase/grammatica.html > /tmp/guasta-mezzo.html
+          if cmp -s showcase/grammatica.html /tmp/guasta-mezzo.html; then
             echo "la copia guasta di mezzo e' identica all'originale: la sed non ha trovato niente." >&2
             exit 1
           fi
@@ -402,8 +193,8 @@ jobs:
           # nominando la voce e il motivo. Ognuna rimette un difetto che la
           # pagina ha avuto davvero.
           guasta_tipo() { # nome, sed, voce, larghezza, motivo atteso
-            sed "$2" showcase/dist/grammatica.html > "/tmp/guasta-$1.html"
-            if cmp -s showcase/dist/grammatica.html "/tmp/guasta-$1.html"; then
+            sed "$2" showcase/grammatica.html > "/tmp/guasta-$1.html"
+            if cmp -s showcase/grammatica.html "/tmp/guasta-$1.html"; then
               echo "la copia guasta $1 e' identica all'originale: la sed non ha trovato niente." >&2
               exit 1
             fi
@@ -425,13 +216,207 @@ jobs:
           # col movimento ridotto, il fotogramma fermo a meta' di una dissolvenza
           guasta_tipo fermo 's/M.mask={dur:MK.D, half:MK.F1, still:60, kind:"type",/M.mask={dur:MK.D, half:MK.F1, still:114, kind:"type",/' TYP-05 1440 'movimento ridotto'
 
-      # I render restano scaricabili dalla run anche quando il deploy non parte,
-      # cosi' su una PR si guarda il video invece di fidarsi del diff.
-      - uses: actions/upload-artifact@v4
+  formato:
+    runs-on: ubuntu-latest
+    # Il limite che il piano chiede per job. La misura locale sta nel README.
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        ratio: ["16x9", "9x16", "4x5"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # LA CHIAVE CONTIENE IL RAPPORTO: tre job con la stessa chiave si
+      # scriverebbero a vicenda cartelle video/out diverse.
+      - name: chiave dei render
+        id: key
+        run: |
+          echo "value=renders-verificati-${{ matrix.ratio }}-${{ hashFiles('video/src/**', 'video/public/**', 'video/package-lock.json', 'video/remotion.config.ts', 'video/tsconfig.json', 'video/eslint.config.mjs', 'scripts/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: render gia' verificati?
+        id: cache
+        uses: actions/cache/restore@v4
         with:
-          name: renders
-          path: showcase/dist/*.mp4
+          path: video/out
+          key: ${{ steps.key.outputs.value }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: video/package-lock.json
+
+      # ImageMagick, ffmpeg e tesseract servono ai banchi, non al render.
+      # Chromium se lo porta Remotion.
+      - name: strumenti di misura
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick ffmpeg tesseract-ocr
+
+      - name: dipendenze
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: video
+        run: npm ci
+
+      # Il typecheck non dipende dal rapporto: basta farlo una volta.
+      - name: typecheck e lint
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.ratio == '16x9'
+        working-directory: video
+        run: npm run lint
+
+      # L'elenco non e' scritto qui: le scene escono da catalog.json, i provini del
+      # tempo dalla sua voce tempoFixtures. I comandi si scrivono in un file e si
+      # eseguono con lo stdin chiuso invece di finire in `| sh`: con il pipe, il
+      # primo comando che legge lo stdin si mangia le righe successive (run
+      # 33404856145, "cripts/seam.sh: not found").
+      - name: render
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: video
+        run: |
+          node ../scripts/catalog.mjs render --ratio ${{ matrix.ratio }} > /tmp/render.sh
+          sh -e /tmp/render.sh < /dev/null
+          ../scripts/fixture-tempo.sh --ratio ${{ matrix.ratio }}
+
+      # I BANCHI E I LORO NEGATIVI, GENERATI. Stavano scritti qui a mano, novanta
+      # righe per il solo 16:9: un negativo dimenticato non rompeva niente, e il
+      # banco restava verde anche quando non poteva piu' fallire. Adesso ogni banco
+      # dichiara i suoi controlli in scripts/checks/, il manifest li calcola per il
+      # rapporto, expect.sh li esegue tutti senza fermarsi al primo errore, e
+      # bench-coverage.py boccia un banco che promuove senza un caso che boccia.
+      - name: i banchi, e i casi che devono bocciare
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          node scripts/manifest.mjs checks --ratio ${{ matrix.ratio }} --tranne film-demo > /tmp/checks.tsv
+          ./scripts/expect.sh /tmp/checks.tsv video/out/bench-report-${{ matrix.ratio }}.json
+          ./scripts/bench-coverage.py video/out/bench-report-${{ matrix.ratio }}.json
+
+          # E il controllo della copertura deve accorgersi di un banco senza
+          # negativo: si toglie dal report quello di seam e deve uscire 1.
+          rc=0; ./scripts/bench-coverage.py video/out/bench-report-${{ matrix.ratio }}.json --without seam > /tmp/cov.log 2>&1 || rc=$?
+          [ "$rc" = 1 ] || { echo "bench-coverage.py promuove un report senza il negativo di seam (rc=$rc)" >&2; cat /tmp/cov.log >&2; exit 1; }
+          grep -q 'seam' /tmp/cov.log || { echo "bench-coverage.py boccia ma non nomina seam" >&2; cat /tmp/cov.log >&2; exit 1; }
+          echo "bench-coverage.py boccia un report senza il negativo di seam, come deve."
+
+      # Da qui in poi i video sono buoni: o li ha appena fatti e misurati questa
+      # run, o vengono da una che li aveva gia' misurati. Solo adesso si salvano.
+      - name: salva i render verificati
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: video/out
+          key: ${{ steps.key.outputs.value }}
+
+      # I render restano scaricabili dalla run anche quando il deploy non parte,
+      # cosi' su una PR si guarda il video invece di fidarsi del diff. Il job di
+      # deploy prende da qui quelli del 16:9. SEMPRE, anche se un banco boccia: la
+      # prima run di questo job e' fallita in CI e passava sul Mac, e senza i render
+      # della CI da scaricare la differenza si poteva solo indovinare.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renders-${{ matrix.ratio }}
+          path: |
+            video/out/*.mp4
+            video/out/bench-report-*.json
           retention-days: 7
+
+  film:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        ratio: ["16x9", "9x16", "4x5"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # La stessa regola di `formato`: la chiave e' il contenuto di tutto quello
+      # che puo' cambiare il film o giudicarlo, e si scrive solo a controlli passati.
+      - name: chiave del film
+        id: key
+        run: |
+          echo "value=film-verificato-${{ matrix.ratio }}-${{ hashFiles('video/src/**', 'video/public/**', 'video/package-lock.json', 'video/remotion.config.ts', 'video/tsconfig.json', 'scripts/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: film gia' verificato?
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: video/out/film
+          key: ${{ steps.key.outputs.value }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: video/package-lock.json
+
+      - name: strumenti di misura
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick ffmpeg
+
+      - name: dipendenze
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: video
+        run: npm ci
+
+      # Prima i controlli, che guardano solo i fotogrammi che servono e dicono in
+      # pochi minuti se il film e' rotto; poi il render intero, che e' la cosa da
+      # guardare.
+      - name: i controlli del film, e i casi che devono bocciare
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p video/out/film
+          node scripts/manifest.mjs checks --ratio ${{ matrix.ratio }} --solo film-demo > /tmp/checks-film.tsv
+          ./scripts/expect.sh /tmp/checks-film.tsv video/out/film/film-report-${{ matrix.ratio }}.json
+          ./scripts/bench-coverage.py video/out/film/film-report-${{ matrix.ratio }}.json
+
+      - name: render del film
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: video
+        run: |
+          if [ "${{ matrix.ratio }}" = 16x9 ]; then id=DemoFilm; else id=DemoFilm-${{ matrix.ratio }}; fi
+          npx remotion render "$id" "out/film/demo-film-${{ matrix.ratio }}.mp4" < /dev/null
+
+      - name: salva il film verificato
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: video/out/film
+          key: ${{ steps.key.outputs.value }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: film-${{ matrix.ratio }}
+          path: |
+            video/out/film/*.mp4
+            video/out/film/film-report-*.json
+          retention-days: 7
+
+  deploy:
+    needs: [pagina, formato]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: renders-16x9
+          path: video/out
+
+      - name: assembla
+        run: ./scripts/showcase-build.sh
 
       # Il deploy e' l'unico passo che ha bisogno di una credenziale, quindi e'
       # l'unico che puo' non essere disponibile. Senza il token il workflow

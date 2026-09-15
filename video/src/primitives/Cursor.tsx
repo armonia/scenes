@@ -1,5 +1,9 @@
 import React from "react";
 import { Easing, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { pointOnPath, type Waypoint } from "./path";
+
+export { pointOnPath } from "./path";
+export type { Waypoint } from "./path";
 
 /**
  * Il cursore che recita.
@@ -22,47 +26,17 @@ import { Easing, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
  * che si espande e svanisce, che e' la parte che l'occhio prende.
  */
 
-export type Waypoint = { x: number; y: number; at: number };
-
-/**
- * Dove sta il puntatore a un dato frame.
- *
- * ESPORTATA perche' una scena in cui il puntatore TRASCINA qualcosa ha bisogno
- * della sua posizione, non solo del suo disegno: la card che segue la mano sta
- * dove stava la mano tre frame prima, e l'inclinazione esce dalla differenza
- * fra due campioni. Tenuto dentro il componente, quel numero non era
- * raggiungibile e la scena avrebbe dovuto ricalcolarsi il percorso per conto
- * suo - due copie della stessa traiettoria, uguali finche' nessuno tocca una
- * delle due.
- */
-export const pointOnPath = (
-  path: Waypoint[],
-  frame: number,
-): { x: number; y: number } => {
-  const first = path[0] as Waypoint;
-  const last = path[path.length - 1] as Waypoint;
-  if (frame <= first.at) return { x: first.x, y: first.y };
-  for (let i = 0; i < path.length - 1; i++) {
-    const a = path[i] as Waypoint;
-    const b = path[i + 1] as Waypoint;
-    if (frame >= a.at && frame <= b.at) {
-      const ease = {
-        easing: Easing.inOut(Easing.cubic),
-        extrapolateLeft: "clamp" as const,
-        extrapolateRight: "clamp" as const,
-      };
-      return {
-        x: interpolate(frame, [a.at, b.at], [a.x, b.x], ease),
-        y: interpolate(frame, [a.at, b.at], [a.y, b.y], ease),
-      };
-    }
-  }
-  return { x: last.x, y: last.y };
-};
-
 export type CursorProps = {
   /** I punti da toccare, in coordinate della scena, ciascuno col suo frame. */
-  path: Waypoint[];
+  path?: Waypoint[];
+  /**
+   * Oppure la posizione come funzione del frame, per un percorso che non e' fatto
+   * di waypoint: l'arco con scavalco di kit/cursorArc.ts (CUR-01). Se c'e', vince
+   * su `path`.
+   */
+  at?: (frame: number) => { x: number; y: number };
+  /** Il colore dell'anello del clic: bianco su una UI scura, scuro su una chiara. */
+  ringColor?: string;
   /** I frame in cui parte un click. */
   clicks?: number[];
   /**
@@ -83,7 +57,9 @@ export type CursorProps = {
 const CLICK_LEN = 20;
 
 export const Cursor: React.FC<CursorProps> = ({
-  path,
+  path = [],
+  at,
+  ringColor = "#ffffff",
   clicks = [],
   progress,
   frame: sceneFrame,
@@ -95,9 +71,9 @@ export const Cursor: React.FC<CursorProps> = ({
     sceneFrame ??
     (progress === undefined ? localFrame : progress * (durationInFrames - 1));
 
-  if (path.length === 0) return null;
+  if (!at && path.length === 0) return null;
 
-  const { x, y } = pointOnPath(path, frame);
+  const { x, y } = at ? at(frame) : pointOnPath(path, frame);
 
   // Il click piu' recente ancora dentro la sua finestra.
   const active = clicks
@@ -157,7 +133,7 @@ export const Cursor: React.FC<CursorProps> = ({
             cy={0}
             r={ringR}
             fill="none"
-            stroke="#ffffff"
+            stroke={ringColor}
             strokeWidth={2}
             opacity={ringO}
           />

@@ -81,6 +81,43 @@ export type ShotMaterial = {
   lighting: { vignette: string; sheen: string };
 };
 
+/**
+ * MAT-02: la luce dello schermo sul piano sotto la lastra. E' un piano che parte
+ * dal bordo basso della lastra e si stende all'indietro, sfocato, del colore del
+ * contenuto attivo: quando lo stato cambia, il colore cambia. Il materiale ne dice
+ * la forma, la scena ne dice il colore e l'intensita' a ogni frame.
+ */
+export type ScreenLightMaterial = {
+  /** Angolo del piano rispetto alla lastra, in gradi: 90 e' perpendicolare. */
+  angle: number;
+  /** Profondita' del piano, in pixel della lastra. */
+  length: number;
+  blur: number;
+};
+export type ScreenLight = { color: string; opacity: number };
+
+/**
+ * CAM-02: uno strato della lastra a una profondita' sua. Il rettangolo e' in
+ * coordinate della lastra; `depth` in pixel verso la camera. Gli strati sono
+ * piani fratelli della lastra, non figli: la lastra ritaglia (`overflow:
+ * hidden`) e un ritaglio appiattisce la terza dimensione dei figli, quindi uno
+ * strato dentro la lastra resterebbe sul suo piano e la parallasse non ci
+ * sarebbe. Ognuno si ritaglia da se' sul suo rettangolo.
+ */
+export type ShotLayer = {
+  depth: number;
+  rect: { x: number; y: number; w: number; h: number };
+  content: React.ReactNode;
+  radius?: number;
+  background?: string;
+  /**
+   * Se lo strato si ritaglia sul suo rettangolo (di default si'). Uno strato di
+   * tipografia non deve: una frase ritagliata dal suo strato perde lettere in
+   * silenzio, mentre una che esce dal quadro la vede film-type.py.
+   */
+  clip?: boolean;
+};
+
 export type ShotProps = {
   rig: Rig;
   slab: SlabSize;
@@ -94,6 +131,11 @@ export type ShotProps = {
   highlight?: boolean;
   /** Opacita' del quadro intero: UIMockup ci entra in dissolvenza. */
   opacity?: number;
+  /** CAM-02: strati a profondita' diverse davanti alla lastra. Senza, la lastra e' un piano solo. */
+  layers?: ShotLayer[];
+  /** MAT-02: la luce dello schermo sul piano sotto. Serve anche `material.screenLight`. */
+  light?: ScreenLight;
+  screenLight?: ScreenLightMaterial;
 };
 
 export const Shot: React.FC<ShotProps> = ({
@@ -105,6 +147,9 @@ export const Shot: React.FC<ShotProps> = ({
   backdrop,
   highlight = true,
   opacity,
+  layers,
+  light,
+  screenLight,
 }) => {
   const { width, height } = useVideoConfig();
   const { yaw, pitch, pushZ, slideX, slideY } = pose;
@@ -157,6 +202,26 @@ export const Shot: React.FC<ShotProps> = ({
           perspectiveOrigin: cssPerspectiveOrigin(rig),
         }}
       >
+        {light && screenLight ? (
+          <div
+            style={{
+              position: "absolute",
+              left,
+              top: top + slab.h,
+              width: slab.w,
+              height: screenLight.length,
+              // Lo stesso impianto della lastra, col perno sul centro della lastra
+              // (mezza altezza sopra questo piano), poi la piega attorno al bordo
+              // alto del piano, che coincide col bordo basso della lastra. In CSS
+              // la trasformazione piu' a destra si applica per prima.
+              transform: `translateZ(${pushZ}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(${rig.slabScale}) translateY(${slab.h / 2}px) rotateX(${screenLight.angle}deg) translateY(${-slab.h / 2}px)`,
+              transformOrigin: `50% ${-slab.h / 2}px`,
+              background: `linear-gradient(to bottom, ${light.color}, transparent)`,
+              opacity: light.opacity,
+              filter: `blur(${screenLight.blur}px)`,
+            }}
+          />
+        ) : null}
         <div
           style={{
             position: "absolute",
@@ -203,6 +268,39 @@ export const Shot: React.FC<ShotProps> = ({
             />
           ) : null}
         </div>
+        {(layers ?? []).map((layer, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left,
+              top,
+              width: slab.w,
+              height: slab.h,
+              // La stessa trasformazione della lastra, e in fondo lo spostamento
+              // verso la camera nel sistema della lastra: lo strato resta parallelo
+              // alla lastra, `depth` pixel davanti.
+              transform: `translateZ(${pushZ}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(${rig.slabScale}) translateZ(${layer.depth}px)`,
+              transformOrigin: "50% 50%",
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: layer.rect.x,
+                top: layer.rect.y,
+                width: layer.rect.w,
+                height: layer.rect.h,
+                overflow: layer.clip === false ? "visible" : "hidden",
+                borderRadius: layer.radius,
+                background: layer.background,
+              }}
+            >
+              {layer.content}
+            </div>
+          </div>
+        ))}
       </AbsoluteFill>
 
       <div

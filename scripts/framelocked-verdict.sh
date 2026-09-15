@@ -21,17 +21,26 @@
 # 1, e la CI lo prova sulla sonda FrameLockedProbeRandom, che ha un Math.random
 # dentro e deve essere bocciata.
 #
+# IL PROGETTO SI IMPACCHETTA UNA VOLTA. Ogni `remotion still` rifaceva il bundle
+# da capo, e il bundle era meta' del tempo del banco. Le due passate restano due
+# processi separati, che e' quello che conta: e' il tempo di orologio fra l'uno
+# e l'altro a far emergere una deriva, non il bundle.
+#
 # Uso:
 #   ./scripts/framelocked-verdict.sh                  i due rami della sonda GSAP
 #   ./scripts/framelocked-verdict.sh PromptInput      una o piu' composition
 #   FRAMES="150 175 200" ./scripts/framelocked-verdict.sh PromptInput
+#   PROGETTO=../films ./scripts/framelocked-verdict.sh CifraFilm
+#
+# PROGETTO e' il progetto Remotion da impacchettare, di default video/ di questo
+# repo: un altro repository che usa il kit ci passa il suo.
 #
 # Esce 0 se ogni frame e' ripetibile e la timeline avanza, 1 se un frame
 # diverge o la timeline e' ferma, 3 se un render non e' uscito: in quel caso lo
 # strumento non ha misurato niente e un verdetto sulla scena sarebbe inventato.
 set -uo pipefail
 
-cd "$(dirname "$0")/../video" || exit 1
+cd "${PROGETTO:-$(dirname "$0")/../video}" || exit 1
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -44,6 +53,11 @@ FRAMES=(${FRAMES:-30 61 92})
 FAIL=0
 NOMEASURE=0
 
+if ! npx remotion bundle --out-dir "$TMP/bundle" --log=error >/dev/null 2>&1 < /dev/null; then
+  echo "VERDETTO: nessuno. Il bundle del progetto non e' uscito."
+  exit 3
+fi
+
 probe() {
   local comp="$1" label="$2"
   echo ""
@@ -53,8 +67,8 @@ probe() {
 
   for f in "${FRAMES[@]}"; do
     for pass in a b; do
-      npx remotion still "$comp" "$TMP/$comp-$f-$pass.png" \
-        --frame="$f" --image-format=png --log=error >/dev/null 2>&1
+      npx remotion still "$TMP/bundle" "$comp" "$TMP/$comp-$f-$pass.png" \
+        --frame="$f" --image-format=png --log=error >/dev/null 2>&1 < /dev/null
     done
 
     local ha hb

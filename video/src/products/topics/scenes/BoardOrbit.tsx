@@ -15,6 +15,7 @@ import {
   TOPICS_SLAB,
 } from "../geometry";
 import { poseAt } from "../../../kit/camera";
+import { stageFor } from "../../../kit/stage";
 import {
   BOARD_ORBIT_BASE as BASE,
   BOARD_ORBIT_SETTLE as SETTLE,
@@ -60,7 +61,8 @@ export type BoardOrbitProps = {
 
 export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
   const localFrame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const { durationInFrames, width, height } = useVideoConfig();
+  const { ratio } = stageFor(width, height);
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
 
@@ -74,7 +76,7 @@ export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
 
   // La camera sta in products/topics/tracks.ts, con la stessa curva e la stessa
   // finestra: `at` resta qui per l'attenuazione, che non e' camera.
-  const pose = poseAt(boardOrbitTrack(durationInFrames), frame);
+  const pose = poseAt(boardOrbitTrack(durationInFrames, ratio), frame);
 
   // Il quadro si riapre: 0,62 e' dove PromptInput ha lasciato l'attenuazione.
   const attn = at(0.62, 1);
