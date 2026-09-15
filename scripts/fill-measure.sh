@@ -21,6 +21,26 @@
 # istante campionato. Il riferimento Linear ne tiene vivi due su quattro. La
 # nostra prompt-input tutti e quattro.
 #
+# NON DA' UN VERDETTO, e il motivo e' misurato (15 settembre 2026). Il "20 su
+# 20" che questo script stampa sulle sei scene lo stampa anche su una lastra
+# arretrata. Ridotto al 60% ui-mockup.mp4 e riempito il resto col colore vero
+# del fondale (#1B1C20), la lettura esce 28,79 su tutti e quattro i bordi a ogni
+# campione: il fondale delle scene ha luminanza intorno a 20, e la soglia e' 2.
+# La soglia era giusta per OrbitLoop, che aveva il fondo nero, e ha smesso di
+# esserlo quando il fondo e' diventato quello dell'app.
+#
+# Neanche la tessitura locale separa i due casi. Il rapporto fra la varianza 3x3
+# della fascia di bordo e quella del centro scende a 0,014 su card-release con
+# la lastra in quadro, e sale a 0,043 su board-orbit, dove i bordi mostrano il
+# fondale apposta. Dietro la lastra c'e' il piano attenuato (MAT-03), cioe' la
+# board disegnata una seconda volta e sfocata, e per i pixel e' contenuto.
+#
+# Quindi il verdetto sul riempimento non si prende dai pixel: si prende dalla
+# geometria, proiettando la lastra ai frame campionati e chiedendo che copra i
+# quattro bordi del quadro. Finche' quel banco non esiste lo script resta una
+# lettura, esce dalle misure della CI, e CAM-01 sulla pagina e' in grigio. Un
+# banco che non puo' fallire non va lasciato in un elenco di banchi che possono.
+#
 # Uso:  ./scripts/fill-measure.sh <video.mp4>
 set -uo pipefail
 
@@ -85,3 +105,4 @@ for q in 0.20 0.38 0.56 0.74 0.90; do
 done
 
 echo "  bordi vivi: $vivi su $tot campioni"
+echo "  (lettura, non verdetto: questa soglia promuove anche una lastra arretrata, vedi l'intestazione)"

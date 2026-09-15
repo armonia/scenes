@@ -100,6 +100,20 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{ detachTicker: false }}
       />
+      {/* LA SONDA CHE IL BANCO DEVE BOCCIARE. Stessa scena delle due sopra, con
+          un Math.random dentro: framelocked-verdict.sh deve uscire 1 su questa,
+          e la CI lo verifica. Fino a settembre 2026 il banco stampava il
+          verdetto e usciva sempre 0, quindi una divergenza vera sarebbe passata
+          col verde. */}
+      <Composition
+        id="FrameLockedProbeRandom"
+        component={FrameLockedProbe}
+        durationInFrames={120}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{ detachTicker: true, jitter: true }}
+      />
     </>
   );
 };

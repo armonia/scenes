@@ -43,7 +43,12 @@ concurrency:
 jobs:
   showcase:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # IL MARGINE ERA FINITO. La run completa di main del 13 settembre 2026 e'
+    # durata 23 minuti e 41 secondi contro un limite di 25: un solo banco in piu'
+    # l'avrebbe fatta scadere, e una run scaduta non pubblica niente. 40 e' il
+    # margine per i passi che vengono; la cura vera e' dividere il lavoro in job
+    # paralleli, non alzare ancora questo numero.
+    timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v4
@@ -110,6 +115,9 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           ./scripts/framelocked-verdict.sh
+          # E sulla scena che digita, nei frame della digitazione: e' li' che un
+          # caso non seminato (TXT-01) romperebbe la ripetibilita'.
+          FRAMES="150 175 200" ./scripts/framelocked-verdict.sh PromptInput
           node scripts/catalog.mjs measures > /tmp/misure.sh
           sh -e /tmp/misure.sh < /dev/null
           ./scripts/handoff-travel.sh
@@ -144,6 +152,13 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         working-directory: .
         run: |
+          # framelocked-verdict.sh deve bocciare la sonda con Math.random dentro.
+          # Fino a settembre 2026 stampava il verdetto ed usciva 0 comunque, e
+          # una divergenza vera sarebbe passata col verde.
+          rc=0; ./scripts/framelocked-verdict.sh FrameLockedProbeRandom > /tmp/fv.log 2>&1 || rc=$?
+          [ "$rc" = 1 ] || { echo "framelocked-verdict.sh sulla sonda con Math.random: atteso 1, ottenuto $rc" >&2; cat /tmp/fv.log >&2; exit 1; }
+          echo "framelocked-verdict.sh boccia la sonda con Math.random, come deve."
+
           ./scripts/fixture-screenshot.sh
           if ./scripts/focus-sharpness.sh video/out/.fixture-card-focus-screenshot.mp4 >/dev/null 2>&1; then
             echo "focus-sharpness.sh promuove una scena fatta di screenshot: non misura niente." >&2
