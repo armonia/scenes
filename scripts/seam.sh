@@ -42,8 +42,6 @@
 # accorge, che e' esattamente il modo in cui una misura smette di misurare.
 set -uo pipefail
 
-# ImageMagick si chiama `magick` sulla 7 e `convert`/`compare` sulla 6.
-. "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
 export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -54,12 +52,14 @@ B="${2:-$ROOT/video/out/card-handoff.mp4}"
 SOGLIA=0.02
 # Sotto questa frazione anche il taglio finto e' quasi uguale: la scena B non si
 # muove abbastanza da provare che lo strumento veda una differenza. I tagli
-# finti delle scene del catalogo stanno fra 1,5% (macOS, ImageMagick 7) e 24%
-# (Linux, ImageMagick 6); un decimo di punto e' sotto tutti con un margine di
-# quindici volte.
+# finti delle scene del catalogo stanno fra il 2,8% e l'11% nei tre rapporti; un
+# decimo di punto e' sotto tutti con un margine di ventotto volte.
 TAGLIO_MIN=0.001
-# Differenza per canale sotto cui due pixel sono "lo stesso pixel" a occhio.
-FUZZ="4%"
+# Differenza di grigio, su 255, sotto cui due pixel sono "lo stesso pixel": il
+# rumore di due codifiche H.264 distinte sta sotto. Misurato con questa soglia:
+# le giunte del catalogo cambiano fino allo 0,21% dei pixel, i tagli di controllo
+# dal 2,8% all'11%, la coppia al contrario il 41%.
+SOGLIA_PIXEL=20
 
 for f in "$A" "$B"; do
   if [ ! -f "$f" ]; then
@@ -98,28 +98,16 @@ for f in a-last b-first b-mid; do
 done
 
 misura() {
-  local x="$1" y="$2"
-  local diff
-  # AE conta i pixel che differiscono oltre la fuzz. Su stderr, e con exit 1
-  # quando ce ne sono: entrambi previsti.
-  diff=$("${IM_COMPARE[@]}" -metric AE -fuzz "$FUZZ" "$x" "$y" null: 2>&1 || true)
-  # AE stampa "542.562 (0.000261652)": si tiene l'intero iniziale. Tagliare dal
-  # primo punto bastava finche' il conteggio non era esattamente zero, perche'
-  # allora la stringa e' "0 (0)", non ha punti, e restava "0(0)": il controllo
-  # numerico sotto la bocciava e lo script usciva 3 dicendo che il confronto era
-  # fallito. Cioe' proprio su una giunta perfetta.
-  diff=$(echo "$diff" | tr -d '[:space:]' | sed 's/[^0-9].*$//')
-  # AE deve dare un intero. Se qui c'e' un messaggio d'errore, il confronto non
-  # e' avvenuto e proseguire vorrebbe dire stampare un numero inventato.
-  case "$diff" in
-    ''|*[!0-9]*)
-      echo "confronto fallito su $(basename "$x") vs $(basename "$y"): $diff" >&2
-      exit 3
-      ;;
-  esac
-  local tot
-  tot=$("${IM_IDENTIFY[@]}" -format '%[fx:w*h]' "$x")
-  python3 -c "print(f'{$diff / $tot:.5f} {$diff}')"
+  # Il conto lo fa ffmpeg (_pixeldiff.sh), uguale su macOS e sulla CI: con
+  # `compare -fuzz` di ImageMagick la stessa coppia dava numeri fino a sei volte
+  # diversi fra la 7 e la 6, e una coppia al contrario che sul Mac differiva del
+  # 10% in CI ne risultava quasi identica.
+  local out
+  out=$("$(dirname "${BASH_SOURCE[0]}")/_pixeldiff.sh" "$1" "$2" "$SOGLIA_PIXEL") || {
+    echo "confronto fallito su $(basename "$1") vs $(basename "$2")" >&2
+    exit 3
+  }
+  echo "$out"
 }
 
 read -r seam_frac seam_px < <(misura "$TMP/a-last.png" "$TMP/b-first.png")

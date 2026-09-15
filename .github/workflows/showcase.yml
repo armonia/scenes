@@ -305,8 +305,11 @@ jobs:
 
       # I render restano scaricabili dalla run anche quando il deploy non parte,
       # cosi' su una PR si guarda il video invece di fidarsi del diff. Il job di
-      # deploy prende da qui quelli del 16:9.
+      # deploy prende da qui quelli del 16:9. SEMPRE, anche se un banco boccia: la
+      # prima run di questo job e' fallita in CI e passava sul Mac, e senza i render
+      # della CI da scaricare la differenza si poteva solo indovinare.
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: renders-${{ matrix.ratio }}
           path: |

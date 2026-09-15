@@ -12,13 +12,7 @@
 # CONSECUTIVI non si misura niente: le camere qui si muovono di frazioni di
 # grado al frame, e a meta' di prompt-input, dove si sta digitando, cambia lo
 # 0,076% dei pixel, cioe' quasi quanto ai bordi. Con cinque frame di distanza il
-# segnale si stacca dal rumore. Misurato sulle cinque scene, bordo e mezzo:
-#
-#   prompt-input   0,000%   0,434%
-#   ui-mockup      0,041%   0,218%
-#   card-handoff   0,000%   0,329%
-#   card-focus     0,000%   1,019%
-#   card-release   0,118%   0,952%
+# segnale si stacca dal rumore.
 #
 # La tolleranza al rumore di codifica e' la stessa di seam.sh, per lo stesso
 # motivo: due fotogrammi sopravvivono a una codifica H.264 e non tornano
@@ -54,7 +48,6 @@
 # mezzo non si muove e manca il controllo, 3 se un render manca o non si legge.
 set -uo pipefail
 
-. "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
 export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -69,45 +62,45 @@ fi
 
 # Quanti frame di distanza fra i due fotogrammi confrontati.
 PASSO=5
-# UNA SOGLIA ASSOLUTA QUI NON REGGE, e averla lasciata ha tenuto main rossa.
-# 0,30 veniva dalle letture di macOS; su Linux, con ImageMagick 6, le stesse
-# scene leggono cinque-dieci volte tanto e tre su cinque la sfondavano:
+# UNA SOGLIA ASSOLUTA QUI NON REGGE, e averla lasciata ha tenuto main rossa: le
+# letture di ImageMagick 6 in CI valevano cinque-dieci volte quelle della 7 sul
+# Mac. Da allora il bordo si confronta col mezzo della sua stessa scena. Poi il
+# conto e' passato a ffmpeg (_pixeldiff.sh), che da' lo stesso numero nei due
+# posti, e le scene si misurano in tre rapporti. Bordo peggiore su mezzo, per le
+# scene che dichiarano i bordi fermi:
 #
-#                    macOS            Linux
-#   ui-mockup        0,041 / 0,000    0,688 / 0,021
-#   card-focus       0,000 / 0,229    0,053 / 2,166
-#   card-release     0,118 / 0,043    0,834 / 0,442
+#                    16:9    9:16    4:5
+#   card-release     0,20    0,19    0,21
+#   board-orbit      0,07    0,24    0,16
 #
-# Le scale non sono confrontabili, i rapporti si'. Un bordo e' fermo se si muove
-# molto meno del mezzo della sua stessa scena, che e' poi la cosa che si voleva
-# dire. Il rapporto peggiore misurato su una scena che dichiara i bordi fermi e'
-# 0,147 (card-release su Linux); su un ritaglio che si muove ovunque vale circa 1.
-FERMA_REL=0.30
+# In 9:16 l'inizio di BoardOrbit si muove di piu' perche' la board, attenuata a
+# fine PromptInput, risale d'opacita' su una lastra piu' ingrandita. 0,45 sta
+# quasi due volte sopra il peggiore; un ritaglio preso dal mezzo di una scena si
+# muove ai bordi quanto nel mezzo, cioe' circa 1.
+FERMA_REL=0.45
 # Il mezzo deve muoversi almeno questo, altrimenti un fermo immagine passerebbe:
 # tre zeri sono tre letture concordi e non provano niente. Il mezzo piu' fermo
-# misurato e' 0,218 (ui-mockup su macOS).
+# fra le scene che dichiarano i bordi fermi e' 2,53 (card-release in 9:16).
 MOTO_MIN=0.12
 # E deve muoversi almeno questo PIU' dei bordi, altrimenti l'indice non
 # distingue una scena ferma da una in movimento. Il rapporto piu' stretto
-# misurato e' 2,2 (ui-mockup su Linux).
+# misurato e' 4,1 (board-orbit in 9:16).
 SEPARA=2
 
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 
 # Quanti pixel diversi fra due fotogrammi, in percentuale sul quadro.
 coppia() {
-  local a="$1" b="$2" tot
-  tot=$("${IM_IDENTIFY[@]}" -format "%[fx:w*h]" "$a")
-  local d
-  d=$("${IM_COMPARE[@]}" -metric AE -fuzz 4% "$a" "$b" null: 2>&1 || true)
-  # AE stampa "542.562 (0.000261652)": si tiene l'intero iniziale, e su un
-  # conteggio esattamente zero la stringa e' "0 (0)", senza punti.
-  d=$(echo "$d" | tr -d '[:space:]' | sed 's/[^0-9].*$//')
-  case "${d:-}" in ''|*[!0-9]*) echo "confronto fallito su $(basename "$a")" >&2; exit 3 ;; esac
-  python3 -c "print(f'{$d / $tot * 100:.3f}')"
+  # Il conto lo fa ffmpeg (_pixeldiff.sh), uguale su macOS e sulla CI. Con
+  # `compare -fuzz` di ImageMagick l'inizio di BoardOrbit in 9:16, dove
+  # l'opacita' della board risale piano, valeva 0,11 del mezzo sul Mac e 0,32
+  # in CI: la stessa scena passava da una parte e veniva bocciata dall'altra.
+  local out
+  out=$("$(dirname "${BASH_SOURCE[0]}")/_pixeldiff.sh" "$1" "$2" 20) || {
+    echo "confronto fallito su $(basename "$1")" >&2; exit 3; }
+  python3 -c "print(f'{${out%% *} * 100:.3f}')"
 }
 
-# I primi due e gli ultimi due fotogrammi di un render.
 estremi() {
   local src="$1" n m i f
   # csv=p=0 stampa "150," con la virgola in coda, e la guardia numerica sotto
