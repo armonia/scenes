@@ -433,6 +433,23 @@ two hundred pixels from the ring: the bench failed the correct case, and against
 a bench that fails everything the negative controls read as green. And on Topics
 the ring was invisible, under the delivered card, which lives at `zIndex` 10.
 
+The second piece of the kit is `kit/Shot.tsx`, and it is a deletion more than an
+addition. The block that films a slab (the attenuated plane behind, the edge,
+the slab, the light on the frame) was copied by hand into all six scenes, with
+perspective 2600, origin "50% 46%", `(1920 - SLAB_W) / 2`, `scale(1.04)` and the
+seven parallax numbers of the plane behind written into each copy, while the
+benches measured the constants in `slab.ts` that no scene read. Now every scene
+hands `Shot` a pose and its content, and the numbers that make the shot look like
+Topics live once, in `primitives/material.ts`. The stage comes from the
+composition rather than from 1920 and 1080. The copies differed in exactly three
+ways (a fade on the whole frame in `UIMockup`, a cursor inside the slab in
+`CardHandoff` and `PromptInput`, and a light edge along the bottom of the slab
+that `PromptInput` and `BoardOrbit` do not have), and `Shot` takes each one as a
+prop. `still-identity.sh` renders the first, second, middle, second-to-last and
+last frame of every scene from the previous commit and from the working tree:
+thirty of thirty identical, with a repeat of one frame per scene to show the
+instrument is repeatable, and a pose moved by one pixel makes it fail.
+
 `scripts/manifest.mjs` is where a bench asks what it should find. It prints, from
 the same modules that produce the render, the variants, their frames, the origin,
 where the subject would sit without compensation, and the tolerance. If the

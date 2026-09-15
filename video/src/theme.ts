@@ -47,12 +47,14 @@ export const monoStack =
  * perche' il contenuto attenuato scende sotto 3:1 da renderizzato.
  */
 /**
- * Il piano attenuato dietro la lastra, in tutte e cinque le scene.
+ * Il piano attenuato dietro la lastra, in tutte le scene.
  *
  * Erano quattro numeri scritti a mano in UIMockup, CardHandoff e CardFocus,
  * identici in tutti e tre i file e senza un nome. Tre copie di una costante
  * restano uguali finche' nessuno tocca una delle tre, che e' lo stesso motivo
- * per cui le pose di camera vivono in slab.ts.
+ * per cui le pose di camera vivono in slab.ts. Li legge `primitives/material.ts`,
+ * che li passa a `kit/Shot.tsx` insieme agli altri numeri del piano dietro
+ * (spostamento, inclinazione in piu', scala, inseguimento della camera).
  *
  * C'ERA ANCHE UN `BACKDROP_OPACITY` a 0,62, e non c'e' piu'. Serviva a
  * PromptInput, che aveva un fondo suo dietro una lastra sua; da quando anche

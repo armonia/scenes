@@ -1,24 +1,23 @@
 import React from "react";
 import {
-  AbsoluteFill,
   Easing,
   interpolate,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { SLAB_BACKDROP, app, fontStack } from "../theme";
 import {
   CARD_FOCUS_END_POSE,
   CARD_RELEASE_END_POSE,
   COLUMNS,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
-  SLAB_H,
-  SLAB_W,
   handoffCard,
   handoffLandedRect,
+  TOPICS_RIG,
+  TOPICS_SLAB,
 } from "../primitives/slab";
-import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
+import { Shot } from "../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 import { Board } from "../primitives/Board";
 
 /**
@@ -72,9 +71,6 @@ export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
     CARD_RELEASE_END_POSE.slideY ?? 0,
   );
 
-  const bgYaw = yaw * 0.6;
-  const bgSlideX = slideX * 0.45;
-  const bgSlideY = slideY * 0.45;
 
   const moving = handoffCard();
   const fromRest = COLUMNS[HANDOFF_FROM_COL]!.cards.filter(
@@ -93,79 +89,14 @@ export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
   };
 
   return (
-    <AbsoluteFill style={{ background: app.bg, fontFamily: fontStack }}>
-      <AbsoluteFill
-        style={{
-          perspective: SLAB_BACKDROP.perspective,
-          perspectiveOrigin: SLAB_BACKDROP.perspectiveOrigin,
-          opacity: SLAB_BACKDROP.opacity,
-          filter: `blur(${SLAB_BACKDROP.blur}px)`,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            left: (1920 - SLAB_W) / 2 - 180 + bgSlideX,
-            top: (1080 - SLAB_H) / 2 - 80 + bgSlideY,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `rotateY(${bgYaw + 8}deg) rotateX(${pitch + 4}deg) scale(0.92)`,
-            transformOrigin: "50% 50%",
-            background: app.surface,
-            border: `1px solid ${app.border}`,
-            borderRadius: 20,
-            overflow: "hidden",
-          }}
-        >
-          <Board {...board} dimmed />
-        </div>
-      </AbsoluteFill>
-
-      <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
-        {/* Lo spessore, dietro. Fratello e non figlio: la lastra ritaglia, e
-            qualunque ritaglio appiattisce il 3D dei suoi figli. */}
-        <SlabEdge
-          left={(1920 - SLAB_W) / 2 + slideX}
-          top={(1080 - SLAB_H) / 2 + slideY}
-          pushZ={pushZ}
-          yaw={yaw}
-          pitch={pitch}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: (1920 - SLAB_W) / 2 + slideX,
-            top: (1080 - SLAB_H) / 2 + slideY,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `translateZ(${pushZ}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(1.04)`,
-            transformOrigin: "50% 50%",
-            transformStyle: "preserve-3d",
-            background: app.bg,
-            borderRadius: 18,
-            border: `1px solid ${app.borderLight}`,
-            boxShadow:
-              "0 80px 160px rgba(0,0,0,0.78), 0 0 0 1px rgba(255,255,255,0.05) inset",
-            overflow: "hidden",
-          }}
-        >
-          <Board {...board} />
-
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 3,
-              background:
-                "linear-gradient(to right, transparent, rgba(255,255,255,0.12) 20%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.12) 80%, transparent)",
-            }}
-          />
-        </div>
-      </AbsoluteFill>
-
-      <SlabLighting />
-    </AbsoluteFill>
+    <Shot
+      rig={TOPICS_RIG}
+      slab={TOPICS_SLAB}
+      material={TOPICS_SHOT_MATERIAL}
+      pose={{ yaw, pitch, pushZ, slideX, slideY }}
+      backdrop={<Board {...board} dimmed />}
+    >
+      <Board {...board} />
+    </Shot>
   );
 };

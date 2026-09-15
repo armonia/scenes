@@ -1,17 +1,14 @@
 import React from "react";
 import {
-  AbsoluteFill,
   Easing,
   interpolate,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { SLAB_BACKDROP, app, fontStack } from "../theme";
 import { Board } from "../primitives/Board";
 import { bubbleCurve } from "../primitives/Assistant";
 import { Cursor, type Waypoint } from "../primitives/Cursor";
 import { typedCount, typingSchedule } from "../primitives/rhythm";
-import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
 import { tempo } from "../primitives/tempo";
 import {
   CARD_RELEASE_END_POSE,
@@ -26,11 +23,13 @@ import {
   SEND_W,
   SEND_X,
   SEND_Y,
-  SLAB_H,
-  SLAB_W,
   handoffCard,
   handoffLandedRect,
+  TOPICS_RIG,
+  TOPICS_SLAB,
 } from "../primitives/slab";
+import { Shot } from "../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 
 /**
  * PromptInput: il quinto anello. Il cursore scende sul composer, scrive, invia,
@@ -214,9 +213,6 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     PROMPT_INPUT_END_POSE.slideY ?? 0,
   );
 
-  const bgYaw = yaw * 0.6;
-  const bgSlideX = slideX * 0.45;
-  const bgSlideY = slideY * 0.45;
 
   const focused = frame >= K.at(T.clickField);
   // Il caret lampeggia a 15 frame, e il calcolo e' sul frame: nessun keyframe CSS.
@@ -299,72 +295,20 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   };
 
   return (
-    <AbsoluteFill style={{ background: app.bg, fontFamily: fontStack }}>
-      <AbsoluteFill
-        style={{
-          perspective: SLAB_BACKDROP.perspective,
-          perspectiveOrigin: SLAB_BACKDROP.perspectiveOrigin,
-          opacity: SLAB_BACKDROP.opacity,
-          filter: `blur(${SLAB_BACKDROP.blur}px)`,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            left: (1920 - SLAB_W) / 2 - 180 + bgSlideX,
-            top: (1080 - SLAB_H) / 2 - 80 + bgSlideY,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `rotateY(${bgYaw + 8}deg) rotateX(${pitch + 4}deg) scale(0.92)`,
-            transformOrigin: "50% 50%",
-            background: app.surface,
-            border: `1px solid ${app.border}`,
-            borderRadius: 20,
-            overflow: "hidden",
-          }}
-        >
-          <Board {...board} assistant={assistant} boardOpacity={attn} dimmed />
-        </div>
-      </AbsoluteFill>
+    <Shot
+      rig={TOPICS_RIG}
+      slab={TOPICS_SLAB}
+      material={TOPICS_SHOT_MATERIAL}
+      pose={{ yaw, pitch, pushZ, slideX, slideY }}
+      highlight={false}
+      backdrop={<Board {...board} assistant={assistant} boardOpacity={attn} dimmed />}
+    >
+      <Board {...board} assistant={assistant} boardOpacity={attn} />
 
-      <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
-        {/* Lo spessore, dietro. Fratello e non figlio: la lastra ritaglia, e
-            qualunque ritaglio appiattisce il 3D dei suoi figli. */}
-        <SlabEdge
-          left={(1920 - SLAB_W) / 2 + slideX}
-          top={(1080 - SLAB_H) / 2 + slideY}
-          pushZ={pushZ}
-          yaw={yaw}
-          pitch={pitch}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: (1920 - SLAB_W) / 2 + slideX,
-            top: (1080 - SLAB_H) / 2 + slideY,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `translateZ(${pushZ}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(1.04)`,
-            transformOrigin: "50% 50%",
-            transformStyle: "preserve-3d",
-            background: app.bg,
-            borderRadius: 18,
-            border: `1px solid ${app.borderLight}`,
-            boxShadow:
-              "0 80px 160px rgba(0,0,0,0.78), 0 0 0 1px rgba(255,255,255,0.05) inset",
-            overflow: "hidden",
-          }}
-        >
-          <Board {...board} assistant={assistant} boardOpacity={attn} />
-
-          {/* Il cursore sta DENTRO la lastra, quindi prende la stessa
-              prospettiva e appoggia sul piano. Uno disegnato sopra il quadro,
-              dritto, tradisce subito che la lastra e' un'immagine. */}
-          <Cursor path={path} clicks={[T.clickField, sendClick]} />
-        </div>
-      </AbsoluteFill>
-
-      <SlabLighting />
-    </AbsoluteFill>
+      {/* Il cursore sta DENTRO la lastra, quindi prende la stessa
+          prospettiva e appoggia sul piano. Uno disegnato sopra il quadro,
+          dritto, tradisce subito che la lastra e' un'immagine. */}
+      <Cursor path={path} clicks={[T.clickField, sendClick]} />
+    </Shot>
   );
 };

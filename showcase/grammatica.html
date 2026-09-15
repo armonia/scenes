@@ -1886,7 +1886,7 @@ var CAT=[
  c:"First card at f52, second at f88, metric from 128 to 64 ms between f120 and f200. The camera is not still at any of those.",
  d:"The frame a count changes on must not coincide with a frame where the camera is still. If they coincide, what you made is a cut with the camera parked over it."},
 
-{fam:"mat",code:"MAT-01",t:"Edge and contact shadow",demo:"thick",src:"SlabChrome · SlabEdge",
+{fam:"mat",code:"MAT-01",t:"Edge and contact shadow",demo:"thick",src:"kit/Shot.tsx · edge",
  a:"The slab has an edge and it rests on something. In the second half of the demo the edge is switched off, to see what goes.",
  b:"A second plane behind the first, slightly larger, with a deep shadow. It costs one div, and it decides whether the object reads as an object. In the repo it is a SIBLING of the slab and not a child, which is not a detail: the slab clips, and any clipping flattens preserve-3d, so a child at translateZ(-30) would be squashed onto its parent's plane and never stick out. As a sibling inside the same perspective its Z is real.",
  c:"Edge 30 behind the plane, 6 px of overhang per side, shadow 90 offset and 180 blur at 75 per cent. All six scenes draw it and only the last one shows it: at small yaw angles it sits exactly behind the slab, which is why it went unwritten for so long — nothing in the film turned far enough to need it.",

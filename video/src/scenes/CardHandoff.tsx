@@ -1,19 +1,15 @@
 import React from "react";
 import {
-  AbsoluteFill,
   Easing,
   interpolate,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { SLAB_BACKDROP, app, fontStack } from "../theme";
 import {
   CARD_HANDOFF_END_POSE,
   CARD_H,
   COLUMNS,
   COL_W,
-  SLAB_H,
-  SLAB_W,
   UI_MOCKUP_END_POSE,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
@@ -22,8 +18,11 @@ import {
   columnX,
   handoffCard,
   handoffTargetCards,
+  TOPICS_RIG,
+  TOPICS_SLAB,
 } from "../primitives/slab";
-import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
+import { Shot } from "../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 import { Board } from "../primitives/Board";
 import { Cursor, pointOnPath, type Waypoint } from "../primitives/Cursor";
 import { tempo } from "../primitives/tempo";
@@ -143,9 +142,6 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
     extrapolateRight: "clamp",
   });
 
-  // NESSUN fade-in. Un fade da nero all'inizio sarebbe un taglio con le buone
-  // maniere: il primo frame deve essere gia' pieno, identico all'ultimo di prima.
-  const bgYaw = yaw * 0.6;
 
   const moving = handoffCard();
 
@@ -232,109 +228,46 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   });
 
   return (
-    <AbsoluteFill style={{ background: app.bg, fontFamily: fontStack }}>
-      <AbsoluteFill
-        style={{
-          perspective: SLAB_BACKDROP.perspective,
-          perspectiveOrigin: SLAB_BACKDROP.perspectiveOrigin,
-          opacity: SLAB_BACKDROP.opacity,
-          filter: `blur(${SLAB_BACKDROP.blur}px)`,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            left: (1920 - SLAB_W) / 2 - 180,
-            top: (1080 - SLAB_H) / 2 - 80,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `rotateY(${bgYaw + 8}deg) rotateX(${pitch + 4}deg) scale(0.92)`,
-            transformOrigin: "50% 50%",
-            background: app.surface,
-            border: `1px solid ${app.border}`,
-            borderRadius: 20,
-            overflow: "hidden",
-          }}
-        >
-          <Board
-            closeGap={closeGap}
-            travel={travel}
-            lift={lift}
-            cardX={cardX}
-            cardY={cardY_}
-            moving={movingNow}
-            fromRest={fromRest}
-            tilt={tilt}
-            handed={frame >= T.at(COUNT_AT) ? 1 : 0}
-            statusChanged={frame >= T.at(PANEL_AT) ? 1 : 0}
-            dimmed
-          />
-        </div>
-      </AbsoluteFill>
-
-      <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
-        {/* Lo spessore, dietro. Fratello e non figlio: la lastra ritaglia, e
-            qualunque ritaglio appiattisce il 3D dei suoi figli. */}
-        <SlabEdge
-          left={(1920 - SLAB_W) / 2}
-          top={(1080 - SLAB_H) / 2}
-          pushZ={pushZ}
-          yaw={yaw}
-          pitch={pitch}
+    <Shot
+      rig={TOPICS_RIG}
+      slab={TOPICS_SLAB}
+      material={TOPICS_SHOT_MATERIAL}
+      pose={{ yaw, pitch, pushZ, slideX: 0, slideY: 0 }}
+      backdrop={
+        <Board
+          closeGap={closeGap}
+          travel={travel}
+          lift={lift}
+          cardX={cardX}
+          cardY={cardY_}
+          moving={movingNow}
+          fromRest={fromRest}
+          tilt={tilt}
+          handed={frame >= T.at(COUNT_AT) ? 1 : 0}
+          statusChanged={frame >= T.at(PANEL_AT) ? 1 : 0}
+          dimmed
         />
-        <div
-          style={{
-            position: "absolute",
-            left: (1920 - SLAB_W) / 2,
-            top: (1080 - SLAB_H) / 2,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `translateZ(${pushZ}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(1.04)`,
-            transformOrigin: "50% 50%",
-            transformStyle: "preserve-3d",
-            background: app.bg,
-            borderRadius: 18,
-            border: `1px solid ${app.borderLight}`,
-            boxShadow:
-              "0 80px 160px rgba(0,0,0,0.78), 0 0 0 1px rgba(255,255,255,0.05) inset",
-            overflow: "hidden",
-          }}
-        >
-          <Board
-            closeGap={closeGap}
-            travel={travel}
-            lift={lift}
-            cardX={cardX}
-            cardY={cardY_}
-            moving={movingNow}
-            fromRest={fromRest}
-            tilt={tilt}
-            handed={frame >= T.at(COUNT_AT) ? 1 : 0}
-            statusChanged={frame >= T.at(PANEL_AT) ? 1 : 0}
-          />
+      }
+    >
+      <Board
+        closeGap={closeGap}
+        travel={travel}
+        lift={lift}
+        cardX={cardX}
+        cardY={cardY_}
+        moving={movingNow}
+        fromRest={fromRest}
+        tilt={tilt}
+        handed={frame >= T.at(COUNT_AT) ? 1 : 0}
+        statusChanged={frame >= T.at(PANEL_AT) ? 1 : 0}
+      />
 
-          {/* La mano sta DENTRO la lastra, quindi prende la stessa prospettiva
-              e appoggia sul piano. Al primo e all'ultimo frame sta fuori dai
-              2400x1200 e l'overflow la taglia: e' cosi' che le due giunte
-              restano identiche a scene che un cursore non ce l'hanno. */}
-          <Cursor path={path} clicks={[T.at(GRAB), T.at(RELEASE)]} />
-
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 3,
-              background:
-                "linear-gradient(to right, transparent, rgba(255,255,255,0.12) 20%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.12) 80%, transparent)",
-            }}
-          />
-        </div>
-      </AbsoluteFill>
-
-      <SlabLighting />
-    </AbsoluteFill>
+      {/* La mano sta DENTRO la lastra, quindi prende la stessa prospettiva
+          e appoggia sul piano. Al primo e all'ultimo frame sta fuori dai
+          2400x1200 e l'overflow la taglia: e' cosi' che le due giunte
+          restano identiche a scene che un cursore non ce l'hanno. */}
+      <Cursor path={path} clicks={[T.at(GRAB), T.at(RELEASE)]} />
+    </Shot>
   );
 };
 

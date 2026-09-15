@@ -1,24 +1,23 @@
 import React from "react";
 import {
-  AbsoluteFill,
   Easing,
   interpolate,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { SLAB_BACKDROP, app, fontStack } from "../theme";
 import {
   BOARD_ORBIT_END_POSE,
   COLUMNS,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
   PROMPT_INPUT_END_POSE,
-  SLAB_H,
-  SLAB_W,
   handoffCard,
   handoffLandedRect,
+  TOPICS_RIG,
+  TOPICS_SLAB,
 } from "../primitives/slab";
-import { SlabEdge, SlabLighting } from "../primitives/SlabChrome";
+import { Shot } from "../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 import { Board } from "../primitives/Board";
 import { tempo } from "../primitives/tempo";
 
@@ -32,8 +31,8 @@ import { tempo } from "../primitives/tempo";
  * indistinguibile da una carta da parati incollata sul fondo. E' l'unica cosa
  * che un film di prodotto dice una volta sola, all'inizio o alla fine.
  *
- * LO SPESSORE ESISTE SOLO PERCHE' LA CAMERA GIRA. `SlabEdge` sta in tutte e
- * cinque le scene precedenti e in nessuna si vede: a yaw piccoli sta esattamente
+ * LO SPESSORE ESISTE SOLO PERCHE' LA CAMERA GIRA. Lo disegna `kit/Shot.tsx` in tutte e
+ * cinque le scene precedenti, e in nessuna si vede: a yaw piccoli sta esattamente
  * dietro la lastra. Qui sporge, ed e' il motivo per cui e' stato scritto.
  *
  * L'ATTENUAZIONE SI RIAPRE. Il primo fotogramma la trova a 0,62, che e' dove
@@ -84,9 +83,6 @@ export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
   // Il quadro si riapre: 0,62 e' dove PromptInput ha lasciato l'attenuazione.
   const attn = at(0.62, 1);
 
-  const bgYaw = yaw * 0.6;
-  const bgSlideX = slideX * 0.45;
-  const bgSlideY = slideY * 0.45;
 
   // La board sta come l'hanno lasciata le scene prima: consegna avvenuta, e il
   // thread con la risposta gia' arrivata per intero.
@@ -115,64 +111,17 @@ export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
     attn,
   };
 
-  const left = (1920 - SLAB_W) / 2 + slideX;
-  const top = (1080 - SLAB_H) / 2 + slideY;
 
   return (
-    <AbsoluteFill style={{ background: app.bg, fontFamily: fontStack }}>
-      <AbsoluteFill
-        style={{
-          perspective: SLAB_BACKDROP.perspective,
-          perspectiveOrigin: SLAB_BACKDROP.perspectiveOrigin,
-          opacity: SLAB_BACKDROP.opacity,
-          filter: `blur(${SLAB_BACKDROP.blur}px)`,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            left: (1920 - SLAB_W) / 2 - 180 + bgSlideX,
-            top: (1080 - SLAB_H) / 2 - 80 + bgSlideY,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `rotateY(${bgYaw + 8}deg) rotateX(${pitch + 4}deg) scale(0.92)`,
-            transformOrigin: "50% 50%",
-            background: app.surface,
-            border: `1px solid ${app.border}`,
-            borderRadius: 20,
-            overflow: "hidden",
-          }}
-        >
-          <Board {...board} assistant={assistant} boardOpacity={attn} dimmed />
-        </div>
-      </AbsoluteFill>
-
-      <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
-        <SlabEdge left={left} top={top} pushZ={pushZ} yaw={yaw} pitch={pitch} />
-
-        <div
-          style={{
-            position: "absolute",
-            left,
-            top,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `translateZ(${pushZ}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(1.04)`,
-            transformOrigin: "50% 50%",
-            transformStyle: "preserve-3d",
-            background: app.bg,
-            borderRadius: 18,
-            border: `1px solid ${app.borderLight}`,
-            boxShadow:
-              "0 80px 160px rgba(0,0,0,0.78), 0 0 0 1px rgba(255,255,255,0.05) inset",
-            overflow: "hidden",
-          }}
-        >
-          <Board {...board} assistant={assistant} boardOpacity={attn} />
-        </div>
-      </AbsoluteFill>
-
-      <SlabLighting />
-    </AbsoluteFill>
+    <Shot
+      rig={TOPICS_RIG}
+      slab={TOPICS_SLAB}
+      material={TOPICS_SHOT_MATERIAL}
+      pose={{ yaw, pitch, pushZ, slideX, slideY }}
+      highlight={false}
+      backdrop={<Board {...board} assistant={assistant} boardOpacity={attn} dimmed />}
+    >
+      <Board {...board} assistant={assistant} boardOpacity={attn} />
+    </Shot>
   );
 };

@@ -1,24 +1,24 @@
 import React from "react";
 import { Assistant } from "../primitives/Assistant";
 import {
-  AbsoluteFill,
   Easing,
   interpolate,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { SLAB_BACKDROP, app, fontStack } from "../theme";
 import {
   COLUMNS,
-  SLAB_H,
-  SLAB_W,
   UI_MOCKUP_END_POSE,
   UI_MOCKUP_START_POSE,
   addCardY,
   cardY,
   columnX,
   COL_W,
+  TOPICS_RIG,
+  TOPICS_SLAB,
 } from "../primitives/slab";
+import { Shot } from "../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 import {
   AddCard,
   AppChrome,
@@ -26,8 +26,6 @@ import {
   CardBox,
   ColumnHeader,
   DetailPanel,
-  SlabEdge,
-  SlabLighting,
 } from "../primitives/SlabChrome";
 
 /**
@@ -112,92 +110,20 @@ export const UIMockup: React.FC<UIMockupProps> = ({ progress }) => {
     extrapolateRight: "clamp",
   });
 
-  // Il layer di sfondo ha un parallasse piu' lento: si muove meno della lastra.
-  const bgYaw = yaw * 0.6;
-  const bgSlideX = slideX * 0.45;
 
   const cardRevealStart = 75;
 
   return (
-    <AbsoluteFill
-      style={{ background: app.bg, fontFamily: fontStack, opacity: fadeIn }}
+    <Shot
+      rig={TOPICS_RIG}
+      slab={TOPICS_SLAB}
+      material={TOPICS_SHOT_MATERIAL}
+      pose={{ yaw, pitch, pushZ, slideX, slideY: 0 }}
+      opacity={fadeIn}
+      backdrop={<SlabBody frame={frame} cardRevealStart={cardRevealStart} dimmed />}
     >
-      {/* Layer di sfondo: un'altra istanza della stessa UI, sfocata e attenuata. */}
-      <AbsoluteFill
-        style={{
-          perspective: SLAB_BACKDROP.perspective,
-          perspectiveOrigin: SLAB_BACKDROP.perspectiveOrigin,
-          opacity: SLAB_BACKDROP.opacity,
-          filter: `blur(${SLAB_BACKDROP.blur}px)`,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            left: (1920 - SLAB_W) / 2 - 180 + bgSlideX,
-            top: (1080 - SLAB_H) / 2 - 80,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `rotateY(${bgYaw + 8}deg) rotateX(${pitch + 4}deg) scale(0.92)`,
-            transformOrigin: "50% 50%",
-            background: app.surface,
-            border: `1px solid ${app.border}`,
-            borderRadius: 20,
-            overflow: "hidden",
-          }}
-        >
-          <SlabBody frame={frame} cardRevealStart={cardRevealStart} dimmed />
-        </div>
-      </AbsoluteFill>
-
-      {/* La lastra principale: nitida, frontale, e' il soggetto della scena. */}
-      <AbsoluteFill style={{ perspective: 2600, perspectiveOrigin: "50% 46%" }}>
-        {/* Lo spessore, dietro. Fratello e non figlio: la lastra ritaglia, e
-            qualunque ritaglio appiattisce il 3D dei suoi figli. */}
-        <SlabEdge
-          left={(1920 - SLAB_W) / 2 + slideX}
-          top={(1080 - SLAB_H) / 2}
-          pushZ={pushZ}
-          yaw={yaw}
-          pitch={pitch}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: (1920 - SLAB_W) / 2 + slideX,
-            top: (1080 - SLAB_H) / 2,
-            width: SLAB_W,
-            height: SLAB_H,
-            transform: `translateZ(${pushZ}px) rotateY(${yaw}deg) rotateX(${pitch}deg) scale(1.04)`,
-            transformOrigin: "50% 50%",
-            transformStyle: "preserve-3d",
-            background: app.bg,
-            borderRadius: 18,
-            border: `1px solid ${app.borderLight}`,
-            boxShadow:
-              "0 80px 160px rgba(0,0,0,0.78), 0 0 0 1px rgba(255,255,255,0.05) inset",
-            overflow: "hidden",
-          }}
-        >
-          <SlabBody frame={frame} cardRevealStart={cardRevealStart} />
-
-          {/* Spessore sul bordo inferiore: dice "oggetto fisico". */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 3,
-              background:
-                "linear-gradient(to right, transparent, rgba(255,255,255,0.12) 20%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.12) 80%, transparent)",
-            }}
-          />
-        </div>
-      </AbsoluteFill>
-
-      <SlabLighting />
-    </AbsoluteFill>
+      <SlabBody frame={frame} cardRevealStart={cardRevealStart} />
+    </Shot>
   );
 };
 
