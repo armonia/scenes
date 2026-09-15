@@ -13,17 +13,17 @@ import {
   handoffLandedRect,
   TOPICS_RIG,
   TOPICS_SLAB,
-} from "../primitives/slab";
-import { poseAt } from "../kit/camera";
+} from "../geometry";
+import { poseAt } from "../../../kit/camera";
 import {
   BOARD_ORBIT_BASE as BASE,
   BOARD_ORBIT_SETTLE as SETTLE,
   boardOrbitTrack,
-} from "../primitives/tracks";
-import { Shot } from "../kit/Shot";
-import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
-import { Board } from "../primitives/Board";
-import { tempo } from "../primitives/tempo";
+} from "../tracks";
+import { Shot } from "../../../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../material";
+import { Board } from "../Board";
+import { tempo } from "../../../primitives/tempo";
 
 /**
  * BoardOrbit: il sesto anello, e la fine del film.
@@ -56,7 +56,7 @@ export type BoardOrbitProps = {
 };
 
 /* BASE, la durata di riferimento, e SETTLE, il frame in cui la camera arriva e
-   si ferma, stanno in primitives/tracks.ts: li legge anche la traccia. */
+   si ferma, stanno in products/topics/tracks.ts: li legge anche la traccia. */
 
 export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
   const localFrame = useCurrentFrame();
@@ -72,7 +72,7 @@ export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
       extrapolateRight: "clamp",
     });
 
-  // La camera sta in primitives/tracks.ts, con la stessa curva e la stessa
+  // La camera sta in products/topics/tracks.ts, con la stessa curva e la stessa
   // finestra: `at` resta qui per l'attenuazione, che non e' camera.
   const pose = poseAt(boardOrbitTrack(durationInFrames), frame);
 

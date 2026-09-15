@@ -11,12 +11,12 @@ import {
   TOPICS_SLAB,
   handoffCard,
   handoffLandedRect,
-} from "../primitives/slab";
-import { poseAt } from "../kit/camera";
-import { cardFocusTrack } from "../primitives/tracks";
-import { Board } from "../primitives/Board";
-import { Shot } from "../kit/Shot";
-import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
+} from "../geometry";
+import { poseAt } from "../../../kit/camera";
+import { cardFocusTrack } from "../tracks";
+import { Board } from "../Board";
+import { Shot } from "../../../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../material";
 
 /**
  * CardFocus: la quarta scena, e il terzo anello della catena.
@@ -59,7 +59,7 @@ export const CardFocus: React.FC<CardFocusProps> = ({ progress }) => {
   // Una curva sola per tutta la scena, come nelle due precedenti. inOut arriva
   // agli estremi con derivata nulla: a sinistra si aggancia alla fine di
   // CardHandoff, che e' ferma, a destra lascia una scena che si puo' mettere
-  // prima di qualunque altra. La curva sta in primitives/tracks.ts.
+  // prima di qualunque altra. La curva sta in products/topics/tracks.ts.
   const pose = poseAt(cardFocusTrack(durationInFrames), frame);
 
   // La board a consegna avvenuta: sono i tre valori che CardHandoff raggiunge

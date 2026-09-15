@@ -39,7 +39,7 @@
 # prima versione di questo banco non la superava: promuoveva la fixture.
 #
 # La geometria del ritaglio non e' scritta qui. La calcola il manifest
-# (scripts/manifest.mjs) da primitives/slab.ts, che e' la stessa sorgente da cui
+# (scripts/manifest.mjs) da products/topics/geometry.ts, che e' la stessa sorgente da cui
 # la scena prende la sua posa finale: una costante ricopiata a mano in bash resta
 # giusta solo fino alla prima modifica della lastra.
 #
@@ -67,7 +67,7 @@ SOGLIA=1.50
 
 # La card, in pixel di composizione, all'ultimo fotogramma: dimensioni, centro,
 # ingrandimento finale, dove stava nel campo largo e quanto manca da li' alla
-# scala finale. Li calcola il manifest (video/src/manifest/topics.ts) dagli
+# scala finale. Li calcola il manifest (video/src/products/topics/benches.ts) dagli
 # stessi numeri che usa la scena.
 read -r CW CH CX CY ZOOM WX WY K < <(node "$ROOT/scripts/manifest.mjs" focus-sharpness 2>/dev/null)
 
@@ -164,6 +164,6 @@ fi
 
 echo "FALLITO: solo ${rapporto}x contro lo screenshot, sotto la soglia di ${SOGLIA}x." >&2
 echo "O la lastra ha smesso di essere DOM da qualche parte lungo la catena," >&2
-echo "oppure CARD_FOCUS_ZOOM in primitives/slab.ts e' salito oltre quello che" >&2
+echo "oppure CARD_FOCUS_ZOOM in products/topics/geometry.ts e' salito oltre quello che" >&2
 echo "la rasterizzazione regge." >&2
 exit 1

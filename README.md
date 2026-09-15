@@ -30,7 +30,7 @@ not a stylistic preference.
 That rule was an assertion until one scene had to enter from another. Two clips
 that both start and end at rest can be placed in any order without anyone seeing
 a cut, because there is no motion to break. `CardHandoff` starts from the pose
-`UIMockup` stops in, both reading it from `primitives/slab.ts`, and `seam.sh`
+`UIMockup` stops in, both reading it from `products/topics/geometry.ts`, and `seam.sh`
 diffs the two frames to prove it.
 
 One measured join makes the rule true of a pair. `CardFocus` is the third link:
@@ -55,7 +55,7 @@ while the other twenty-eight were joined.
 Putting it in was not a swap of constants. The board only ever used the top half
 of the slab; the bottom half was empty, which is also why the frames read as a
 mockup rather than as a screen in use. The assistant thread and the composer now
-live down there, in `primitives/Assistant.tsx`, drawn by every scene — if only
+live down there, in `products/topics/Assistant.tsx`, drawn by every scene — if only
 one scene drew them, the join before it would show half a screen appearing out
 of nothing, and `seam.sh` would call that a cut, correctly. With one screen the
 move from the board to the composer stops being a change of screen and becomes a
@@ -393,12 +393,12 @@ bench would have noticed, because no bench looked anywhere else.
 
 `video/src/kit/` is where the registry becomes usable for any product. It starts
 with two pure modules, which Node reads directly the way the benches already read
-`slab.ts`: `stage.ts`, the three stages, and `rig.ts`, with perspective, origin
+`topics/geometry.ts`: `stage.ts`, the three stages, and `rig.ts`, with perspective, origin
 and slab scale as parameters and `slabPointOnScreen`, `centreOn`, `zoomForPush`,
 `pushForZoom` and `pushForFill` written against them. `pushForFill` exists
 because push numbers do not travel between formats: the same push gives the same
 magnification, and in a narrow frame the subject fills it much sooner, so the
-fill is the decision and the push follows from it. `slab.ts` keeps every export
+fill is the decision and the push follows from it. `topics/geometry.ts` keeps every export
 and calls the kit with the stage and rig of Topics. `geometry-snapshot.mjs`
 photographs its geometry (38 constants, seven poses, the functions on sample
 points) and the versions before and after the move are the same string.
@@ -438,9 +438,9 @@ addition. The block that films a slab (the attenuated plane behind, the edge,
 the slab, the light on the frame) was copied by hand into all six scenes, with
 perspective 2600, origin "50% 46%", `(1920 - SLAB_W) / 2`, `scale(1.04)` and the
 seven parallax numbers of the plane behind written into each copy, while the
-benches measured the constants in `slab.ts` that no scene read. Now every scene
+benches measured the constants in `topics/geometry.ts` that no scene read. Now every scene
 hands `Shot` a pose and its content, and the numbers that make the shot look like
-Topics live once, in `primitives/material.ts`. The stage comes from the
+Topics live once, in `products/topics/material.ts`. The stage comes from the
 composition rather than from 1920 and 1080. The copies differed in exactly three
 ways (a fade on the whole frame in `UIMockup`, a cursor inside the slab in
 `CardHandoff` and `PromptInput`, and a light edge along the bottom of the slab
@@ -465,7 +465,7 @@ error reaches 103.7 px and the check says so.
 The four benches that worked out the geometry of Topics inside a `node -e`
 snippet of their own (`handoff-travel.sh`, `focus-sharpness.sh`,
 `fixture-screenshot.sh`, `contrast-floor.py`) now ask `manifest.mjs`, which
-computes it once in `video/src/manifest/topics.ts`. Their output is identical
+computes it once in `video/src/products/topics/benches.ts`. Their output is identical
 line for line, and the screenshot fixture comes out with the same hash.
 `no-product-literals.sh` keeps it that way: a bench that reads `video/src` by
 itself fails it, and pointed at the benches of the commit before this one it
@@ -478,7 +478,7 @@ no bench could ask whether the camera reverses in motion or whether the slab
 leaves an edge of the frame uncovered. `kit/camera.ts` makes the camera data: a
 track is one curve per axis (from, to, a window, an easing) and `poseAt` reads it
 with Remotion's own `interpolate` and `Easing`, called with the same arguments
-the scenes used. The six tracks live in `primitives/tracks.ts`, and the scenes
+the scenes used. The six tracks live in `products/topics/tracks.ts`, and the scenes
 read them. `still-identity.sh` now takes the frames to compare, because the five
 default ones miss the windows that matter: frames 20 to 81 of `UIMockup`, where
 the slab slides in, and the frames either side of where `PromptInput` and
@@ -509,11 +509,19 @@ where the subject would sit without compensation, and the tolerance. If the
 uncompensated point fell on the origin, the negative could not fail, and
 `drift.py` exits 2 and says so.
 
+Everything that belongs to Topics now sits in one folder, `video/src/products/topics/`:
+the slab geometry (`geometry.ts`, which was `primitives/slab.ts`), the tokens
+(`tokens.ts`, which was `theme.ts`), the furniture, the material, the tracks, the
+bench geometry (`benches.ts`) and the six scenes. What stays outside is what
+another product can use as it is: `kit/`, the cursor, the frame-locked helpers.
+The move changed no number. `geometry-snapshot.mjs` gives the same 52 values as
+before the kit existed, and every still is identical to `main`.
+
 ## Layout
 
 | | |
 |---|---|
-| `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/`, the product-independent kit in `video/src/kit/`, the probe slab in `video/src/products/probe/`, bench specimens in `video/src/specimens/` |
+| `video/` | The Remotion project. The product-independent kit in `video/src/kit/`, one folder per product in `video/src/products/` (`topics/` holds the slab, its tokens, tracks, bench geometry and the six scenes; `probe/` the synthetic slab), shared primitives such as the cursor and the frame-locked helpers in `video/src/primitives/`, the catalogue in `video/src/scenes/catalog.json`, bench specimens in `video/src/specimens/` |
 | `scripts/` | The measurements, the review page, the showcase build, and `catalog.mjs`, which is how shell and CI read `catalog.json` without a compiler. See below |
 | `showcase/` | The public pages. `index.template.html` and `grammatica.html` are committed; the scene section and the renders are not, `showcase-build.sh` generates the first from `catalog.json` and copies the second into `showcase/dist/` |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
@@ -551,7 +559,7 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/fill-geom.py [--push-offset N] [--must-fail]  # does the slab cover the four edges of the frame
 ./scripts/no-product-literals.sh [scripts-dir]          # does any bench read product geometry by itself
 node scripts/manifest.mjs cam06                          # what the benches must find, from the kit
-node scripts/geometry-snapshot.mjs [slab.ts]             # the geometry as a string, to prove a refactor left it alone
+node scripts/geometry-snapshot.mjs [geometry.ts]         # the geometry as a string, to prove a refactor left it alone
 ./scripts/tempo.py [long.mp4 short.mp4]                 # does shortening a scene retime it or just trim it
 ./scripts/fixture-tempo.sh                              # render the two retimed fixtures
 ./scripts/fixture-trim.sh                               # build the trimmed scene tempo.py must fail
@@ -700,7 +708,7 @@ entry, or its green means only that it reached the end.
 catalogue says the attenuation floor is 0.62 *because* below it the attenuated
 content falls under 3:1 once rendered — and nobody had ever rendered it and
 looked. It now reads the WCAG ratio between the attenuated thread heading and its
-background on a real frame, with the crop projected out of `slab.ts` instead of
+background on a real frame, with the crop projected out of `topics/geometry.ts` instead of
 picked by eye, and gets 4.17:1 here — 3.84:1 in CI, because Linux renders the
 same text with different fonts. Same verdict, and a reminder of why the number
 is a floor and not an equality. The same scene rendered at 0.25, which is what
@@ -719,7 +727,7 @@ Linux in CI — everything shifts and a fixed crop lands on empty background. It
 exited 3 there, "could not measure", which was at least the honest answer rather
 than a verdict about a scene that was fine. The heading it reads instead sits at
 `THREAD_TOP`, which is a constant, so its position is arithmetic. The same
-lesson `slab.ts` already records about card heights, learned again one floor
+lesson `topics/geometry.ts` already records about card heights, learned again one floor
 down.
 
 How it reads matters too: background is the modal value of the crop, foreground
@@ -770,7 +778,7 @@ thread down there — static relative to the slab, but moving with the camera li
 everything else — thousands of high-contrast text pixels drag the centroid down.
 The reading fell from 154px to 83 and invented a backward step: the scene blamed
 for a change in the instrument's surroundings. It now diffs only the board's half
-of the frame, and where that half ends is read from `slab.ts` rather than picked
+of the frame, and where that half ends is read from `topics/geometry.ts` rather than picked
 by eye, so it follows if the assistant moves.
 
 `handoff-travel.sh` had never run on macOS. Its centroid step was a heredoc
@@ -864,15 +872,16 @@ from a fresh one, which is the whole argument for letting CI do it.
 The order matters, and step 4 is the one people skip.
 
 0. **Decide the pose it enters from and the pose it leaves in**, and put both in
-   `primitives/slab.ts`. `CARD_HANDOFF_END_POSE` spent three scenes as three
-   literals inside `CardHandoff.tsx`, which was fine exactly as long as nothing
-   came after it.
-1. **Write it in `video/src/scenes/`.** Take `progress?: number` and derive
+   the product's `geometry.ts`, `products/topics/geometry.ts` for Topics.
+   `CARD_HANDOFF_END_POSE` spent three scenes as three literals inside
+   `CardHandoff.tsx`, which was fine exactly as long as nothing came after it.
+1. **Write it in `video/src/products/<product>/scenes/`.** Take `progress?: number` and derive
    everything else from `useCurrentFrame()`. If you reach for `Date.now()`,
    `Math.random()` or a CSS keyframe, the scene is no longer reproducible and
    `framelocked-verdict.sh` will say so.
-2. **Reuse `primitives/`.** `slab.ts` holds the geometry and the camera poses,
-   `SlabChrome.tsx` the app furniture. A scene that redraws its own sidebar can
+2. **Reuse the kit and the product folder.** `kit/Shot.tsx` draws the slab,
+   `kit/camera.ts` turns a track into a pose; the product's `geometry.ts` holds
+   the poses, `tracks.ts` the camera, `SlabChrome.tsx` the app furniture. A scene that redraws its own sidebar can
    only stay aligned with the others by hand, and it will not.
 3. **Add one entry to `video/src/scenes/catalog.json`** — id, slug, duration,
    the blurb for the page, and `seamAfter` if it follows another scene — then
@@ -894,8 +903,8 @@ The order matters, and step 4 is the one people skip.
    to the deploy. Change a scene or a bench and the full run comes back.
 
 If your scene is meant to follow another without a cut, read the previous
-scene's end pose from `slab.ts` rather than retyping the numbers, and name that
-scene in `seamAfter`. Two copies of the same pose stay equal exactly as long as nobody
+scene's end pose from the product's `geometry.ts` rather than retyping the
+numbers, and name that scene in `seamAfter`. Two copies of the same pose stay equal exactly as long as nobody
 edits one of them.
 
 ## Licensing, which has two halves

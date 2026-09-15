@@ -1,12 +1,12 @@
 import "./index.css";
 import { Composition } from "remotion";
-import { PromptInput } from "./scenes/PromptInput";
+import { PromptInput } from "./products/topics/scenes/PromptInput";
 import { FrameLockedProbe } from "./scenes/FrameLockedProbe";
-import { UIMockup } from "./scenes/UIMockup";
-import { CardHandoff } from "./scenes/CardHandoff";
-import { CardFocus } from "./scenes/CardFocus";
-import { CardRelease } from "./scenes/CardRelease";
-import { BoardOrbit } from "./scenes/BoardOrbit";
+import { UIMockup } from "./products/topics/scenes/UIMockup";
+import { CardHandoff } from "./products/topics/scenes/CardHandoff";
+import { CardFocus } from "./products/topics/scenes/CardFocus";
+import { CardRelease } from "./products/topics/scenes/CardRelease";
+import { BoardOrbit } from "./products/topics/scenes/BoardOrbit";
 import catalog from "./scenes/catalog.json";
 import { SpecimenCam06 } from "./specimens/SpecimenCam06";
 import { CAM06_SPECIMENS } from "./specimens/list";

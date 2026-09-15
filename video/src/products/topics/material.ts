@@ -1,5 +1,5 @@
-import type { ShotMaterial } from "../kit/Shot";
-import { SLAB_BACKDROP, app, fontStack } from "../theme";
+import type { ShotMaterial } from "../../kit/Shot";
+import { SLAB_BACKDROP, app, fontStack } from "./tokens";
 
 /**
  * L'aspetto della ripresa di Topics: i numeri che le sei scene scrivevano a mano

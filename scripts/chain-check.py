@@ -6,7 +6,7 @@ PERCHE' ESISTE. La voce GIU-04 della grammatica diceva "l'occhio segue la
 derivata, e un'inversione a una giunta si legge come uno stacco anche quando i
 pixel coincidono", e nominava un banco che non esisteva. seam.sh misura che due
 fotogrammi si somigliano; non puo' vedere il verso del movimento. Questo lo
-misura sulle tracce della camera (primitives/tracks.ts), cioe' sugli stessi
+misura sulle tracce della camera (products/topics/tracks.ts), cioe' sugli stessi
 dati che le scene passano al render.
 
 COSA CONTROLLA, su yaw, pitch, spinta e spostamenti, lungo tutte le scene del

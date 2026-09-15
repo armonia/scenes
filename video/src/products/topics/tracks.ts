@@ -1,4 +1,4 @@
-import type { Track } from "../kit/camera.ts";
+import type { Track } from "../../kit/camera.ts";
 import {
   BOARD_ORBIT_END_POSE,
   CARD_FOCUS_END_POSE,
@@ -7,14 +7,14 @@ import {
   PROMPT_INPUT_END_POSE,
   UI_MOCKUP_END_POSE,
   UI_MOCKUP_START_POSE,
-} from "./slab.ts";
-import { tempo } from "./tempo.ts";
+} from "./geometry.ts";
+import { tempo } from "../../primitives/tempo.ts";
 
 /**
  * Le camere delle sei scene di Topics, come tracce.
  *
  * Erano cinque `interpolate` dentro ogni componente. I numeri e le curve sono
- * gli stessi, scena per scena: stesse pose di partenza e d'arrivo da slab.ts,
+ * gli stessi, scena per scena: stesse pose di partenza e d'arrivo da topics/geometry.ts,
  * stessi easing, stesse finestre, e dove una finestra dipende dalla durata la
  * scala con lo stesso `tempo()`. Le scene leggono la loro traccia con `poseAt`;
  * chain-check e fill-geom leggono le stesse tracce senza renderizzare.

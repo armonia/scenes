@@ -11,15 +11,15 @@ import type { Ratio } from "../kit/stage";
 import { cam06Expectation, specimenGeometry } from "./list";
 import type { SpecimenProduct } from "./list";
 import { AnchorMarker, ProbeSlab } from "../products/probe/Slab";
-import { Board } from "../primitives/Board";
+import { Board } from "../products/topics/Board";
 import {
   COLUMNS,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
   handoffCard,
   handoffLandedRect,
-} from "../primitives/slab";
-import { app, fontStack } from "../theme";
+} from "../products/topics/geometry";
+import { app, fontStack } from "../products/topics/tokens";
 
 /**
  * CAM-06 fuori da Topics: il punto che non scappa, su due lastre e tre rapporti.

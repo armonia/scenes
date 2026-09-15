@@ -67,7 +67,7 @@ MIN_TRAVEL_PX=120
 # cioe' dava la colpa alla scena per un difetto dello strumento.
 #
 # Il taglio non e' un numero a occhio: e' dove comincia il pannello sulla
-# lastra, e lo calcola il manifest da slab.ts. Se il pannello si sposta, il
+# lastra, e lo calcola il manifest da topics/geometry.ts. Se il pannello si sposta, il
 # taglio lo segue.
 read -r BAND < <(node "$ROOT/scripts/manifest.mjs" handoff-band 2>/dev/null)
 case "${BAND:-}" in ''|*[!0-9]*) echo "non riesco a leggere la geometria dal manifest: '${BAND:-}'" >&2; exit 3 ;; esac

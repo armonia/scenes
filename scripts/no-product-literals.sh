@@ -3,16 +3,16 @@
 # Qualche banco si calcola ancora la geometria da solo, importando i moduli di
 # un prodotto?
 #
-# PERCHE' ESISTE. Quattro banchi importavano slab.ts dentro uno script node
+# PERCHE' ESISTE. Quattro banchi importavano topics/geometry.ts dentro uno script node
 # scritto nel proprio corpo e rifacevano i conti di ripresa di Topics. Adesso li
 # chiedono a scripts/manifest.mjs, che e' l'unico posto in cui un banco puo'
 # leggere video/src. Senza un controllo, il primo banco nuovo scritto di fretta
-# tornerebbe a importare slab.ts e a misurare solo Topics, e nessuno se ne
+# tornerebbe a importare topics/geometry.ts e a misurare solo Topics, e nessuno se ne
 # accorgerebbe perche' non fallirebbe.
 #
 # COSA CERCA. Nelle righe di codice degli script (non nei commenti) un percorso
 # a un modulo .ts o .tsx di video/src. Sono ammessi solo manifest.mjs, che
-# esiste per quello, e geometry-snapshot.mjs, che fotografa slab.ts apposta per
+# esiste per quello, e geometry-snapshot.mjs, che fotografa topics/geometry.ts apposta per
 # confrontarne due versioni.
 #
 # Uso:  ./scripts/no-product-literals.sh [cartella-degli-script]

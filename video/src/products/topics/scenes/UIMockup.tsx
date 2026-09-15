@@ -1,5 +1,5 @@
 import React from "react";
-import { Assistant } from "../primitives/Assistant";
+import { Assistant } from "../Assistant";
 import {
   Easing,
   interpolate,
@@ -14,11 +14,11 @@ import {
   COL_W,
   TOPICS_RIG,
   TOPICS_SLAB,
-} from "../primitives/slab";
-import { poseAt } from "../kit/camera";
-import { uiMockupTrack } from "../primitives/tracks";
-import { Shot } from "../kit/Shot";
-import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
+} from "../geometry";
+import { poseAt } from "../../../kit/camera";
+import { uiMockupTrack } from "../tracks";
+import { Shot } from "../../../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../material";
 import {
   AddCard,
   AppChrome,
@@ -26,14 +26,14 @@ import {
   CardBox,
   ColumnHeader,
   DetailPanel,
-} from "../primitives/SlabChrome";
+} from "../SlabChrome";
 
 /**
  * UIMockup: app window su piano CSS 3D inclinato, con parallasse su camera move.
  *
  * La grammatica e' quella dei Linear Diffs: una lastra di UI VERA che riempie il
  * quadro, entra da fuori frame, e si stabilizza senza mai tagliare. Il "vera"
- * significa token da theme.ts, raggi 8/6/4, font di sistema, non un wireframe.
+ * significa token da topics/tokens.ts, raggi 8/6/4, font di sistema, non un wireframe.
  *
  * Tre decisioni strutturali:
  *
@@ -49,7 +49,7 @@ import {
  * attenuato, la lastra principale e' nitida: la differenza di fuoco dice all'occhio
  * qual e' il piano principale, senza mai spiegarlo.
  *
- * LA POSA FINALE NON STA PIU' QUI. Le due pose vivono in `primitives/slab.ts`
+ * LA POSA FINALE NON STA PIU' QUI. Le due pose vivono in `products/topics/geometry.ts`
  * perche' `CardHandoff` deve partire esattamente da dove questa finisce, e due
  * copie dello stesso numero restano uguali solo finche' nessuno tocca una delle
  * due. Ora la giunta e' verificabile: `seam.sh` confronta i pixel dell'ultimo
@@ -73,7 +73,7 @@ export const UIMockup: React.FC<UIMockupProps> = ({ progress }) => {
 
   // La camera: la lastra entra da destra in 80 frame e la camera si raddrizza
   // per tutta la scena, finendo piu' frontale di come e' partita, cosi' la scena
-  // successiva puo' partire da qui. La curva sta in primitives/tracks.ts, la
+  // successiva puo' partire da qui. La curva sta in products/topics/tracks.ts, la
   // stessa che leggono i banchi.
   const pose = poseAt(uiMockupTrack(durationInFrames), frame);
 

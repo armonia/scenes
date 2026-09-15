@@ -10,7 +10,7 @@ nessuno misura e' un numero che qualcuno ha scritto.
 COSA MISURA. Il rapporto di contrasto WCAG fra il testo attenuato e il suo
 fondo, su un fotogramma vero, mentre la risposta scorre. Il ritaglio non e'
 scelto a occhio: e' la fascia di intestazione del thread, e la sua posizione
-esce da slab.ts proiettata con la posa finale di PromptInput. Quella posa sta a
+esce da topics/geometry.ts proiettata con la posa finale di PromptInput. Quella posa sta a
 yaw e pitch zero, quindi la proiezione e' esatta.
 
 IL RITAGLIO STA SU UNA POSIZIONE ARITMETICA, e la prima versione no. Puntava la
@@ -64,7 +64,7 @@ if not SRC.exists():
 
 # La geometria viene dal manifest, non da due numeri copiati qui: l'intestazione
 # del thread all'ultima posa di PromptInput, proiettata e con dimensioni pari
-# (video/src/manifest/topics.ts spiega perche').
+# (video/src/products/topics/benches.ts spiega perche').
 geo = subprocess.run(
     ["node", "%s/scripts/manifest.mjs" % ROOT, "contrast-crop"],
     capture_output=True, text=True,
@@ -131,7 +131,7 @@ l1, l2 = max(lum(fg), lum(bg)), min(lum(fg), lum(bg))
 ratio = (l1 + 0.05) / (l2 + 0.05)
 
 print("Contrasto del contenuto attenuato su %s, fotogramma %d." % (SRC.name, FRAME))
-print("Ritaglio sull'intestazione del thread, proiettato da slab.ts: %dx%d a (%d,%d)."
+print("Ritaglio sull'intestazione del thread, proiettato da topics/geometry.ts: %dx%d a (%d,%d)."
       % (r["w"], r["h"], r["x"], r["y"]))
 print()
 print("  fondo (valore piu' frequente)      %3d" % bg)

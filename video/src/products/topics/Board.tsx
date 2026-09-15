@@ -11,7 +11,7 @@ import {
   addCardY,
   cardY,
   columnX,
-} from "./slab";
+} from "./geometry";
 import {
   AddCard,
   AppChrome,
@@ -29,7 +29,7 @@ import {
  * si ferma, quindi deve disegnare la board ESATTAMENTE come la lascia: non
  * "uguale", la stessa. Copiarla avrebbe reso la giunta vera solo finche'
  * qualcuno teneva allineate due copie a mano, che e' precisamente la cosa che
- * `primitives/slab.ts` esiste per impedire.
+ * `products/topics/geometry.ts` esiste per impedire.
  *
  * I parametri sono lo stato del gesto, non il gesto: passando travel 1, lift 0
  * e closeGap 1 si ottiene la board a consegna avvenuta, che e' il primo frame

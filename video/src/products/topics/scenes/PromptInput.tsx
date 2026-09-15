@@ -5,11 +5,11 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { Board } from "../primitives/Board";
-import { bubbleCurve } from "../primitives/Assistant";
-import { Cursor, type Waypoint } from "../primitives/Cursor";
-import { typedCount, typingSchedule } from "../primitives/rhythm";
-import { tempo } from "../primitives/tempo";
+import { Board } from "../Board";
+import { bubbleCurve } from "../Assistant";
+import { Cursor, type Waypoint } from "../../../primitives/Cursor";
+import { typedCount, typingSchedule } from "../../../primitives/rhythm";
+import { tempo } from "../../../primitives/tempo";
 import {
   COLUMNS,
   COMPOSER_H,
@@ -25,14 +25,14 @@ import {
   handoffLandedRect,
   TOPICS_RIG,
   TOPICS_SLAB,
-} from "../primitives/slab";
-import { poseAt } from "../kit/camera";
+} from "../geometry";
+import { poseAt } from "../../../kit/camera";
 import {
   PROMPT_INPUT_BASE as BASE,
   promptInputTrack,
-} from "../primitives/tracks";
-import { Shot } from "../kit/Shot";
-import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
+} from "../tracks";
+import { Shot } from "../../../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../material";
 
 /**
  * PromptInput: il quinto anello. Il cursore scende sul composer, scrive, invia,
@@ -79,7 +79,7 @@ export type PromptInputProps = {
 // credibile: senza, l'invio parte insieme all'ultimo tasto e legge come uno
 // script che esegue, non come qualcuno che rilegge.
 /* La durata di riferimento a cui sono scritti i tempi (BASE) sta in
-   primitives/tracks.ts, perche' la legge anche la traccia della camera. */
+   products/topics/tracks.ts, perche' la legge anche la traccia della camera. */
 
 const T = {
   travelStart: 56,
@@ -179,7 +179,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
    * poi ci si ferma: nessuno muove la macchina mentre qualcuno scrive e legge,
    * perche' l'inquadratura in cui si legge deve stare ferma.
    */
-  // La finestra e' PROMPT_INPUT_CAM_SETTLE in primitives/tracks.ts.
+  // La finestra e' PROMPT_INPUT_CAM_SETTLE in products/topics/tracks.ts.
 
   // Lo streaming va a blocchi di parole, non a caratteri. Un LLM non scrive
   // lettera per lettera: arriva a token, e l'occhio lo riconosce.
@@ -201,7 +201,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   // La camera: una curva sola, inOut, derivata nulla ai due capi. A sinistra
   // per agganciarsi alla fine di CardRelease, a destra perche' la scena si
   // ferma e un'altra ci si possa attaccare. La curva, e la finestra di 132 frame
-  // spiegata qui sopra, stanno in primitives/tracks.ts.
+  // spiegata qui sopra, stanno in products/topics/tracks.ts.
   const pose = poseAt(promptInputTrack(durationInFrames), frame);
 
 
@@ -234,7 +234,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   );
 
   // Il percorso del cursore, in coordinate della lastra condivisa. Le mire sono
-  // le costanti di slab.ts, non due numeri copiati dal layout: se il composer
+  // le costanti di topics/geometry.ts, non due numeri copiati dal layout: se il composer
   // si sposta il puntatore lo segue.
   const path: Waypoint[] = [
     { x: 2620, y: 1330, at: 0 },

@@ -5,7 +5,7 @@ CAM-01 in geometria: la lastra copre i quattro bordi del quadro.
 PERCHE' ESISTE. fill-measure.sh dava 20 su 20 anche su una lastra arretrata:
 il fondale delle scene e' luminoso quanto la sua soglia, e il piano sfocato
 dietro la lastra inganna qualunque misura sui pixel. Il riempimento e' una
-domanda di geometria, e con le tracce della camera (primitives/tracks.ts) e la
+domanda di geometria, e con le tracce della camera (products/topics/tracks.ts) e la
 proiezione del kit (kit/project.ts, verificata contro Chromium) la si puo' fare
 esattamente, su ogni fotogramma, senza renderizzare.
 

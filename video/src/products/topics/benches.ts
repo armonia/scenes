@@ -9,18 +9,24 @@ import {
   SLAB_H,
   SLAB_SCALE,
   THREAD_TOP,
+  TOPICS_RIG,
+  TOPICS_SLAB,
+  TOPICS_STAGE,
   handoffLandedRect,
-  slabPointOnScreen,
-  zoomForPush,
-} from "../primitives/slab.ts";
+} from "./geometry.ts";
+import { slabPointOnScreen as kitSlab, zoomForPush as kitZoom } from "../../kit/rig.ts";
+
+const slabPointOnScreen = (x: number, y: number): { x: number; y: number } =>
+  kitSlab(TOPICS_STAGE, TOPICS_RIG, TOPICS_SLAB, { x, y });
+const zoomForPush = (z: number): number => kitZoom(TOPICS_RIG, z);
 
 /**
  * Quello che i banchi delle scene di Topics devono sapere della geometria:
- * ritagli, bande, ingrandimenti. Calcolato qui, da slab.ts, e stampato da
+ * ritagli, bande, ingrandimenti. Calcolato qui, da topics/geometry.ts, e stampato da
  * `scripts/manifest.mjs`.
  *
  * PERCHE' ESISTE. Quattro banchi (handoff-travel, focus-sharpness,
- * fixture-screenshot, contrast-floor) importavano slab.ts dentro uno script
+ * fixture-screenshot, contrast-floor) importavano topics/geometry.ts dentro uno script
  * `node -e` scritto nel proprio corpo, e rifacevano ognuno per conto suo gli
  * stessi conti di ripresa: dove sta la card, quanto ingrandisce la spinta,
  * dove cade l'intestazione del thread. Quattro copie di un calcolo restano

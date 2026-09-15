@@ -52,7 +52,7 @@ export const monoStack =
  * Erano quattro numeri scritti a mano in UIMockup, CardHandoff e CardFocus,
  * identici in tutti e tre i file e senza un nome. Tre copie di una costante
  * restano uguali finche' nessuno tocca una delle tre, che e' lo stesso motivo
- * per cui le pose di camera vivono in slab.ts. Li legge `primitives/material.ts`,
+ * per cui le pose di camera vivono in topics/geometry.ts. Li legge `products/topics/material.ts`,
  * che li passa a `kit/Shot.tsx` insieme agli altri numeri del piano dietro
  * (spostamento, inclinazione in piu', scala, inseguimento della camera).
  *

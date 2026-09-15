@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 //
-// La geometria di slab.ts fotografata in un JSON, per dimostrare che un
+// La geometria di topics/geometry.ts fotografata in un JSON, per dimostrare che un
 // refactor non l'ha toccata.
 //
 // PERCHE' ESISTE. Spostare la matematica della ripresa in `kit/` doveva lasciare
@@ -16,14 +16,36 @@
 //
 // Il percorso serve a fotografare anche la versione di un altro commit, estratta
 // con `git worktree add`.
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const target = resolve(
-  process.argv[2] ?? `${here}/../video/src/primitives/slab.ts`,
+  process.argv[2] ?? `${here}/../video/src/products/topics/geometry.ts`,
 );
 const m = await import(pathToFileURL(target).href);
+
+// Le funzioni di ripresa di Topics sono state prima esportate dal modulo della
+// lastra e poi tolte a favore del kit. Per confrontare un commit di prima con uno
+// di dopo, lo strumento usa quelle esportate se ci sono, altrimenti il kit con
+// lo stage e il rig di Topics: gli stessi numeri, se il refactor e' onesto.
+const kitPath = ["../../kit/rig.ts", "../kit/rig.ts"]
+  .map((rel) => resolve(target, "..", rel))
+  .find((p) => existsSync(p));
+const kit =
+  typeof m.slabPointOnScreen === "function" || !kitPath
+    ? null
+    : await import(pathToFileURL(kitPath).href);
+const fn = kit
+  ? {
+      slabPointOnScreen: (x, y) =>
+        kit.slabPointOnScreen(m.TOPICS_STAGE, m.TOPICS_RIG, m.TOPICS_SLAB, { x, y }),
+      centreOn: (x, y) => kit.centreOn(m.TOPICS_STAGE, m.TOPICS_RIG, m.TOPICS_SLAB, { x, y }),
+      zoomForPush: (z) => kit.zoomForPush(m.TOPICS_RIG, z),
+      pushForZoom: (k) => kit.pushForZoom(m.TOPICS_RIG, k),
+    }
+  : m;
 
 const out = { constants: {}, poses: {}, functions: {} };
 
@@ -43,12 +65,12 @@ const pts = [
   [417.3, 918.61],
   [2011.07, 131.9],
 ];
-out.functions.slabPointOnScreen = pts.map(([x, y]) => m.slabPointOnScreen(x, y));
-out.functions.centreOn = pts.map(([x, y]) => m.centreOn(x, y));
+out.functions.slabPointOnScreen = pts.map(([x, y]) => fn.slabPointOnScreen(x, y));
+out.functions.centreOn = pts.map(([x, y]) => fn.centreOn(x, y));
 out.functions.zoomForPush = [0, 48, 96, 1180, 1493.6, -140, -420].map((z) =>
-  m.zoomForPush(z),
+  fn.zoomForPush(z),
 );
-out.functions.pushForZoom = [1, 1.12, 2.35, 0.9].map((k) => m.pushForZoom(k));
+out.functions.pushForZoom = [1, 1.12, 2.35, 0.9].map((k) => fn.pushForZoom(k));
 out.functions.handoffLandedRect = m.handoffLandedRect();
 out.functions.cardY = m.COLUMNS.map((c) =>
   c.cards.map((_, i) => m.cardY(c.cards, i)),

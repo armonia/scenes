@@ -11,12 +11,12 @@ import {
   handoffLandedRect,
   TOPICS_RIG,
   TOPICS_SLAB,
-} from "../primitives/slab";
-import { poseAt } from "../kit/camera";
-import { cardReleaseTrack } from "../primitives/tracks";
-import { Shot } from "../kit/Shot";
-import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
-import { Board } from "../primitives/Board";
+} from "../geometry";
+import { poseAt } from "../../../kit/camera";
+import { cardReleaseTrack } from "../tracks";
+import { Shot } from "../../../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../material";
+import { Board } from "../Board";
 
 /**
  * CardRelease: il quarto anello, e la fine del film.
@@ -53,7 +53,7 @@ export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
 
   // Una curva sola, inOut: derivata nulla a sinistra per agganciarsi alla fine
   // di CardFocus, derivata nulla a destra perche' e' l'ultimo frame del film.
-  // La curva sta in primitives/tracks.ts.
+  // La curva sta in products/topics/tracks.ts.
   const pose = poseAt(cardReleaseTrack(durationInFrames), frame);
 
 

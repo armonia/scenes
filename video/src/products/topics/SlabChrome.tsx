@@ -1,5 +1,5 @@
 import React from "react";
-import { app, fontStack, monoStack, radius } from "../theme";
+import { app, fontStack, monoStack, radius } from "./tokens";
 import {
   BOARD_TOP,
   COL_HEADER_H,
@@ -11,7 +11,7 @@ import {
   SIDEBAR_W,
   cardHeight,
   columnX,
-} from "./slab";
+} from "./geometry";
 
 /**
  * Il contenuto della lastra, disegnato una volta sola per tutte le scene.
@@ -492,7 +492,7 @@ export const DetailPanel: React.FC<{
  * Lo spessore della lastra (SlabEdge) e la luce sul quadro (SlabLighting)
  * stavano qui, e ogni scena li montava dentro la propria copia del blocco di
  * ripresa. Adesso li disegna `kit/Shot.tsx`, con i numeri di Topics in
- * `primitives/material.ts`: lo spessore resta fratello della lastra e non
+ * `products/topics/material.ts`: lo spessore resta fratello della lastra e non
  * figlio, per la ragione scritta li'.
  */
 

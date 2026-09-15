@@ -4,7 +4,7 @@
 // calcolato dai moduli puri del kit e non riscritto dentro gli script.
 //
 // PERCHE' ESISTE. I banchi di questo repo leggevano la geometria importando
-// slab.ts, cioe' le costanti di Topics: su un'altra lastra o in un altro
+// topics/geometry.ts, cioe' le costanti di Topics: su un'altra lastra o in un altro
 // rapporto non misuravano niente, e nessuno se ne sarebbe accorto perche' non
 // fallivano. Qui un banco chiede "cosa devo trovare, e dove" per ogni variante,
 // e la risposta viene dallo stesso codice che produce il render.
@@ -36,10 +36,10 @@ const commands = {
   // il controllo negativo: le giunte non sono piu' a riposo.
   chain: async () => {
     const { checkChain, linearized } = await load("video/src/kit/camera.ts");
-    const { TOPICS_TRACKS } = await load("video/src/primitives/tracks.ts");
+    const { TOPICS_TRACKS } = await load("video/src/products/topics/tracks.ts");
     const scenes = (await catalogScenes()).map((s) => {
       const build = TOPICS_TRACKS[s.id];
-      if (!build) throw new Error(`nessuna traccia per ${s.id} in primitives/tracks.ts`);
+      if (!build) throw new Error(`nessuna traccia per ${s.id} in products/topics/tracks.ts`);
       const track = build(s.durationInFrames);
       return {
         id: s.id,
@@ -57,8 +57,8 @@ const commands = {
   fill: async () => {
     const { poseAt } = await load("video/src/kit/camera.ts");
     const { project } = await load("video/src/kit/project.ts");
-    const { TOPICS_TRACKS } = await load("video/src/primitives/tracks.ts");
-    const slab = await load("video/src/primitives/slab.ts");
+    const { TOPICS_TRACKS } = await load("video/src/products/topics/tracks.ts");
+    const slab = await load("video/src/products/topics/geometry.ts");
     const offset = Number(argValue("--push-offset") ?? 0);
     const stage = slab.TOPICS_STAGE;
     const out = [];
@@ -131,24 +131,24 @@ const commands = {
     return out;
   },
 
-  // La geometria che i banchi delle scene di Topics chiedevano a slab.ts con
+  // La geometria che i banchi delle scene di Topics chiedevano a topics/geometry.ts con
   // uno script node scritto dentro di se'. Stesso formato di uscita di prima,
   // cosi' i banchi leggono con lo stesso `read`.
   "handoff-band": async () => {
-    const t = await load("video/src/manifest/topics.ts");
+    const t = await load("video/src/products/topics/benches.ts");
     return t.handoffBand();
   },
   "focus-sharpness": async () => {
-    const g = (await load("video/src/manifest/topics.ts")).cardFocusGeometry();
+    const g = (await load("video/src/products/topics/benches.ts")).cardFocusGeometry();
     return [g.cw, g.ch, g.cx, g.cy, g.zoom, g.wx, g.wy, g.k].join(" ");
   },
   "fixture-screenshot": async () => {
-    const g = (await load("video/src/manifest/topics.ts")).cardFocusGeometry();
+    const g = (await load("video/src/products/topics/benches.ts")).cardFocusGeometry();
     return [g.cx, g.cy, g.wx, g.wy, g.k].join(" ");
   },
   // Su una riga: contrast-floor.py legge l'ultima riga dell'uscita.
   "contrast-crop": async () => {
-    const t = await load("video/src/manifest/topics.ts");
+    const t = await load("video/src/products/topics/benches.ts");
     return JSON.stringify(t.contrastCrop());
   },
 
@@ -159,7 +159,7 @@ const commands = {
     const { STAGES, RATIOS } = await load("video/src/kit/stage.ts");
     const { cssPerspectiveOrigin } = await load("video/src/kit/rig.ts");
     const { project } = await load("video/src/kit/project.ts");
-    const slab = await load("video/src/primitives/slab.ts");
+    const slab = await load("video/src/products/topics/geometry.ts");
     const probe = await load("video/src/products/probe/geometry.ts");
     const slabs = {
       topics: { rig: slab.TOPICS_RIG, size: slab.TOPICS_SLAB },

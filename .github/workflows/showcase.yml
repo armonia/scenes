@@ -135,7 +135,7 @@ jobs:
           # banco che non guarda solo Topics in 16:9.
           ./scripts/drift.py
 
-          # LA CAMERA COME DATO. Le tracce di primitives/tracks.ts sono quelle che
+          # LA CAMERA COME DATO. Le tracce di products/topics/tracks.ts sono quelle che
           # le scene passano al render: da li' si misura che la camera non torni
           # mai indietro in moto (GIU-04) e che la lastra copra i quattro bordi
           # del quadro su ogni frame (CAM-01), senza chiederlo ai pixel.
@@ -305,13 +305,13 @@ jobs:
 
           # Nessun banco si calcola da se' la geometria di un prodotto: la chiede
           # al manifest. E il controllo deve bocciare una copia dei banchi in cui
-          # uno torna a importare slab.ts.
+          # uno torna a importare topics/geometry.ts.
           ./scripts/no-product-literals.sh
           mkdir -p /tmp/banchi-guasti && cp scripts/*.sh scripts/*.py scripts/*.mjs /tmp/banchi-guasti/
-          printf '%s\n' "read -r X < <(node --input-type=module -e 'const m = await import(\"\$ROOT/video/src/primitives/slab.ts\"); console.log(m.THREAD_TOP)')" >> /tmp/banchi-guasti/handoff-travel.sh
+          printf '%s\n' "read -r X < <(node --input-type=module -e 'const m = await import(\"\$ROOT/video/src/products/topics/geometry.ts\"); console.log(m.THREAD_TOP)')" >> /tmp/banchi-guasti/handoff-travel.sh
           rc=0; ./scripts/no-product-literals.sh /tmp/banchi-guasti > /tmp/npl.log 2>&1 || rc=$?
-          [ "$rc" = 1 ] || { echo "no-product-literals.sh promuove un banco che importa slab.ts (rc=$rc)" >&2; cat /tmp/npl.log >&2; exit 1; }
-          echo "no-product-literals.sh boccia un banco che importa slab.ts, come deve."
+          [ "$rc" = 1 ] || { echo "no-product-literals.sh promuove un banco che importa topics/geometry.ts (rc=$rc)" >&2; cat /tmp/npl.log >&2; exit 1; }
+          echo "no-product-literals.sh boccia un banco che importa topics/geometry.ts, come deve."
 
           ./scripts/demo-check.py
 

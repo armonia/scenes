@@ -17,7 +17,7 @@ import {
   TOPICS_RIG,
   TOPICS_SLAB,
   handoffLandedRect,
-} from "../primitives/slab.ts";
+} from "../products/topics/geometry.ts";
 
 /**
  * Gli specimen: una voce del registro girata su piu' lastre e in piu' rapporti.

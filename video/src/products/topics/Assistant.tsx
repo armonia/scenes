@@ -10,8 +10,8 @@ import {
   SIDEBAR_W,
   THREAD_PAD_BOTTOM,
   THREAD_TOP,
-} from "./slab";
-import { app, monoStack, radius } from "../theme";
+} from "./geometry";
+import { app, monoStack, radius } from "./tokens";
 
 /**
  * Il thread dell'assistente e il composer, nella meta' bassa della lastra.

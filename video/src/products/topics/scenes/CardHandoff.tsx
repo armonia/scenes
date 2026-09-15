@@ -18,14 +18,14 @@ import {
   handoffTargetCards,
   TOPICS_RIG,
   TOPICS_SLAB,
-} from "../primitives/slab";
-import { poseAt } from "../kit/camera";
-import { cardHandoffTrack } from "../primitives/tracks";
-import { Shot } from "../kit/Shot";
-import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
-import { Board } from "../primitives/Board";
-import { Cursor, pointOnPath, type Waypoint } from "../primitives/Cursor";
-import { tempo } from "../primitives/tempo";
+} from "../geometry";
+import { poseAt } from "../../../kit/camera";
+import { cardHandoffTrack } from "../tracks";
+import { Shot } from "../../../kit/Shot";
+import { TOPICS_SHOT_MATERIAL } from "../material";
+import { Board } from "../Board";
+import { Cursor, pointOnPath, type Waypoint } from "../../../primitives/Cursor";
+import { tempo } from "../../../primitives/tempo";
 
 /**
  * CardHandoff: la terza scena, e quella che rende dimostrabile la regola
@@ -129,7 +129,7 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   const T = tempo(durationInFrames, BASE);
 
   // La camera continua l'arco di UIMockup: stessa direzione, stessa curva
-  // (primitives/tracks.ts).
+  // (products/topics/tracks.ts).
   const pose = poseAt(cardHandoffTrack(durationInFrames), frame);
 
 
