@@ -450,6 +450,27 @@ last frame of every scene from the previous commit and from the working tree:
 thirty of thirty identical, with a repeat of one frame per scene to show the
 instrument is repeatable, and a pose moved by one pixel makes it fail.
 
+The third piece is `kit/project.ts`, which says where a point of the slab lands on
+screen with the camera in any pose, tilted included. `centreOn` is exact only
+with yaw and pitch at zero, and a bench that watches a moving camera, which is
+what almost every product film has, needs to know where an element is at a
+tilted pose rather than guess a crop by eye. It redoes the CSS chain of `Shot`
+in arithmetic (scale, then rotateX, then rotateY, then the push, then the
+container's perspective around the rig origin), and `project-check.py` compares
+it with Chromium on 36 cases: two slabs, three stages, the six poses of the
+Topics chain, five points each, off-centre and off-axis on purpose. The largest
+error is 0.040 px. With the CSS origin set to 50% 50% instead of the rig's, the
+error reaches 103.7 px and the check says so.
+
+The four benches that worked out the geometry of Topics inside a `node -e`
+snippet of their own (`handoff-travel.sh`, `focus-sharpness.sh`,
+`fixture-screenshot.sh`, `contrast-floor.py`) now ask `manifest.mjs`, which
+computes it once in `video/src/manifest/topics.ts`. Their output is identical
+line for line, and the screenshot fixture comes out with the same hash.
+`no-product-literals.sh` keeps it that way: a bench that reads `video/src` by
+itself fails it, and pointed at the benches of the commit before this one it
+names exactly those four.
+
 `scripts/manifest.mjs` is where a bench asks what it should find. It prints, from
 the same modules that produce the render, the variants, their frames, the origin,
 where the subject would sit without compensation, and the tolerance. If the
@@ -493,6 +514,8 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/type-check.py [page.html]                     # does the type cover, leave the frame, vanish, snap, or stop mid-move
 ./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
 ./scripts/drift.py [--props JSON] [--must-fail]         # does the subject stay on the origin, on two slabs and three formats
+./scripts/project-check.py [--origin-mismatch]          # does the kit's projection agree with Chromium
+./scripts/no-product-literals.sh [scripts-dir]          # does any bench read product geometry by itself
 node scripts/manifest.mjs cam06                          # what the benches must find, from the kit
 node scripts/geometry-snapshot.mjs [slab.ts]             # the geometry as a string, to prove a refactor left it alone
 ./scripts/tempo.py [long.mp4 short.mp4]                 # does shortening a scene retime it or just trim it

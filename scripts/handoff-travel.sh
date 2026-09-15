@@ -67,12 +67,10 @@ MIN_TRAVEL_PX=120
 # cioe' dava la colpa alla scena per un difetto dello strumento.
 #
 # Il taglio non e' un numero a occhio: e' dove comincia il pannello sulla
-# lastra, letto da slab.ts. Se il pannello si sposta, il taglio lo segue.
-read -r BAND < <(node --input-type=module -e '
-const m = await import("'"$ROOT"'/video/src/primitives/slab.ts");
-console.log(Math.round((m.THREAD_TOP / m.SLAB_H) * 100) - 4);
-')
-[ -n "${BAND:-}" ] || { echo "non riesco a leggere la geometria da slab.ts" >&2; exit 3; }
+# lastra, e lo calcola il manifest da slab.ts. Se il pannello si sposta, il
+# taglio lo segue.
+read -r BAND < <(node "$ROOT/scripts/manifest.mjs" handoff-band 2>/dev/null)
+case "${BAND:-}" in ''|*[!0-9]*) echo "non riesco a leggere la geometria dal manifest: '${BAND:-}'" >&2; exit 3 ;; esac
 
 prev=""
 xs=()

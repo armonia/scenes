@@ -38,10 +38,10 @@
 # 1. E' la condizione che il README chiede prima di fidarsi del verde, e la
 # prima versione di questo banco non la superava: promuoveva la fixture.
 #
-# La geometria del ritaglio non e' scritta qui. Viene da primitives/slab.ts,
-# perche' e' la stessa sorgente da cui la scena calcola la sua posa finale: una
-# costante ricopiata a mano in bash resta giusta solo fino alla prima modifica
-# della lastra.
+# La geometria del ritaglio non e' scritta qui. La calcola il manifest
+# (scripts/manifest.mjs) da primitives/slab.ts, che e' la stessa sorgente da cui
+# la scena prende la sua posa finale: una costante ricopiata a mano in bash resta
+# giusta solo fino alla prima modifica della lastra.
 #
 # Uso:  ./scripts/focus-sharpness.sh [card-focus.mp4]
 set -uo pipefail
@@ -65,26 +65,14 @@ SOGLIA=1.50
   exit 1
 }
 
-# La card, in pixel di composizione, all'ultimo fotogramma. Node legge il modulo
-# della lastra direttamente: gli stessi numeri che usa la scena.
-read -r CW CH CX CY ZOOM WX WY K < <(node --input-type=module -e '
-const m = await import("'"$ROOT"'/video/src/primitives/slab.ts");
-const r = m.handoffLandedRect();
-const p = m.slabPointOnScreen(r.x + r.w / 2, r.y + r.h / 2);
-const ox = m.COMP_W / 2, oy = m.COMP_H * m.PERSPECTIVE_ORIGIN_Y;
-const k1 = m.zoomForPush(m.CARD_FOCUS_END_POSE.pushZ);   // ingrandimento finale
-const k0 = m.zoomForPush(m.CARD_HANDOFF_END_POSE.pushZ); // ingrandimento al primo fotogramma
-// Dove sta la card nel campo largo, e quanto manca da li alla scala finale.
-const wx = ox + (p.x - ox) * k0;
-const wy = oy + (p.y - oy) * k0;
-console.log(
-  Math.round(r.w * m.SLAB_SCALE * k1), Math.round(r.h * m.SLAB_SCALE * k1),
-  Math.round(ox), Math.round(oy), k1.toFixed(4),
-  Math.round(wx), Math.round(wy), (k1 / k0).toFixed(4));
-' 2>/dev/null)
+# La card, in pixel di composizione, all'ultimo fotogramma: dimensioni, centro,
+# ingrandimento finale, dove stava nel campo largo e quanto manca da li' alla
+# scala finale. Li calcola il manifest (video/src/manifest/topics.ts) dagli
+# stessi numeri che usa la scena.
+read -r CW CH CX CY ZOOM WX WY K < <(node "$ROOT/scripts/manifest.mjs" focus-sharpness 2>/dev/null)
 
 case "${CW:-}|${CH:-}|${ZOOM:-}|${K:-}" in
-  *'|'|'|'*|'') echo "la geometria non e' arrivata da slab.ts: '$CW' '$CH' '$ZOOM'" >&2; exit 3 ;;
+  *'|'|'|'*|'') echo "la geometria non e' arrivata dal manifest: '$CW' '$CH' '$ZOOM'" >&2; exit 3 ;;
 esac
 case "$CW$CH" in ''|*[!0-9]*) echo "geometria non numerica: '$CW' '$CH'" >&2; exit 3 ;; esac
 

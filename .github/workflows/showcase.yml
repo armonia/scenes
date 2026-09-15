@@ -65,8 +65,10 @@ jobs:
           path: video/out
           key: ${{ steps.key.outputs.value }}
 
+      # Node 22 serve anche quando i render arrivano dalla cache: il passo della
+      # pagina chiede al manifest i casi della proiezione, e il manifest legge i
+      # moduli .ts del kit, che il Node preinstallato sul runner non sa leggere.
       - uses: actions/setup-node@v4
-        if: steps.cache.outputs.cache-hit != 'true'
         with:
           node-version: 22
           cache: npm
@@ -108,9 +110,9 @@ jobs:
 
       # Le misure che possono fallire. Se una scena e' rotta, il deploy non parte.
       #
-      # Le generiche (riempimento di ogni scena, giunta di ogni coppia adiacente)
-      # arrivano dal catalogo. Le altre sono legate a una scena sola e restano
-      # scritte qui: derivarle da un elenco nasconderebbe che esistono.
+      # Le generiche (la giunta di ogni coppia adiacente) arrivano dal catalogo.
+      # Le altre sono legate a una scena sola e restano scritte qui: derivarle da
+      # un elenco nasconderebbe che esistono.
       - name: misure
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
@@ -273,6 +275,25 @@ jobs:
           # banco che guarda dei pixel del browser invece del DOM.
           python3 -m pip install --quiet --disable-pip-version-check playwright pillow
           python3 -m playwright install --with-deps chromium
+
+          # La proiezione del kit (kit/project.ts) contro Chromium: due lastre,
+          # tre stage, le sei pose della catena, cinque punti ciascuno. E deve
+          # accorgersi di un'origine della prospettiva sbagliata nel CSS.
+          ./scripts/project-check.py
+          rc=0; ./scripts/project-check.py --origin-mismatch --must-fail > /tmp/pc.log 2>&1 || rc=$?
+          [ "$rc" = 0 ] || { echo "project-check.py non si accorge dell'origine sbagliata (rc=$rc)" >&2; cat /tmp/pc.log >&2; exit 1; }
+          echo "project-check.py boccia l'origine sbagliata, come deve."
+
+          # Nessun banco si calcola da se' la geometria di un prodotto: la chiede
+          # al manifest. E il controllo deve bocciare una copia dei banchi in cui
+          # uno torna a importare slab.ts.
+          ./scripts/no-product-literals.sh
+          mkdir -p /tmp/banchi-guasti && cp scripts/*.sh scripts/*.py scripts/*.mjs /tmp/banchi-guasti/
+          printf '%s\n' "read -r X < <(node --input-type=module -e 'const m = await import(\"\$ROOT/video/src/primitives/slab.ts\"); console.log(m.THREAD_TOP)')" >> /tmp/banchi-guasti/handoff-travel.sh
+          rc=0; ./scripts/no-product-literals.sh /tmp/banchi-guasti > /tmp/npl.log 2>&1 || rc=$?
+          [ "$rc" = 1 ] || { echo "no-product-literals.sh promuove un banco che importa slab.ts (rc=$rc)" >&2; cat /tmp/npl.log >&2; exit 1; }
+          echo "no-product-literals.sh boccia un banco che importa slab.ts, come deve."
+
           ./scripts/demo-check.py
 
           # E i cicli si devono chiudere. Le demo girano in loop: se l'ultimo
