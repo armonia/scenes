@@ -39,9 +39,18 @@
     "16:9 tiene id e slug di sempre mentre gli altri li portano come suffisso",
     "(CardFocus-9x16, card-focus-9x16.mp4). Root.tsx registra una composition",
     "per scena e per rapporto, il workflow ne renderizza e misura un rapporto",
-    "per job."
+    "per job.",
+    "",
+    "tempoFixtures = provini del tempo, non scene: la stessa scena a durata",
+    "dimezzata o a due terzi, in ogni rapporto. Non vanno in vetrina; servono a",
+    "tempo.py per provare che accorciare la durata accorcia ogni battuta, e ai",
+    "banchi percettivi per ripetersi sul render ritempificato."
   ],
   "ratios": ["16x9", "9x16", "4x5"],
+  "tempoFixtures": [
+    { "id": "CardHandoffFast", "scene": "CardHandoff", "slug": ".fast-card-handoff", "durationInFrames": 120 },
+    { "id": "PromptInputFast", "scene": "PromptInput", "slug": ".fast-prompt-input", "durationInFrames": 300 }
+  ],
   "scenes": [
     {
       "id": "UIMockup",

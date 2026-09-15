@@ -12,8 +12,9 @@
 //   node scripts/catalog.mjs measures i comandi dei banchi generici
 //   node scripts/catalog.mjs html     la sezione <section id="scenes"> intera
 //   node scripts/catalog.mjs ratios   i rapporti in cui escono le scene
+//   node scripts/catalog.mjs fixtures i render dei provini del tempo
 //
-// render, slugs, ids, rest e measures accettano `--ratio 9x16` (o 4x5): stessi
+// render, fixtures, slugs, ids, rest e measures accettano `--ratio 9x16` (o 4x5): stessi
 // comandi per le varianti di quel rapporto. Senza, il 16:9, con gli id e gli
 // slug di sempre. La pagina resta sul 16:9.
 import { readFileSync, writeFileSync } from "node:fs";
@@ -64,6 +65,15 @@ const commands = {
   ids: () => scenes.forEach((s) => out(s.id)),
 
   ratios: () => catalog.ratios.forEach((r) => out(r)),
+
+  // I provini del tempo nel rapporto chiesto, come comandi di render: la stessa
+  // forma di `render`, cosi' fixture-tempo.sh li esegue senza sapere quali sono.
+  fixtures: () =>
+    catalog.tempoFixtures.forEach((f) =>
+      out(
+        `npx remotion render ${variantName(f.id, ratioArg)} out/${variantName(f.slug, ratioArg)}.mp4`,
+      ),
+    ),
 
   // Le scene che dichiarano di stare ferme sui bordi. rest-point.sh boccia solo
   // quelle: le altre le misura e basta.

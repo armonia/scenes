@@ -10,7 +10,14 @@
 // e la risposta viene dallo stesso codice che produce il render.
 //
 // Uso:
-//   node scripts/manifest.mjs cam06     le varianti dello specimen CAM-06, in JSON
+//   node scripts/manifest.mjs cam06                 le varianti dello specimen CAM-06, in JSON
+//   node scripts/manifest.mjs chain|fill --ratio R  le tracce della camera in un rapporto
+//   node scripts/manifest.mjs film --ratio R        le finestre del film
+//   node scripts/manifest.mjs bench NOME --ratio R  cosa deve trovare il banco NOME, in JSON
+//   node scripts/manifest.mjs checks --ratio R      i controlli da far girare, per expect.sh
+//
+// Senza --ratio vale il 16:9. Un rapporto che il catalogo non dichiara esce 2.
+import { readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -31,6 +38,21 @@ const catalogScenes = async () => {
 };
 
 const ratioArg = () => argValue("--ratio") ?? "16x9";
+
+const catalogJson = async () => {
+  const { readFile } = await import("node:fs/promises");
+  return JSON.parse(await readFile(join(root, "video/src/scenes/catalog.json"), "utf8"));
+};
+
+// La geometria di un banco sta in un modulo suo, sotto il prodotto:
+// video/src/products/topics/benches/<nome>.ts, che esporta geometry(ratio).
+// Il nome del file e' il nome del banco, quindi aggiungerne uno non tocca
+// questo file.
+const benchGeometry = async (name, ratio) => {
+  if (!/^[a-z0-9-]+$/.test(name)) throw new Error(`nome di banco non valido: ${name}`);
+  const mod = await load(`video/src/products/topics/benches/${name}.ts`);
+  return mod.geometry(ratio);
+};
 
 const commands = {
   // Il film di Topics come finestre: per ogni scena, nell'ordine delle giunte,
@@ -53,10 +75,11 @@ const commands = {
   chain: async () => {
     const { checkChain, linearized } = await load("video/src/kit/camera.ts");
     const { TOPICS_TRACKS } = await load("video/src/products/topics/tracks.ts");
+    const ratio = ratioArg();
     const scenes = (await catalogScenes()).map((s) => {
       const build = TOPICS_TRACKS[s.id];
       if (!build) throw new Error(`nessuna traccia per ${s.id} in products/topics/tracks.ts`);
-      const track = build(s.durationInFrames);
+      const track = build(s.durationInFrames, ratio);
       return {
         id: s.id,
         frames: s.durationInFrames,
@@ -75,12 +98,14 @@ const commands = {
     const { project } = await load("video/src/kit/project.ts");
     const { TOPICS_TRACKS } = await load("video/src/products/topics/tracks.ts");
     const slab = await load("video/src/products/topics/geometry.ts");
+    const { STAGES } = await load("video/src/kit/stage.ts");
     const offset = Number(argValue("--push-offset") ?? 0);
-    const stage = slab.TOPICS_STAGE;
+    const ratio = ratioArg();
+    const stage = STAGES[ratio];
     const out = [];
     for (const s of await catalogScenes()) {
       if (!s.fill) continue;
-      const track = TOPICS_TRACKS[s.id](s.durationInFrames);
+      const track = TOPICS_TRACKS[s.id](s.durationInFrames, ratio);
       const from = Math.floor(s.durationInFrames * 0.2);
       let first = null;
       let minMargin = Infinity;
@@ -169,26 +194,21 @@ const commands = {
   },
 
   // I casi su cui project-check.py confronta la proiezione con il DOM: due
-  // lastre, tre stage, le sei pose della catena di Topics, cinque punti ciascuno
-  // messi apposta lontano dal centro e fuori dagli assi.
+  // lastre, tre stage, le sette pose della catena di Topics NEL RAPPORTO DI
+  // QUELLO STAGE (poses.ts), cinque punti ciascuno messi apposta lontano dal
+  // centro e fuori dagli assi.
   "project-cases": async () => {
     const { STAGES, RATIOS } = await load("video/src/kit/stage.ts");
     const { cssPerspectiveOrigin } = await load("video/src/kit/rig.ts");
     const { project } = await load("video/src/kit/project.ts");
     const slab = await load("video/src/products/topics/geometry.ts");
+    const { TOPICS_POSES } = await load("video/src/products/topics/poses.ts");
     const probe = await load("video/src/products/probe/geometry.ts");
     const slabs = {
       topics: { rig: slab.TOPICS_RIG, size: slab.TOPICS_SLAB },
       probe: { rig: probe.PROBE_RIG, size: probe.PROBE_SLAB },
     };
-    const poses = [
-      "UI_MOCKUP_START_POSE",
-      "UI_MOCKUP_END_POSE",
-      "CARD_HANDOFF_END_POSE",
-      "CARD_FOCUS_END_POSE",
-      "PROMPT_INPUT_END_POSE",
-      "BOARD_ORBIT_END_POSE",
-    ];
+    const poses = Object.keys(TOPICS_POSES["16x9"]);
     const frac = [
       [0.1, 0.1],
       [0.9, 0.1],
@@ -201,7 +221,7 @@ const commands = {
       const stage = STAGES[ratio];
       for (const [name, { rig, size }] of Object.entries(slabs)) {
         for (const poseName of poses) {
-          const p = slab[poseName];
+          const p = TOPICS_POSES[ratio][poseName];
           const pose = { slideY: 0, ...p };
           cases.push({
             id: `${name}-${ratio}-${poseName}`,
@@ -220,6 +240,69 @@ const commands = {
       }
     }
     return cases;
+  },
+
+  // Cosa deve trovare un banco, per rapporto: ritagli, frame, soglie. Il
+  // calcolo sta nel modulo del banco sotto il prodotto (vedi benchGeometry).
+  bench: async () => {
+    const name = process.argv[3];
+    if (!name || name.startsWith("--")) throw new Error("uso: manifest.mjs bench NOME [--ratio R]");
+    return benchGeometry(name, ratioArg());
+  },
+
+  // I controlli di un rapporto, uno per riga, nel formato di expect.sh. Ogni
+  // banco li dichiara in scripts/checks/<banco>.mjs, che esporta
+  // checks(ctx) e restituisce righe; qui si raccolgono in ordine di nome.
+  // Il contesto da' il rapporto, i nomi delle varianti e la geometria dei
+  // banchi, cosi' i moduli dei controlli non leggono mai un prodotto da se'.
+  checks: async () => {
+    const ratio = ratioArg();
+    const { variantName, STAGES } = await load("video/src/kit/stage.ts");
+    const catalog = await catalogJson();
+    const scenes = catalog.scenes.map((s) => ({
+      ...s,
+      variant: variantName(s.id, ratio),
+      file: `video/out/${variantName(s.slug, ratio)}.mp4`,
+    }));
+    const ctx = {
+      ratio,
+      stage: STAGES[ratio],
+      variantName: (base) => variantName(base, ratio),
+      scenes,
+      scene: (id) => {
+        const s = scenes.find((x) => x.id === id);
+        if (!s) throw new Error(`scena sconosciuta: ${id}`);
+        return s;
+      },
+      fixtures: catalog.tempoFixtures.map((f) => ({
+        ...f,
+        variant: variantName(f.id, ratio),
+        file: `video/out/${variantName(f.slug, ratio)}.mp4`,
+      })),
+      bench: (name) => benchGeometry(name, ratio),
+      tmp: (name) => `$CHECKS_TMP/${variantName(name, ratio)}`,
+    };
+    const dir = join(root, "scripts/checks");
+    const lines = [];
+    for (const file of readdirSync(dir).filter((f) => f.endsWith(".mjs")).sort()) {
+      const mod = await import(pathToFileURL(join(dir, file)).href);
+      for (const c of await mod.checks(ctx)) {
+        const fields =
+          c.run !== undefined
+            ? ["run", c.label, c.run]
+            : ["expect", String(c.rc), c.bench, c.target, c.role, c.cmd];
+        for (const f of fields) {
+          if (typeof f !== "string" || f === "" || /[\t\n]/.test(f)) {
+            throw new Error(`${file}: campo non valido in ${JSON.stringify(c)}`);
+          }
+        }
+        if (c.run === undefined && !["positivo", "negativo"].includes(c.role)) {
+          throw new Error(`${file}: ruolo sconosciuto ${c.role}`);
+        }
+        lines.push(fields.join("\t"));
+      }
+    }
+    return lines.join("\n");
   },
 
   cam06: async () => {
@@ -245,6 +328,13 @@ const commands = {
 };
 
 const cmd = process.argv[2];
+if (argValue("--ratio") !== undefined) {
+  const { ratios } = await catalogJson();
+  if (!ratios.includes(argValue("--ratio"))) {
+    console.error(`catalog.json non dichiara il rapporto "${argValue("--ratio")}" (ratios: ${ratios.join(", ")})`);
+    process.exit(2);
+  }
+}
 if (!commands[cmd]) {
   console.error(`uso: node scripts/manifest.mjs <${Object.keys(commands).join("|")}>`);
   process.exit(2);

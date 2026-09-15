@@ -15,7 +15,8 @@
 # FORMATO, una riga per controllo, campi separati da tab:
 #   run     <etichetta>  <comando>                         preparazione, deve uscire 0
 #   expect  <rc>  <banco>  <bersaglio>  <positivo|negativo>  <comando>
-# Il comando gira con bash, dalla radice del repo, con lo stdin chiuso.
+# Il comando gira con bash, dalla radice del repo, con lo stdin chiuso, e trova
+# in $CHECKS_TMP una cartella sua per i casi costruiti.
 #
 # `cmd; rc=$?` NON SI USA, per lo stesso motivo scritto nel workflow: sotto
 # `bash -e` la shell se ne va prima di assegnare rc. Qui si usa `|| rc=$?`.
@@ -35,6 +36,11 @@ REPORT="${2:?serve il percorso del report}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 : > "$TMP/results.tsv"
+# La cartella dei casi costruiti (ritagli, fermi immagine, copie guaste): i
+# controlli la chiamano $CHECKS_TMP, cosi' due rapporti nella stessa macchina
+# non si sovrascrivono i file e niente finisce in video/out.
+export CHECKS_TMP="$TMP/work"
+mkdir -p "$CHECKS_TMP"
 
 BAD=0
 N=0
