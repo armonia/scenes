@@ -601,7 +601,7 @@ fourth job from the start, and the deploy waits for all of them.
 | | |
 |---|---|
 | `video/` | The Remotion project. The product-independent kit in `video/src/kit/`, one folder per product in `video/src/products/` (`topics/` holds the slab, its tokens, tracks, bench geometry and the six scenes; `probe/` the synthetic slab), shared primitives such as the cursor and the frame-locked helpers in `video/src/primitives/`, the catalogue in `video/src/scenes/catalog.json`, bench specimens in `video/src/specimens/` |
-| `scripts/` | The measurements, the review page, the showcase build, and `catalog.mjs`, which is how shell and CI read `catalog.json` without a compiler. See below |
+| `scripts/` | The measurements, the review page, the showcase build, and `catalog.mjs`, which is how shell and CI read `catalog.json` without a compiler. `scripts/checks/` holds each bench's checks and negatives, which `manifest.mjs checks` resolves per ratio and `expect.sh` runs. See below |
 | `showcase/` | The public pages. `index.template.html` and `grammatica.html` are committed; the scene section and the renders are not, `showcase-build.sh` generates the first from `catalog.json` and copies the second into `showcase/dist/` |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
 | `ref/` | Reference commercials and their contact sheets. **Not in git**, see below |
