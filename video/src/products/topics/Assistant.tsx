@@ -17,6 +17,7 @@ import {
 } from "./geometry";
 import { app, monoStack, radius } from "./tokens";
 import { topicsLayout } from "./poses";
+import { THREAD_HISTORY } from "./thread";
 import { stageFor } from "../../kit/stage";
 import { useVideoConfig } from "remotion";
 
@@ -136,18 +137,13 @@ export const Assistant: React.FC<AssistantProps> = ({
         }}
       >
         <div style={{ opacity: attn, display: "flex", flexDirection: "column", gap: 16 }}>
-        <Msg who="user" text="Prendi i quattro commercial e dimmi cosa fanno davvero." />
-        <Msg
-          who="assistant"
-          text="Su quattro, solo i due Linear sono motion graphics. Cursor e Raycast sono girati con una camera: attore, luce calda, mani vere. Quelli non si replicano in codice."
-        />
-        <ToolRow file="ref/sheet_ovxL42LkKNg.jpg" />
-        <Msg who="user" text="Fammi vedere la board con la card attiva." />
-        <Msg
-          who="assistant"
-          text="Fatto. Kanban aperto, la card attiva e' UIMockup: piano 3D piu' parallasse, e il pannello mostra branch e assegnatario."
-        />
-
+          {THREAD_HISTORY.map((item, i) =>
+            item.kind === "tool" ? (
+              <ToolRow key={i} file={item.file} />
+            ) : (
+              <Msg key={i} who={item.who} text={item.text} />
+            ),
+          )}
         </div>
 
         {sent ? (
