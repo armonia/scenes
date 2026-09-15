@@ -1,5 +1,6 @@
 import React from "react";
-import { DEFAULT_TYPE_TIMING, cueAt, mixColor, wordStates } from "./type";
+import { Easing, interpolate } from "remotion";
+import { DEFAULT_TYPE_TIMING, LOCKUP_STAGGER, cueAt, mixColor, wordStates } from "./type";
 import type { TypeCue, TypeTiming } from "./type";
 
 export type TypeLineProps = {
@@ -214,3 +215,68 @@ export const Companion: React.FC<{
     {text}
   </div>
 );
+
+/**
+ * La chiusura: il marchio, la chiamata all'azione e il dominio, uno sotto
+ * l'altro.
+ *
+ * IL MARCHIO LO PORTA IL PRODOTTO, come nodo: nel repo pubblico e' scritto in
+ * DOM, in quello dei film e' l'asset vero (`<Img src={staticFile(...)} />`), che
+ * qui non puo' stare. Le righe sotto sono testo e basta: una chiamata all'azione
+ * e un dominio, corte, perche' la chiusura dura pochi secondi.
+ *
+ * ENTRA COME LE FRASI, dalla maschera (TYP-05) e sfalsata, il marchio per primo:
+ * e' l'ultima cosa che si muove nel film, e muoversi in un altro modo la
+ * staccherebbe da tutto il resto. Non esce: resta fino all'ultimo fotogramma.
+ */
+export const Lockup: React.FC<{
+  /** Il fotogramma in cui comincia a salire. */
+  at: number;
+  frame: number;
+  wordmark: React.ReactNode;
+  lines: readonly string[];
+  /** Corpo delle righe sotto il marchio, in pixel. */
+  size: number;
+  fontFamily: string;
+  color: string;
+  align?: "left" | "center";
+  timing?: TypeTiming;
+}> = ({ at, frame, wordmark, lines, size, fontFamily, color, align = "center", timing = DEFAULT_TYPE_TIMING }) => {
+  const pad = 0.28;
+  const rise = (i: number): number =>
+    interpolate(frame, [at + i * timing.stagger * LOCKUP_STAGGER, at + i * timing.stagger * LOCKUP_STAGGER + timing.wordFrames], [1, 0], {
+      easing: Easing.inOut(Easing.cubic),
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    });
+  const cell = (content: React.ReactNode, i: number, style?: React.CSSProperties) => (
+    <span
+      key={i}
+      style={{
+        display: "block",
+        overflow: "hidden",
+        padding: `${pad}em 0.08em`,
+        margin: `-${pad}em -0.08em`,
+      }}
+    >
+      <span style={{ display: "block", transform: `translateY(${rise(i) * timing.travel * 100}%)`, ...style }}>{content}</span>
+    </span>
+  );
+  return (
+    <div
+      style={{
+        fontFamily,
+        fontSize: size,
+        lineHeight: 1.25,
+        color,
+        textAlign: align,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: align === "center" ? "center" : "flex-start",
+      }}
+    >
+      {cell(wordmark, 0)}
+      {lines.map((line, i) => cell(line, i + 1, { opacity: 0.86 }))}
+    </div>
+  );
+};

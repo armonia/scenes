@@ -5,7 +5,7 @@ import type { FilmFrame } from "../../kit/FilmView";
 import { filmCamera } from "../../kit/filmCamera";
 import { useFontFile } from "../../kit/font";
 import type { ShotLayer, ShotMaterial } from "../../kit/Shot";
-import { TypeLine, Companion } from "../../kit/TypeLine";
+import { Companion, Lockup, TypeLine } from "../../kit/TypeLine";
 import {
   DEMO_CAMERA_KEYS,
   DEMO_FRAMES,
@@ -17,7 +17,7 @@ import {
   PANEL,
 } from "./geometry";
 import { DEMO, DEMO_FONT, DemoFlat, DemoPart } from "./Slab";
-import { COMPANION, cuesFor, stateAt } from "./timeline";
+import { COMPANION, LOCKUP, LOCKUP_LIFT_AT, cuesFor, stateAt } from "./timeline";
 
 /** Il formato casa: fondo nero, testo bianco, accento giallo su una parola. */
 const INK = { bg: "#000000", text: "#ffffff", accent: "#fff96b" };
@@ -85,7 +85,7 @@ export type DemoFilmProps = {
    * cui film-type.py sa dove sono le lettere nel render completo. Uno strato alla
    * volta, perche' ognuno ha la sua soglia e il suo fondo.
    */
-  solo?: "piano" | "vetro" | "compagno";
+  solo?: "piano" | "vetro" | "compagno" | "marchio";
   /**
    * La copia guasta per i negativi di film-type.py: "tipo-grande" raddoppia il
    * corpo delle frasi (escono dal quadro), "senza-fondo" toglie il fondo scuro
@@ -218,10 +218,13 @@ export const DemoFilm: React.FC<DemoFilmProps> = ({ solo, guasto }) => {
         // In 9:16 la frase sta piu' in alto (sotto ci sono i comandi delle
         // piattaforme): il fondo scuro sale con lei. Tarato sul 16:9, in verticale
         // lasciava la frase a 2,8:1 (film-type.py).
-        const lift = ratio === "9x16" ? 0.22 : 0.12;
+        const base = ratio === "9x16" ? 0.22 : 0.12;
+        // Nella chiusura la frase sale di un blocco per lasciare il posto al
+        // marchio, che prende la fascia che era sua.
+        const lift = frame >= LOCKUP_LIFT_AT ? base + 0.13 : base;
         const ground = interpolate(
           frame,
-          [440, 470, 1040, 1060, 1200, 1215],
+          [440, 470, 1040, 1060, 1140, 1160],
           [0, 1, 1, 0, 0, 1],
           {
             easing: Easing.inOut(Easing.cubic),
@@ -235,7 +238,7 @@ export const DemoFilm: React.FC<DemoFilmProps> = ({ solo, guasto }) => {
             {solo || guasto === "senza-fondo" ? null : (
               <AbsoluteFill
                 style={{
-                  background: `linear-gradient(to top, rgba(0,0,0,0.82), rgba(0,0,0,0.7) ${(lift + 0.1) * 100}%, rgba(0,0,0,0) ${(lift + 0.48) * 100}%)`,
+                  background: `linear-gradient(to top, rgba(0,0,0,0.82), rgba(0,0,0,0.7) ${(base + 0.1) * 100}%, rgba(0,0,0,0) ${(lift + 0.48) * 100}%)`,
                   opacity: ground,
                 }}
               />
@@ -257,6 +260,26 @@ export const DemoFilm: React.FC<DemoFilmProps> = ({ solo, guasto }) => {
                   color={INK.text}
                   accentColor={solo ? INK.text : INK.accent}
                   weight={600}
+                />
+              </div>
+            )}
+            {/* La chiusura col marchio: il prodotto porta il suo, qui scritto in DOM. */}
+            {(solo && solo !== "marchio") || frame < LOCKUP.at ? null : (
+              <div style={{ position: "absolute", left: 0, right: 0, bottom: stage.h * base }}>
+                <Lockup
+                  at={LOCKUP.at}
+                  frame={frame}
+                  size={stage.w * (ratio === "16x9" ? 0.016 : 0.026)}
+                  fontFamily={DEMO.font}
+                  color={INK.text}
+                  lines={LOCKUP.lines}
+                  wordmark={
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.42em", fontSize: "1.7em", fontWeight: 650, letterSpacing: "-0.02em" }}>
+                      {/* Il segno del marchio non e' una lettera: fuori dalla maschera, o film-type.py misurerebbe il viola del marchio come tipografia. */}
+                      <span style={{ width: "0.72em", height: "0.72em", borderRadius: "0.2em", background: solo ? "transparent" : DEMO.ui }} />
+                      Registro
+                    </span>
+                  }
                 />
               </div>
             )}

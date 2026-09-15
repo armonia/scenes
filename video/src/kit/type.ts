@@ -164,6 +164,33 @@ export const wordStates = (
   return out;
 };
 
+/**
+ * La chiusura col marchio: sfalsamento fra le righe (in multipli di `stagger`) e
+ * il fotogramma in cui e' tutta in campo.
+ */
+export const LOCKUP_STAGGER = 1.6;
+
+export const lockupEnd = (at: number, rows: number, timing: TypeTiming = DEFAULT_TYPE_TIMING): number =>
+  at + (rows - 1) * timing.stagger * LOCKUP_STAGGER + timing.wordFrames;
+
+/**
+ * La chiusura deve stare ferma in campo prima che il film finisca: un marchio che
+ * sta ancora salendo sull'ultimo fotogramma non e' una chiusura, e nei social
+ * l'ultimo fotogramma e' anche quello che resta fermo nel feed.
+ */
+export const lockupProblems = (
+  at: number,
+  rows: number,
+  frames: number,
+  timing: TypeTiming = DEFAULT_TYPE_TIMING,
+  minStill = 20,
+): string[] => {
+  const still = frames - 1 - lockupEnd(at, rows, timing);
+  return still < minStill
+    ? [`la chiusura finisce di salire a f${lockupEnd(at, rows, timing).toFixed(0)} e resta ferma ${still.toFixed(0)} frame, meno di ${minStill}`]
+    : [];
+};
+
 /** TYP-03: il colore a meta' strada fra due colori esadecimali. */
 export const mixColor = (a: string, b: string, t: number): string => {
   const parse = (h: string) => {

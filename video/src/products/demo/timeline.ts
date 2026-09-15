@@ -80,10 +80,28 @@ export const SECTION_CAUSE = 560;
 
 export const TOTAL_SETTLE: Settle = { from: 0, to: 7350, start: 700, frames: 72, overshoot: 0.025 };
 
-/* ---------------------------------------------------------- S5 correzione */
+/* ------------------------------------------------- S5 e S6, la mano e il testo
+
+ * IL CURSORE VIENE PRIMA DELLA BATTITURA perche' la battitura comincia dal clic
+ * sul campo: `TYPING.start` si calcola da `FIELD_CLICK`, non si scrive. Scritto a
+ * mano partiva tre frame prima del clic, cioe' il testo compariva in un campo non
+ * ancora attivo.
+ */
+
+export const CURSOR: CursorTimeline = {
+  from: { x: 2320, y: 1300 },
+  moves: [
+    { to: { x: ASSIST_FIELD.x + 60, y: ASSIST_FIELD.y + 60 }, start: 780, travel: 70, settle: 12 },
+    { to: { x: SEND_BUTTON.x + SEND_BUTTON.w * 0.4, y: SEND_BUTTON.y + SEND_BUTTON.h / 2 }, start: 980, travel: 76, settle: 12 },
+    { to: { x: 2320, y: 1300 }, start: 1150, travel: 60, settle: 8 },
+  ],
+};
+export const FIELD_CLICK = arrivalOf(CURSOR.moves[0] as ArcMove) + 6;
+/** CUR-02: la mano arriva sul pulsante e aspetta venti frame prima di premere. */
+export const SEND_PRESS = arrivalOf(CURSOR.moves[1] as ArcMove) + 20;
 
 export const TYPING: TypingPlan = {
-  start: 905,
+  start: FIELD_CLICK + 4,
   fps: FPS,
   steps: [
     { kind: "type", text: "aggiungi il sopralluogo e una penale per rit", seed: 1409 },
@@ -92,20 +110,6 @@ export const TYPING: TypingPlan = {
     { kind: "type", text: "una verifica a fine lavori", seed: 2711 },
   ],
 };
-
-/* ---------------------------------------------------------------- S6 invio */
-
-export const CURSOR: CursorTimeline = {
-  from: { x: 2320, y: 1300 },
-  moves: [
-    { to: { x: ASSIST_FIELD.x + 60, y: ASSIST_FIELD.y + 60 }, start: 820, travel: 70, settle: 12 },
-    { to: { x: SEND_BUTTON.x + SEND_BUTTON.w * 0.4, y: SEND_BUTTON.y + SEND_BUTTON.h / 2 }, start: 1020, travel: 76, settle: 12 },
-    { to: { x: 2320, y: 1300 }, start: 1150, travel: 60, settle: 8 },
-  ],
-};
-export const FIELD_CLICK = arrivalOf(CURSOR.moves[0] as ArcMove) + 6;
-/** CUR-02: la mano arriva sul pulsante e aspetta venti frame prima di premere. */
-export const SEND_PRESS = arrivalOf(CURSOR.moves[1] as ArcMove) + 20;
 
 /** CUR-03 e CHR-03: il pulsante risponde, poi gli stati si accendono a catena. */
 export const STATUS_STEPS: ChainStep[] = [
@@ -189,7 +193,7 @@ export const stateAt = (frame: number): DemoState => {
     },
     // Alla chiusura tutta la ripresa scende a 0,42, sotto il pavimento di CAM-05,
     // perche' la frase bianca sopra una lastra chiara regge solo fra 0,40 e 0,45.
-    dim: interpolate(frame, [1265, 1295], [1, 0.42], inOut),
+    dim: interpolate(frame, [1210, 1240], [1, 0.42], inOut),
   };
 };
 
@@ -204,7 +208,20 @@ export const stateAt = (frame: number): DemoState => {
  * 4,5:1 del testo piccolo. Sta qui e non nel componente perche' film-type.py
  * deve sapere quando guardarlo.
  */
-export const COMPANION = { text: "Registro · RQ-2026-014", from: 1290, to: 1310, opacity: 1 } as const;
+export const COMPANION = { text: "Registro · RQ-2026-014", from: 1250, to: 1270, opacity: 1 } as const;
+
+/**
+ * La chiusura col marchio (gli script: al f1300, marchio, chiamata all'azione,
+ * dominio). Entra mentre la frase finale e' gia' ferma, e resta fino all'ultimo
+ * fotogramma.
+ *
+ * LA FRASE FINALE STA PIU' IN ALTO per farle posto, e si sposta a f1268, fra
+ * l'uscita di "Approvato." (finita a f1268) e l'ingresso della chiusura (f1270):
+ * in quei due fotogrammi sul vetro non c'e' niente, quindi lo spostamento non si
+ * vede. Una frase che si sposta mentre e' in campo sarebbe un difetto.
+ */
+export const LOCKUP = { at: 1292, lines: ["Chiedi una prova", "registro.example"] } as const;
+export const LOCKUP_LIFT_AT = 1224;
 
 /**
  * Le battute per formato. Le frasi e i frame sono gli stessi; cambia dove si va a
@@ -226,11 +243,11 @@ export const cuesFor = (ratio: Ratio): { plane: TypeCue[]; glass: TypeCue[] } =>
       { at: 545, rows: [["Ordina."]], key: { word: [0, 0], scale: 1.6 } },
       { at: 625, rows: [["Stima."]], key: { word: [0, 0], scale: 1.6 }, exitAt: 760 },
       { at: 900, rows: narrow ? [["Il", "resto"], ["lo", "decidi", "tu."]] : [["Il", "resto", "lo", "decidi", "tu."]], accent: narrow ? [1, 2] : [0, 4], exitAt: 1050 },
-      { at: 1190, rows: [["Approvato."]], exitAt: 1244 },
+      { at: 1150, rows: [["Approvato."]], exitAt: 1200 },
       // La parola chiave sta da sola sulla sua riga, in ogni formato: cresce dal
       // centro, e la riga le tiene libero lo spazio sopra. In fondo a una riga
       // lunga cresceva verso destra e usciva dal quadro del 16:9.
-      { at: 1270, rows: [["Richieste", "che"], ["chiudono."]], key: { word: [1, 0], scale: 1.4 }, accent: [1, 0] },
+      { at: 1226, rows: [["Richieste", "che"], ["chiudono."]], key: { word: [1, 0], scale: 1.4 }, accent: [1, 0] },
     ],
   };
 };

@@ -47,6 +47,7 @@ NOMI = {
     "hesitation": "esitazione prima della pressione (CUR-02): da 10 a 25 frame",
     "chain": "catene di conseguenze (CHR-03): da 2 a 40 frame fra un anello e l'altro",
     "handoff": "consegne (CHR-01): varco, volo, chiusura, in quest'ordine",
+    "lockup": "la chiusura col marchio e' ferma in campo prima della fine",
     "parked": "nessun cambio di stato con la camera ferma",
 }
 

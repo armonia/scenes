@@ -1,7 +1,7 @@
 import type { Ratio } from "../../kit/stage.ts";
-import { DEFAULT_TYPE_TIMING } from "../../kit/type.ts";
+import { DEFAULT_TYPE_TIMING, lockupEnd } from "../../kit/type.ts";
 import type { TypeCue } from "../../kit/type.ts";
-import { COMPANION, cuesFor } from "./timeline.ts";
+import { COMPANION, LOCKUP, cuesFor } from "./timeline.ts";
 import { DEMO_FRAMES } from "./geometry.ts";
 
 /**
@@ -13,7 +13,7 @@ import { DEMO_FRAMES } from "./geometry.ts";
  * delle lettere), `role` dice a film-type.py che soglia usare: una frase e' testo
  * grande (3:1), una didascalia no (4,5:1).
  */
-export type TypeSample = { frame: number; layer: "piano" | "vetro" | "compagno"; role: "frase" | "didascalia"; text: string };
+export type TypeSample = { frame: number; layer: "piano" | "vetro" | "compagno" | "marchio"; role: "frase" | "didascalia"; text: string };
 
 export const typeSamples = (ratio: Ratio): TypeSample[] => {
   const t = DEFAULT_TYPE_TIMING;
@@ -35,5 +35,12 @@ export const typeSamples = (ratio: Ratio): TypeSample[] => {
     role: "didascalia",
     text: COMPANION.text,
   };
-  return [...frames(plane, "piano"), ...frames(glass, "vetro"), companion];
+  // Il marchio a salita finita: e' quando e' tutto in campo.
+  const lockup: TypeSample = {
+    frame: Math.min(DEMO_FRAMES - 2, Math.round(lockupEnd(LOCKUP.at, LOCKUP.lines.length + 1)) + 4),
+    layer: "marchio",
+    role: "didascalia",
+    text: LOCKUP.lines.join(" · "),
+  };
+  return [...frames(plane, "piano"), ...frames(glass, "vetro"), companion, lockup];
 };

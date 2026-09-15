@@ -14,6 +14,7 @@ const REGOLE = [
   ["catena-insieme", "chain"],
   ["volo-prima-del-varco", "handoff"],
   ["stato-a-camera-ferma", "parked"],
+  ["marchio-tardi", "lockup"],
 ];
 
 const FRAMES = [100, 320, 560, 780, 1000, 1300];

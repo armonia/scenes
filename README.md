@@ -600,7 +600,10 @@ Locally the checks take about three minutes per ratio on renders that already
 exist. In CI each ratio is its own job (render, fixtures, checks, coverage): the
 first run took 14, 15 and 20 minutes against a limit of 25, with the page checks
 in a fourth job of 5 minutes from the start, and the deploy waiting for all of
-them.
+them. The example film is three more jobs, one per ratio, which the deploy does
+not wait for: its checks and its 1350-frame render took 11.1, 10.4 and 9.3
+minutes. A whole run is 16 minutes of wall clock, because the seven jobs go
+together.
 
 ## Layout
 
@@ -1046,6 +1049,7 @@ A new film copies the folder and rewrites those files. The kit does not change.
 | TYP-01 to TYP-05 | `type.ts` (cues, `wordStates`, `dwellProblems`, `cueProblems`) and `TypeLine` | Word 26 frames, stagger 3.4, swap 24, accent 24, key 44, travel 160%; at most 15.5 characters per second of net dwell |
 | TYP-09 | `Companion`, anchored at the bottom or at the top | 1.5cqw bottom left in 16:9, 2.4cqw anchored top in portrait, never under 34 px from an edge |
 | TYP-10 | A `TypeLine` inside a layer on the slab's plane | |
+| The close | `Lockup`: the wordmark, which the product brings as a node, over the call to action and the domain, rising from the mask | The scripts put it at f1300, with the claim already still |
 | Typeface | `font.ts` `useFontFile`: the render waits for the file and fails without it | |
 
 ### The order

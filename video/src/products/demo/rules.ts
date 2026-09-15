@@ -5,13 +5,14 @@ import { chain, chainProblems, handoffOrder } from "../../kit/choreo.ts";
 import type { ChainStep, Handoff } from "../../kit/choreo.ts";
 import { arrivalOf, hesitationProblems } from "../../kit/cursorArc.ts";
 import type { ArcMove } from "../../kit/cursorArc.ts";
-import { cueProblems, dwellProblems } from "../../kit/type.ts";
+import { cueProblems, dwellProblems, lockupProblems } from "../../kit/type.ts";
 import type { TypeCue } from "../../kit/type.ts";
 import { DEMO_CAMERA_KEYS, DEMO_FRAMES } from "./geometry.ts";
 import {
   CURSOR,
   FPS,
   INBOX_ITEMS,
+  LOCKUP,
   SECTION_CAUSE,
   SECTION_CHAIN,
   SEND_PRESS,
@@ -28,8 +29,8 @@ import {
  * indietro, una frase che resta troppo poco per leggerla, una frase che esce
  * mentre la successiva entra, un'esitazione di quattro frame, due stati accesi
  * sullo stesso frame, un volo che parte prima che il varco si apra, un cambio di
- * stato con la camera ferma. Ognuno deve far scattare la sua regola
- * (film-rules.py --regola).
+ * stato con la camera ferma, un marchio che sta ancora salendo quando il film
+ * finisce. Ognuno deve far scattare la sua regola (film-rules.py --regola).
  */
 export type DemoGuasto =
   | "camera-indietro"
@@ -38,7 +39,8 @@ export type DemoGuasto =
   | "esitazione-corta"
   | "catena-insieme"
   | "volo-prima-del-varco"
-  | "stato-a-camera-ferma";
+  | "stato-a-camera-ferma"
+  | "marchio-tardi";
 
 export const demoRules = (ratio: Ratio, guasto?: string) => {
   let keys: PoseKey[] = DEMO_CAMERA_KEYS[ratio];
@@ -46,6 +48,7 @@ export const demoRules = (ratio: Ratio, guasto?: string) => {
   let statusSteps: ChainStep[] = STATUS_STEPS;
   let cues = cuesFor(ratio);
   let hs: Handoff[] = handoffs();
+  let lockupAt = LOCKUP.at;
   if (guasto === "camera-indietro") {
     // La chiave di f440 torna al yaw di f0: la camera si gira indietro e poi riparte.
     keys = keys.map((k, i) => (i === 2 ? { at: k.at, pose: { ...k.pose, yaw: (keys[0] as PoseKey).pose.yaw } } : k));
@@ -63,6 +66,8 @@ export const demoRules = (ratio: Ratio, guasto?: string) => {
   } else if (guasto === "battute-sovrapposte") {
     const glass: TypeCue[] = cues.glass.map((c, i) => (i === 4 ? { ...c, exitAt: 1266 } : c));
     cues = { ...cues, glass };
+  } else if (guasto === "marchio-tardi") {
+    lockupAt = LOCKUP.at + 40;
   } else if (guasto === "stato-a-camera-ferma") {
     // L'ultima chiave arriva prima e la camera si ferma a f1100: gli stati che si
     // accendono dopo cambiano a camera parcheggiata.
@@ -101,6 +106,8 @@ export const demoRules = (ratio: Ratio, guasto?: string) => {
     hesitation: hesitationProblems(arrivalOf(CURSOR.moves[1] as ArcMove), press),
     chain: [...chainProblems(SECTION_CHAIN.slice(1)), ...chainProblems(statusSteps)],
     handoff: hs.flatMap(handoffOrder),
+    // La chiusura conta il marchio piu' le righe sotto.
+    lockup: lockupProblems(lockupAt, LOCKUP.lines.length + 1, DEMO_FRAMES),
     parked,
   };
 };
