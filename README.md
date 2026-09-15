@@ -384,11 +384,66 @@ measurements still hold.
 planes, with the product's own tokens, radii and system font stack. A mockup
 that is 3px off reads as a mockup.
 
+## The kit, starting with the geometry
+
+Every measurement in this repo used to be taken on one slab: dark, 2400 by 1200,
+in 16:9. `slabPointOnScreen` and `centreOn` had 1920 and 1080 written inside
+them, so the maths a product film needs in 9:16 and 4:5 did not exist, and no
+bench would have noticed, because no bench looked anywhere else.
+
+`video/src/kit/` is where the registry becomes usable for any product. It starts
+with two pure modules, which Node reads directly the way the benches already read
+`slab.ts`: `stage.ts`, the three stages, and `rig.ts`, with perspective, origin
+and slab scale as parameters and `slabPointOnScreen`, `centreOn`, `zoomForPush`,
+`pushForZoom` and `pushForFill` written against them. `pushForFill` exists
+because push numbers do not travel between formats: the same push gives the same
+magnification, and in a narrow frame the subject fills it much sooner, so the
+fill is the decision and the push follows from it. `slab.ts` keeps every export
+and calls the kit with the stage and rig of Topics. `geometry-snapshot.mjs`
+photographs its geometry (38 constants, seven poses, the functions on sample
+points) and the versions before and after the move are the same string.
+
+The origin deserves a sentence, because the direction documents of the first
+product films got it wrong. They said the 46 per cent "is not a fraction of the
+frame but the result of the slab geometry and the pitch". It is a choice, written
+in the CSS and read back by the maths. What changes between formats is the slide
+that brings the subject onto it.
+
+`drift.py` proves it on renders rather than on the catalogue page. It runs
+`CAM-06` as six specimens, in `video/src/specimens/`: the delivered Topics card,
+and the card of a probe slab, in 16:9, 9:16 and 4:5. The probe slab is a product
+that does not exist and imitates none. It is light where Topics is dark, vertical
+where Topics is wide, at scale 1 where Topics is at 1.04, so a number copied from
+Topics does not come out right on it. Each specimen slides the slab once with
+`centreOn` and pushes until the subject fills 90 per cent of the frame, and a
+magenta ring on the subject has to stay within 4 px of the origin on the first
+and the last frame. The worst reading is 2.03 px, on Topics in 16:9, where the card
+sits on fractional coordinates and is magnified three times; the probe slab stays
+under 0.71. The negative controls have to fail in all six: once without the
+slide, once with the slide worked out for 46 per cent while the CSS says 50. The
+second is the subtle one. On the first frame the ring is exactly where it should
+be, and it drifts 39.5 to 99.8 px only as the camera pushes in, which is
+(0.50 − 0.46) × height × (zoom − 1), the figure the manifest predicts. A bench
+that looked at one frame would pass it.
+
+The bench had two defects of its own before it could be trusted. The first mask
+turned the magenta white and then blacked out everything that was not white, so
+the white surfaces of the probe slab stayed in the mask and the centroid landed
+two hundred pixels from the ring: the bench failed the correct case, and against
+a bench that fails everything the negative controls read as green. And on Topics
+the ring was invisible, under the delivered card, which lives at `zIndex` 10.
+
+`scripts/manifest.mjs` is where a bench asks what it should find. It prints, from
+the same modules that produce the render, the variants, their frames, the origin,
+where the subject would sit without compensation, and the tolerance. If the
+uncompensated point fell on the origin, the negative could not fail, and
+`drift.py` exits 2 and says so.
+
 ## Layout
 
 | | |
 |---|---|
-| `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/` |
+| `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/`, the product-independent kit in `video/src/kit/`, the probe slab in `video/src/products/probe/`, bench specimens in `video/src/specimens/` |
 | `scripts/` | The measurements, the review page, the showcase build, and `catalog.mjs`, which is how shell and CI read `catalog.json` without a compiler. See below |
 | `showcase/` | The public pages. `index.template.html` and `grammatica.html` are committed; the scene section and the renders are not, `showcase-build.sh` generates the first from `catalog.json` and copies the second into `showcase/dist/` |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
@@ -420,6 +475,9 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/loop-close.py [page.html]                     # does every demo loop close, or tear every pass
 ./scripts/type-check.py [page.html]                     # does the type cover, leave the frame, vanish, snap, or stop mid-move
 ./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
+./scripts/drift.py [--props JSON] [--must-fail]         # does the subject stay on the origin, on two slabs and three formats
+node scripts/manifest.mjs cam06                          # what the benches must find, from the kit
+node scripts/geometry-snapshot.mjs [slab.ts]             # the geometry as a string, to prove a refactor left it alone
 ./scripts/tempo.py [long.mp4 short.mp4]                 # does shortening a scene retime it or just trim it
 ./scripts/fixture-tempo.sh                              # render the two retimed fixtures
 ./scripts/fixture-trim.sh                               # build the trimmed scene tempo.py must fail

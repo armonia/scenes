@@ -17,6 +17,19 @@
  * aritmetica pura e la si puo' interpolare.
  */
 
+// Import con l'estensione scritta e i tipi in un import a parte: questo file lo
+// leggono anche i banchi, da Node, che toglie i tipi senza compilare e non
+// risolve un import senza estensione.
+import { STAGES } from "../kit/stage.ts";
+import type { Stage } from "../kit/stage.ts";
+import {
+  centreOn as kitCentreOn,
+  pushForZoom as kitPushForZoom,
+  slabPointOnScreen as kitSlabPointOnScreen,
+  zoomForPush as kitZoomForPush,
+} from "../kit/rig.ts";
+import type { Rig, SlabSize } from "../kit/rig.ts";
+
 export const SLAB_W = 2400;
 export const SLAB_H = 1200;
 
@@ -251,20 +264,37 @@ export const THREAD_PAD_BOTTOM = SLAB_H - COMPOSER_Y + 24;
  * a occhio spostando numeri finche' sembra giusto: si fa una volta e si
  * verifica sul render.
  */
-export const COMP_W = 1920;
-export const COMP_H = 1080;
+export const COMP_W = STAGES["16x9"].w;
+export const COMP_H = STAGES["16x9"].h;
 export const SLAB_SCALE = 1.04;
 export const PERSPECTIVE = 2600;
 export const PERSPECTIVE_ORIGIN_Y = 0.46;
+
+/**
+ * Topics nei termini del kit. Lo stage, il rig e la dimensione della lastra
+ * che le sei scene usano, passati alle funzioni di `kit/rig.ts`.
+ *
+ * LE QUATTRO FUNZIONI QUI SOTTO SONO UN PONTE. Stavano scritte qui con 1920 e
+ * 1080 dentro, quindi valevano solo in 16:9; adesso chiamano il kit con lo
+ * stage di Topics e restituiscono gli stessi numeri al bit, verificato da
+ * `scripts/geometry-snapshot.mjs` sul commit di prima e su questo. Restano
+ * finche' scene e banchi non leggono il kit direttamente.
+ */
+export const TOPICS_STAGE: Stage = STAGES["16x9"];
+export const TOPICS_RIG: Rig = {
+  perspective: PERSPECTIVE,
+  originX: 0.5,
+  originY: PERSPECTIVE_ORIGIN_Y,
+  slabScale: SLAB_SCALE,
+};
+export const TOPICS_SLAB: SlabSize = { w: SLAB_W, h: SLAB_H };
 
 /** Dove cade un punto della lastra, con yaw e pitch a zero e prima della spinta in Z. */
 export const slabPointOnScreen = (
   x: number,
   y: number,
-): { x: number; y: number } => ({
-  x: (COMP_W - SLAB_W) / 2 + SLAB_W / 2 + (x - SLAB_W / 2) * SLAB_SCALE,
-  y: (COMP_H - SLAB_H) / 2 + SLAB_H / 2 + (y - SLAB_H / 2) * SLAB_SCALE,
-});
+): { x: number; y: number } =>
+  kitSlabPointOnScreen(TOPICS_STAGE, TOPICS_RIG, TOPICS_SLAB, { x, y });
 
 /**
  * Lo scostamento che porta quel punto sull'origine della prospettiva.
@@ -277,17 +307,12 @@ export const slabPointOnScreen = (
 export const centreOn = (
   x: number,
   y: number,
-): { slideX: number; slideY: number } => {
-  const p = slabPointOnScreen(x, y);
-  return {
-    slideX: COMP_W / 2 - p.x,
-    slideY: COMP_H * PERSPECTIVE_ORIGIN_Y - p.y,
-  };
-};
+): { slideX: number; slideY: number } =>
+  kitCentreOn(TOPICS_STAGE, TOPICS_RIG, TOPICS_SLAB, { x, y });
 
 /** L'ingrandimento che produce una spinta in Z, e la spinta che serve per un ingrandimento. */
-export const zoomForPush = (z: number): number => PERSPECTIVE / (PERSPECTIVE - z);
-export const pushForZoom = (k: number): number => PERSPECTIVE * (1 - 1 / k);
+export const zoomForPush = (z: number): number => kitZoomForPush(TOPICS_RIG, z);
+export const pushForZoom = (k: number): number => kitPushForZoom(TOPICS_RIG, k);
 
 /** Quanto ingrandisce la discesa di CardFocus. Oltre 2,6 la card esce dal quadro. */
 export const CARD_FOCUS_ZOOM = 2.35;

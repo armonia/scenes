@@ -8,6 +8,8 @@ import { CardFocus } from "./scenes/CardFocus";
 import { CardRelease } from "./scenes/CardRelease";
 import { BoardOrbit } from "./scenes/BoardOrbit";
 import catalog from "./scenes/catalog.json";
+import { SpecimenCam06 } from "./specimens/SpecimenCam06";
+import { CAM06_SPECIMENS } from "./specimens/list";
 
 /**
  * Le composition della vetrina NON sono scritte qui a mano: escono da
@@ -114,6 +116,21 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{ detachTicker: true, jitter: true }}
       />
+      {/* GLI SPECIMEN: una voce del registro su piu' lastre e piu' rapporti,
+          per i banchi e non per la vetrina. L'elenco sta in specimens/list.ts,
+          lo stesso che legge il manifest di drift.py. */}
+      {CAM06_SPECIMENS.map((s) => (
+        <Composition
+          key={s.id}
+          id={s.id}
+          component={SpecimenCam06}
+          durationInFrames={s.durationInFrames}
+          fps={s.fps}
+          width={s.width}
+          height={s.height}
+          defaultProps={{ product: s.product, ratio: s.ratio }}
+        />
+      ))}
     </>
   );
 };
