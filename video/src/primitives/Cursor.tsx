@@ -70,6 +70,13 @@ export type CursorProps = {
    * una timeline padre puo' guidarla. Se manca, il frame se lo prende da se'.
    */
   progress?: number;
+  /**
+   * Il frame della scena. Se c'e' vince su tutto: e' il modo in cui una scena
+   * guidata da `progress` tiene la mano sincronizzata con la camera. Prima il
+   * cursore leggeva sempre il proprio orologio, e con una scena pilotata da una
+   * timeline padre la mano andava per conto suo.
+   */
+  frame?: number;
   size?: number;
 };
 
@@ -79,12 +86,14 @@ export const Cursor: React.FC<CursorProps> = ({
   path,
   clicks = [],
   progress,
+  frame: sceneFrame,
   size = 34,
 }) => {
   const localFrame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
   const frame =
-    progress === undefined ? localFrame : progress * (durationInFrames - 1);
+    sceneFrame ??
+    (progress === undefined ? localFrame : progress * (durationInFrames - 1));
 
   if (path.length === 0) return null;
 

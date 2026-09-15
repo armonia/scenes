@@ -2,7 +2,7 @@ import React, { useCallback, useRef } from "react";
 import { AbsoluteFill } from "remotion";
 import gsap from "gsap";
 import { FrameLocked } from "../primitives/FrameLocked";
-import { app, fontStack, monoStack, radius } from "../theme";
+import { app, fontStack, monoStack, radius } from "../products/topics/tokens";
 
 /**
  * Il banco di prova di FrameLocked, non una scena.

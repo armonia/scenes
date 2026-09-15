@@ -18,18 +18,11 @@ SRC="${1:-$ROOT/video/out/card-focus.mp4}"
 OUT="${2:-$ROOT/video/out/.fixture-card-focus-screenshot.mp4}"
 [ -f "$SRC" ] || { echo "manca il render: $SRC" >&2; exit 1; }
 
-read -r CX CY WX WY K < <(node --input-type=module -e '
-const m = await import("'"$ROOT"'/video/src/primitives/slab.ts");
-const r = m.handoffLandedRect();
-const p = m.slabPointOnScreen(r.x + r.w / 2, r.y + r.h / 2);
-const ox = m.COMP_W / 2, oy = m.COMP_H * m.PERSPECTIVE_ORIGIN_Y;
-const k1 = m.zoomForPush(m.CARD_FOCUS_END_POSE.pushZ);
-const k0 = m.zoomForPush(m.CARD_HANDOFF_END_POSE.pushZ);
-console.log(Math.round(ox), Math.round(oy),
-            Math.round(ox + (p.x - ox) * k0), Math.round(oy + (p.y - oy) * k0),
-            (k1 / k0).toFixed(4));
-' 2>/dev/null)
-case "${K:-}" in ''|*[!0-9.]*) echo "geometria non arrivata da slab.ts" >&2; exit 3 ;; esac
+# La stessa geometria di focus-sharpness.sh, dallo stesso manifest: il centro
+# della composizione, dove sta la card nel campo largo, e l'ingrandimento che
+# manca per arrivare alla scala finale.
+read -r CX CY WX WY K < <(node "$ROOT/scripts/manifest.mjs" fixture-screenshot 2>/dev/null)
+case "${K:-}" in ''|*[!0-9.]*) echo "geometria non arrivata dal manifest" >&2; exit 3 ;; esac
 
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 mkdir -p "$T/f"

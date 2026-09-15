@@ -10,7 +10,7 @@ nessuno misura e' un numero che qualcuno ha scritto.
 COSA MISURA. Il rapporto di contrasto WCAG fra il testo attenuato e il suo
 fondo, su un fotogramma vero, mentre la risposta scorre. Il ritaglio non e'
 scelto a occhio: e' la fascia di intestazione del thread, e la sua posizione
-esce da slab.ts proiettata con la posa finale di PromptInput. Quella posa sta a
+esce da topics/geometry.ts proiettata con la posa finale di PromptInput. Quella posa sta a
 yaw e pitch zero, quindi la proiezione e' esatta.
 
 IL RITAGLIO STA SU UNA POSIZIONE ARITMETICA, e la prima versione no. Puntava la
@@ -62,37 +62,15 @@ if not SRC.exists():
     print("manca il render: %s" % SRC, file=sys.stderr)
     raise SystemExit(1)
 
-# La geometria viene dal modulo, non da due numeri copiati qui.
+# La geometria viene dal manifest, non da due numeri copiati qui: l'intestazione
+# del thread all'ultima posa di PromptInput, proiettata e con dimensioni pari
+# (video/src/products/topics/benches.ts spiega perche').
 geo = subprocess.run(
-    ["node", "--input-type=module", "-e", """
-const m = await import("%s/video/src/primitives/slab.ts");
-const p = m.PROMPT_INPUT_END_POSE;
-const k = m.zoomForPush(p.pushZ);
-const ox = m.COMP_W / 2, oy = m.COMP_H * m.PERSPECTIVE_ORIGIN_Y;
-// L'intestazione del thread: contenuto vero, attenuato per costruzione mentre
-// la risposta scorre, e in una posizione che e' aritmetica invece che
-// dipendente da come vanno a capo i messaggi.
-const x0 = m.SIDEBAR_W + 20, x1 = m.SIDEBAR_W + 560;
-const y0 = m.THREAD_TOP + 10, y1 = m.THREAD_TOP + 44;
-const P = (x, y) => {
-  const s = m.slabPointOnScreen(x, y);
-  return [ox + (s.x + p.slideX - ox) * k, oy + (s.y + (p.slideY ?? 0) - oy) * k];
-};
-const a = P(x0, y0), b = P(x1, y1);
-// Dimensioni PARI: su una sorgente yuv420p ffmpeg arrotonda un ritaglio
-// dispari al pixel sotto, restituisce una riga in meno di quella chiesta, e il
-// controllo sulla lunghezza del buffer scatta dicendo che l'estrazione e'
-// fallita quando invece e' solo diversa di uno.
-const pari = (v) => 2 * Math.floor(v / 2);
-console.log(JSON.stringify({
-  x: pari(Math.max(0, Math.round(a[0]))), y: pari(Math.round(a[1])),
-  w: pari(Math.round(b[0] - a[0])), h: pari(Math.round(b[1] - a[1])),
-}));
-""" % ROOT],
+    ["node", "%s/scripts/manifest.mjs" % ROOT, "contrast-crop"],
     capture_output=True, text=True,
 )
 if geo.returncode != 0:
-    print("non riesco a leggere la geometria da slab.ts:\n" + geo.stderr, file=sys.stderr)
+    print("non riesco a leggere la geometria dal manifest:\n" + geo.stderr, file=sys.stderr)
     raise SystemExit(3)
 r = json.loads(geo.stdout.strip().splitlines()[-1])
 if r["w"] < 40 or r["h"] < 12:
@@ -153,7 +131,7 @@ l1, l2 = max(lum(fg), lum(bg)), min(lum(fg), lum(bg))
 ratio = (l1 + 0.05) / (l2 + 0.05)
 
 print("Contrasto del contenuto attenuato su %s, fotogramma %d." % (SRC.name, FRAME))
-print("Ritaglio sull'intestazione del thread, proiettato da slab.ts: %dx%d a (%d,%d)."
+print("Ritaglio sull'intestazione del thread, proiettato da topics/geometry.ts: %dx%d a (%d,%d)."
       % (r["w"], r["h"], r["x"], r["y"]))
 print()
 print("  fondo (valore piu' frequente)      %3d" % bg)

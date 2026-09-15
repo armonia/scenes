@@ -134,5 +134,5 @@ fi
 
 echo "VERDETTO: c'e' un salto fra $(basename "$A" .mp4) e $(basename "$B" .mp4)." >&2
 echo "Le due pose non coincidono: la posa di giunzione va letta da" >&2
-echo "primitives/slab.ts da entrambe le scene, non riscritta in una delle due." >&2
+echo "products/topics/geometry.ts da entrambe le scene, non riscritta in una delle due." >&2
 exit 1

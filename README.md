@@ -30,7 +30,7 @@ not a stylistic preference.
 That rule was an assertion until one scene had to enter from another. Two clips
 that both start and end at rest can be placed in any order without anyone seeing
 a cut, because there is no motion to break. `CardHandoff` starts from the pose
-`UIMockup` stops in, both reading it from `primitives/slab.ts`, and `seam.sh`
+`UIMockup` stops in, both reading it from `products/topics/geometry.ts`, and `seam.sh`
 diffs the two frames to prove it.
 
 One measured join makes the rule true of a pair. `CardFocus` is the third link:
@@ -55,7 +55,7 @@ while the other twenty-eight were joined.
 Putting it in was not a swap of constants. The board only ever used the top half
 of the slab; the bottom half was empty, which is also why the frames read as a
 mockup rather than as a screen in use. The assistant thread and the composer now
-live down there, in `primitives/Assistant.tsx`, drawn by every scene — if only
+live down there, in `products/topics/Assistant.tsx`, drawn by every scene — if only
 one scene drew them, the join before it would show half a screen appearing out
 of nothing, and `seam.sh` would call that a cut, correctly. With one screen the
 move from the board to the composer stops being a change of screen and becomes a
@@ -99,8 +99,8 @@ cent of its width and the titles stop being titles, and it holds still for the
 last 32 frames so the piece finishes on a pose rather than on an interrupted
 move.
 
-The thickness it shows — `SlabEdge` — is drawn by all six scenes and visible in
-exactly one, because at small yaw angles it sits precisely behind the slab. It
+The thickness it shows, the edge that `Shot` draws, is there in all six scenes and
+visible in exactly one, because at small yaw angles it sits precisely behind the slab. It
 is a *sibling* of the slab and not a child, and that is not a detail: the slab
 clips, any clipping flattens `preserve-3d`, and a child at `translateZ(-30)`
 would be squashed onto its parent's plane and never stick out. The same fact is
@@ -384,11 +384,144 @@ measurements still hold.
 planes, with the product's own tokens, radii and system font stack. A mockup
 that is 3px off reads as a mockup.
 
+## The kit, starting with the geometry
+
+Every measurement in this repo used to be taken on one slab: dark, 2400 by 1200,
+in 16:9. `slabPointOnScreen` and `centreOn` had 1920 and 1080 written inside
+them, so the maths a product film needs in 9:16 and 4:5 did not exist, and no
+bench would have noticed, because no bench looked anywhere else.
+
+`video/src/kit/` is where the registry becomes usable for any product. It starts
+with two pure modules, which Node reads directly the way the benches already read
+`topics/geometry.ts`: `stage.ts`, the three stages, and `rig.ts`, with perspective, origin
+and slab scale as parameters and `slabPointOnScreen`, `centreOn`, `zoomForPush`,
+`pushForZoom` and `pushForFill` written against them. `pushForFill` exists
+because push numbers do not travel between formats: the same push gives the same
+magnification, and in a narrow frame the subject fills it much sooner, so the
+fill is the decision and the push follows from it. `topics/geometry.ts` keeps every export
+and calls the kit with the stage and rig of Topics. `geometry-snapshot.mjs`
+photographs its geometry (38 constants, seven poses, the functions on sample
+points) and the versions before and after the move are the same string.
+
+The origin deserves a sentence, because the direction documents of the first
+product films got it wrong. They said the 46 per cent "is not a fraction of the
+frame but the result of the slab geometry and the pitch". It is a choice, written
+in the CSS and read back by the maths. What changes between formats is the slide
+that brings the subject onto it.
+
+`drift.py` proves it on renders rather than on the catalogue page. It runs
+`CAM-06` as six specimens, in `video/src/specimens/`: the delivered Topics card,
+and the card of a probe slab, in 16:9, 9:16 and 4:5. The probe slab is a product
+that does not exist and imitates none. It is light where Topics is dark, vertical
+where Topics is wide, at scale 1 where Topics is at 1.04, so a number copied from
+Topics does not come out right on it. Each specimen slides the slab once with
+`centreOn` and pushes until the subject fills 90 per cent of the frame, and a
+magenta ring on the subject has to stay within 4 px of the origin on the first
+and the last frame. The worst reading is 2.03 px, on Topics in 16:9, where the card
+sits on fractional coordinates and is magnified three times; the probe slab stays
+under 0.71. The negative controls have to fail in all six: once without the
+slide, once with the slide worked out for 46 per cent while the CSS says 50. The
+second is the subtle one. On the first frame the ring is exactly where it should
+be, and it drifts 39.5 to 99.8 px only as the camera pushes in, which is
+(0.50 − 0.46) × height × (zoom − 1), the figure the manifest predicts. A bench
+that looked at one frame would pass it.
+
+The bench had two defects of its own before it could be trusted. The first mask
+turned the magenta white and then blacked out everything that was not white, so
+the white surfaces of the probe slab stayed in the mask and the centroid landed
+two hundred pixels from the ring: the bench failed the correct case, and against
+a bench that fails everything the negative controls read as green. And on Topics
+the ring was invisible, under the delivered card, which lives at `zIndex` 10.
+
+The second piece of the kit is `kit/Shot.tsx`, and it is a deletion more than an
+addition. The block that films a slab (the attenuated plane behind, the edge,
+the slab, the light on the frame) was copied by hand into all six scenes, with
+perspective 2600, origin "50% 46%", `(1920 - SLAB_W) / 2`, `scale(1.04)` and the
+seven parallax numbers of the plane behind written into each copy, while the
+benches measured the constants in `topics/geometry.ts` that no scene read. Now every scene
+hands `Shot` a pose and its content, and the numbers that make the shot look like
+Topics live once, in `products/topics/material.ts`. The stage comes from the
+composition rather than from 1920 and 1080. The copies differed in exactly three
+ways (a fade on the whole frame in `UIMockup`, a cursor inside the slab in
+`CardHandoff` and `PromptInput`, and a light edge along the bottom of the slab
+that `PromptInput` and `BoardOrbit` do not have), and `Shot` takes each one as a
+prop. `still-identity.sh` renders the first, second, middle, second-to-last and
+last frame of every scene from the previous commit and from the working tree:
+thirty of thirty identical, with a repeat of one frame per scene to show the
+instrument is repeatable, and a pose moved by one pixel makes it fail.
+
+The third piece is `kit/project.ts`, which says where a point of the slab lands on
+screen with the camera in any pose, tilted included. `centreOn` is exact only
+with yaw and pitch at zero, and a bench that watches a moving camera, which is
+what almost every product film has, needs to know where an element is at a
+tilted pose rather than guess a crop by eye. It redoes the CSS chain of `Shot`
+in arithmetic (scale, then rotateX, then rotateY, then the push, then the
+container's perspective around the rig origin), and `project-check.py` compares
+it with Chromium on 36 cases: two slabs, three stages, the six poses of the
+Topics chain, five points each, off-centre and off-axis on purpose. The largest
+error is 0.040 px. With the CSS origin set to 50% 50% instead of the rig's, the
+error reaches 103.7 px and the check says so.
+
+The four benches that worked out the geometry of Topics inside a `node -e`
+snippet of their own (`handoff-travel.sh`, `focus-sharpness.sh`,
+`fixture-screenshot.sh`, `contrast-floor.py`) now ask `manifest.mjs`, which
+computes it once in `video/src/products/topics/benches.ts`. Their output is identical
+line for line, and the screenshot fixture comes out with the same hash.
+`no-product-literals.sh` keeps it that way: a bench that reads `video/src` by
+itself fails it, and pointed at the benches of the commit before this one it
+names exactly those four.
+
+The fourth piece takes the camera out of the scenes. Each scene used to compute
+its own camera inside the component, five `interpolate` calls written by hand,
+which meant that only the render could say what the pose was at frame 137, so
+no bench could ask whether the camera reverses in motion or whether the slab
+leaves an edge of the frame uncovered. `kit/camera.ts` makes the camera data: a
+track is one curve per axis (from, to, a window, an easing) and `poseAt` reads it
+with Remotion's own `interpolate` and `Easing`, called with the same arguments
+the scenes used. The six tracks live in `products/topics/tracks.ts`, and the scenes
+read them. `still-identity.sh` now takes the frames to compare, because the five
+default ones miss the windows that matter: frames 20 to 81 of `UIMockup`, where
+the slab slides in, and the frames either side of where `PromptInput` and
+`BoardOrbit` settle. All of them are identical to the previous commit. The cursor
+also takes the scene's frame now: it used to read its own clock, so in a scene
+driven by `progress` the hand would have gone its own way.
+
+Two benches that the catalogue named and nobody had written read those tracks.
+`chain-check.py` is `GIU-04`: along the six scenes, in the order they join, no
+axis changes direction inside a scene, every join is continuous, and a reversal
+at a join is allowed only where the camera is still on both sides. It finds
+seven, all at rest, with boundary velocities under a thousandth of the peak; with
+the easing taken out of every track the same seven become reversals in motion
+and it fails. `fill-geom.py` is `CAM-01`: from 20 per cent of each scene to its
+last frame, the four corners of the frame have to fall inside the projected slab.
+Its first run failed `BoardOrbit`, by up to 260 px from frame 30, and it is right:
+the orbit exists to show the vertical edges of the slab, so the edges of the
+frame show the background on purpose. The scene had declared `fill` anyway, and
+the pixel bench had passed it. It does not declare it any more. The other five
+scenes are covered on every frame with at least 5.4 px to spare, and
+`PromptInput` sits at exactly zero, because its final pose puts the bottom edge
+of the slab on the bottom edge of the frame by construction. Pushed back by 1500,
+all five fail.
+
+`scripts/manifest.mjs` is where a bench asks what it should find. It prints, from
+the same modules that produce the render, the variants, their frames, the origin,
+where the subject would sit without compensation, and the tolerance. If the
+uncompensated point fell on the origin, the negative could not fail, and
+`drift.py` exits 2 and says so.
+
+Everything that belongs to Topics now sits in one folder, `video/src/products/topics/`:
+the slab geometry (`geometry.ts`, which was `primitives/slab.ts`), the tokens
+(`tokens.ts`, which was `theme.ts`), the furniture, the material, the tracks, the
+bench geometry (`benches.ts`) and the six scenes. What stays outside is what
+another product can use as it is: `kit/`, the cursor, the frame-locked helpers.
+The move changed no number. `geometry-snapshot.mjs` gives the same 52 values as
+before the kit existed, and every still is identical to `main`.
+
 ## Layout
 
 | | |
 |---|---|
-| `video/` | The Remotion project. Scenes in `video/src/scenes/`, primitives in `video/src/primitives/` |
+| `video/` | The Remotion project. The product-independent kit in `video/src/kit/`, one folder per product in `video/src/products/` (`topics/` holds the slab, its tokens, tracks, bench geometry and the six scenes; `probe/` the synthetic slab), shared primitives such as the cursor and the frame-locked helpers in `video/src/primitives/`, the catalogue in `video/src/scenes/catalog.json`, bench specimens in `video/src/specimens/` |
 | `scripts/` | The measurements, the review page, the showcase build, and `catalog.mjs`, which is how shell and CI read `catalog.json` without a compiler. See below |
 | `showcase/` | The public pages. `index.template.html` and `grammatica.html` are committed; the scene section and the renders are not, `showcase-build.sh` generates the first from `catalog.json` and copies the second into `showcase/dist/` |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
@@ -420,6 +553,13 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/loop-close.py [page.html]                     # does every demo loop close, or tear every pass
 ./scripts/type-check.py [page.html]                     # does the type cover, leave the frame, vanish, snap, or stop mid-move
 ./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
+./scripts/drift.py [--props JSON] [--must-fail]         # does the subject stay on the origin, on two slabs and three formats
+./scripts/project-check.py [--origin-mismatch]          # does the kit's projection agree with Chromium
+./scripts/chain-check.py [--linear] [--must-fail]       # does the camera ever reverse while it moves
+./scripts/fill-geom.py [--push-offset N] [--must-fail]  # does the slab cover the four edges of the frame
+./scripts/no-product-literals.sh [scripts-dir]          # does any bench read product geometry by itself
+node scripts/manifest.mjs cam06                          # what the benches must find, from the kit
+node scripts/geometry-snapshot.mjs [geometry.ts]         # the geometry as a string, to prove a refactor left it alone
 ./scripts/tempo.py [long.mp4 short.mp4]                 # does shortening a scene retime it or just trim it
 ./scripts/fixture-tempo.sh                              # render the two retimed fixtures
 ./scripts/fixture-trim.sh                               # build the trimmed scene tempo.py must fail
@@ -467,10 +607,9 @@ between the local variance of a border strip and of the centre falls to 0.014 on
 `card-release` with the slab in frame and rises to 0.043 on `board-orbit`, where
 the borders show the background on purpose, because the attenuated plane behind
 the slab is the board drawn a second time and any pixel measure reads it as
-content. So the script is kept as a readout, it is out of the CI measurements,
-and `CAM-01` on the catalogue page is grey. Whether a slab covers the frame is a
-question for the geometry: project the slab at the sampled frames and require it
-to cover all four edges.
+content. So the script is kept as a readout and is out of the CI measurements.
+Whether a slab covers the frame is a question for the geometry, and
+`fill-geom.py` asks it on the camera tracks (see the kit, below).
 
 `framelocked-verdict.sh` had the opposite problem. It measured the right thing
 and then exited 0 whatever it found, so a real divergence would have scrolled past
@@ -569,7 +708,7 @@ entry, or its green means only that it reached the end.
 catalogue says the attenuation floor is 0.62 *because* below it the attenuated
 content falls under 3:1 once rendered — and nobody had ever rendered it and
 looked. It now reads the WCAG ratio between the attenuated thread heading and its
-background on a real frame, with the crop projected out of `slab.ts` instead of
+background on a real frame, with the crop projected out of `topics/geometry.ts` instead of
 picked by eye, and gets 4.17:1 here — 3.84:1 in CI, because Linux renders the
 same text with different fonts. Same verdict, and a reminder of why the number
 is a floor and not an equality. The same scene rendered at 0.25, which is what
@@ -588,7 +727,7 @@ Linux in CI — everything shifts and a fixed crop lands on empty background. It
 exited 3 there, "could not measure", which was at least the honest answer rather
 than a verdict about a scene that was fine. The heading it reads instead sits at
 `THREAD_TOP`, which is a constant, so its position is arithmetic. The same
-lesson `slab.ts` already records about card heights, learned again one floor
+lesson `topics/geometry.ts` already records about card heights, learned again one floor
 down.
 
 How it reads matters too: background is the modal value of the crop, foreground
@@ -639,7 +778,7 @@ thread down there — static relative to the slab, but moving with the camera li
 everything else — thousands of high-contrast text pixels drag the centroid down.
 The reading fell from 154px to 83 and invented a backward step: the scene blamed
 for a change in the instrument's surroundings. It now diffs only the board's half
-of the frame, and where that half ends is read from `slab.ts` rather than picked
+of the frame, and where that half ends is read from `topics/geometry.ts` rather than picked
 by eye, so it follows if the assistant moves.
 
 `handoff-travel.sh` had never run on macOS. Its centroid step was a heredoc
@@ -676,9 +815,9 @@ playing
 `BoardOrbit`, in the order they join), the four rules, the
 license note. Beside it, `showcase/grammatica.html` is the catalogue: thirty-six
 movements with a live demo each, the numbers they start from, and the bench that
-can fail them. Seven of those benches are printed in grey, because six have not
-been written and one needs material that is not in git; the page counts them from
-its own data, since the hand-written count said thirty-two when it was twenty-nine. The demos are browser re-creations of the slab, not the renders,
+can fail them. The ones without a bench that runs and can fail are printed in grey,
+and the page counts them from its own data: the hand-written count once said
+thirty-two when it was twenty-nine. The demos are browser re-creations of the slab, not the renders,
 which is the point of keeping them next to the renders rather than instead of
 them. Neither page carries a build step or a dependency, so what you open
 locally is what ships.
@@ -733,15 +872,16 @@ from a fresh one, which is the whole argument for letting CI do it.
 The order matters, and step 4 is the one people skip.
 
 0. **Decide the pose it enters from and the pose it leaves in**, and put both in
-   `primitives/slab.ts`. `CARD_HANDOFF_END_POSE` spent three scenes as three
-   literals inside `CardHandoff.tsx`, which was fine exactly as long as nothing
-   came after it.
-1. **Write it in `video/src/scenes/`.** Take `progress?: number` and derive
+   the product's `geometry.ts`, `products/topics/geometry.ts` for Topics.
+   `CARD_HANDOFF_END_POSE` spent three scenes as three literals inside
+   `CardHandoff.tsx`, which was fine exactly as long as nothing came after it.
+1. **Write it in `video/src/products/<product>/scenes/`.** Take `progress?: number` and derive
    everything else from `useCurrentFrame()`. If you reach for `Date.now()`,
    `Math.random()` or a CSS keyframe, the scene is no longer reproducible and
    `framelocked-verdict.sh` will say so.
-2. **Reuse `primitives/`.** `slab.ts` holds the geometry and the camera poses,
-   `SlabChrome.tsx` the app furniture. A scene that redraws its own sidebar can
+2. **Reuse the kit and the product folder.** `kit/Shot.tsx` draws the slab,
+   `kit/camera.ts` turns a track into a pose; the product's `geometry.ts` holds
+   the poses, `tracks.ts` the camera, `SlabChrome.tsx` the app furniture. A scene that redraws its own sidebar can
    only stay aligned with the others by hand, and it will not.
 3. **Add one entry to `video/src/scenes/catalog.json`** — id, slug, duration,
    the blurb for the page, and `seamAfter` if it follows another scene — then
@@ -763,8 +903,8 @@ The order matters, and step 4 is the one people skip.
    to the deploy. Change a scene or a bench and the full run comes back.
 
 If your scene is meant to follow another without a cut, read the previous
-scene's end pose from `slab.ts` rather than retyping the numbers, and name that
-scene in `seamAfter`. Two copies of the same pose stay equal exactly as long as nobody
+scene's end pose from the product's `geometry.ts` rather than retyping the
+numbers, and name that scene in `seamAfter`. Two copies of the same pose stay equal exactly as long as nobody
 edits one of them.
 
 ## Licensing, which has two halves

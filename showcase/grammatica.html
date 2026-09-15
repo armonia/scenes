@@ -221,7 +221,7 @@
         border: 1px solid hsl(220 11% 26%); border-radius: 6px; }
 
 /* ================= LA LASTRA =================
-   Geometria da video/src/primitives/slab.ts, token da video/src/theme.ts,
+   Geometria da video/src/products/topics/geometry.ts, token da video/src/products/topics/tokens.ts,
    contenuto da SlabChrome.tsx. Font di sistema, raggi 8/6/4. */
 .slab{
   position:absolute;left:-1200px;top:-370px;width:2400px;height:1200px;
@@ -323,8 +323,8 @@
           is the film.
         </p>
         <p class="lede" id="benchcount" style="margin-top:18px;font-size:16px">
-          Twenty-nine of the thirty-six name a bench that exists, runs in CI and
-          can fail. The other seven are printed in grey: six name a bench nobody
+          Thirty-one of the thirty-six name a bench that exists, runs in CI and
+          can fail. The other five are printed in grey: four name a bench nobody
           has written yet, and one names a bench that exists but cannot run in
           CI. A measurement nobody runs is a proposal, and this page would be
           doing the thing it warns against if it let the two look alike.
@@ -418,7 +418,7 @@
               <tr><td>seam.sh</td><td>A join that is really a cut in costume</td><td class="n">29 px against 59,895, 2065×</td></tr>
               <tr><td>handoff-travel.sh</td><td>A card that does not actually cross. A freeze frame passes the other checks with full marks, and for months this one did not run at all on macOS, printing a diagnosis about the scene for a fault in itself</td><td class="n">210 px, monotonic centroid</td></tr>
               <tr><td>beats.sh</td><td>A promised beat that is not on screen. The answer was assembling under the composer</td><td class="n">2 → 8 → 10 words streamed</td></tr>
-              <tr><td>fill-measure.sh</td><td>A frame that lets its edges die, which it cannot catch. The scenes sit on a background as bright as its threshold, so a slab shrunk to 60 per cent with the real background around it reads the same as a full frame. Kept as a readout and taken out of CI until the check is geometric</td><td class="n">20 of 20, on the defect too</td></tr>
+              <tr><td>fill-measure.sh</td><td>A frame that lets its edges die, which it cannot catch. The scenes sit on a background as bright as its threshold, so a slab shrunk to 60 per cent with the real background around it reads the same as a full frame. Kept as a readout; fill-geom.py does the job in CI, in geometry</td><td class="n">20 of 20, on the defect too</td></tr>
               <tr><td>legibility.sh</td><td>Text that does not survive being scaled down. It reads the reference films beside the render, and those are not in git, so it runs on a laptop and not in CI</td><td class="n">holds under 640 px wide</td></tr>
               <tr><td>framelocked-verdict.sh</td><td>A scene that is not reproducible: it still renders, with different pixels. For months it printed its verdict and exited 0 either way, so it now has to fail a probe with a <code>Math.random</code> inside before its green counts</td><td class="n">same pixels every render, the probe fails</td></tr>
               <tr><td>focus-sharpness.sh</td><td>A slab that stopped being DOM: the text falls apart once the camera is on top of it</td><td class="n">2.09× against 1.03× on the fixture</td></tr>
@@ -429,6 +429,11 @@
               <tr><td>tempo.py</td><td>A scene that was shortened rather than sped up. If the beats scale, frame <i>f</i> of the short render is frame <i>f/k</i> of the long one; compared that way the two differ by 287 px against 5379 without normalising. The residual is not slop — it is the signature of the thresholds that deliberately did not scale</td><td class="n">18.7× advantage, 4 required</td></tr>
               <tr><td>fixture-trim.sh</td><td>Measures nothing. Truncates a scene to the short duration instead of retiming it, which is what lowering the duration produced before any of this existed</td><td class="n">120 frames, beats left in place</td></tr>
               <tr><td>contrast-floor.py</td><td>Content attenuated so far that it stops being a plane behind and becomes dirt on the background. Two wrong versions before this one: the first measured the composer placeholder, which is deliberately faint and sits at 2.93:1 before any attenuation at all; the second measured the right content in a place whose position depends on how the messages wrap, and on Linux the crop landed on empty background</td><td class="n">4.17:1, 3.84 on Linux, against 1.71</td></tr>
+              <tr><td>drift.py</td><td>A descent that slides past its subject, measured away from Topics: two slabs, one of them light and vertical, in three formats. Its second broken case starts exactly in place and only drifts while the camera pushes in, and the first version of the bench failed the correct case too, because the white of the probe slab ended up in the magenta mask</td><td class="n">2.03 px at worst of six, broken cases 39.5 to 99.8</td></tr>
+              <tr><td>chain-check.py</td><td>A camera that reverses while it is moving, which reads as a cut even when the two frames match. It reads the tracks the scenes render from, so it needs no render, and the version of the chain with the easing taken out is its broken case</td><td class="n">7 reversals, all at rest</td></tr>
+              <tr><td>fill-geom.py</td><td>A slab that leaves an edge of the frame uncovered, checked on every frame from the camera tracks and the kit projection instead of from pixels. Its first run said BoardOrbit fails, and it does, on purpose: the orbit shows the edge</td><td class="n">5.4 px of cover at worst, all five fail pushed back</td></tr>
+              <tr><td>project-check.py</td><td>A projection that gets a rotation sign wrong. The kit works out where a point of the slab lands at any pose, tilted included, and every bench that watches a moving camera will crop by it, so it is checked against the engine that draws: Chromium, two slabs, three stages, the six poses of the chain</td><td class="n">0.040 px at worst, 103.7 with the origin wrong</td></tr>
+              <tr><td>no-product-literals.sh</td><td>A bench that works out the geometry of one product by itself instead of asking the manifest. Four benches did, which is how a bench ends up measuring Topics and nothing else without ever failing</td><td class="n">4 on the previous commit, 0 now</td></tr>
               <tr><td>demo-check.py</td><td>A demonstration on this page that has stopped demonstrating its own entry. The difference between showing a thesis and not showing it is almost always temporal, and a screenshot cannot see it, so this one scrubs</td><td class="n">25 entries, frame by frame</td></tr>
               <tr><td>fixture-screenshot.sh</td><td>Measures nothing. It builds the scene the bench above has to fail, and without it that bench is a promise</td><td class="n">first frame magnified 2.26×</td></tr>
             </tbody>
@@ -464,7 +469,7 @@
 "use strict";
 
 /* ============================================================
-   Geometria e contenuto: valori presi da video/src/primitives/slab.ts
+   Geometria e contenuto: valori presi da video/src/products/topics/geometry.ts
    e da SlabChrome.tsx. Se cambiano lì, cambiano qui.
    ============================================================ */
 var SLAB_W=2400, SLAB_H=1200, SIDEBAR_W=280, HEADER_H=58, PANEL_W=420;
@@ -491,7 +496,7 @@ var COLUMNS=[
 ];
 var TAGC={feature:"#4d94ff",bugfix:"#f87171",chore:"#7d838d"};
 
-/* Le due pose che il repo tiene in slab.ts, non riscritte a occhio. */
+/* Le due pose che il repo tiene in topics/geometry.ts, non riscritte a occhio. */
 var START={yaw:-18,pitch:5,z:0,x:900,y:0};
 var END={yaw:-9,pitch:2.5,z:48,x:0,y:0};
 
@@ -1771,11 +1776,11 @@ var FAMS=[
 ];
 
 var CAT=[
-{fam:"cam",code:"CAM-01",p:1,t:"Straightening push-in",demo:"push",src:"slab.ts · START/END_POSE",
+{fam:"cam",code:"CAM-01",t:"Straightening push-in",demo:"push",src:"topics/geometry.ts · START/END_POSE",
  a:"The slab enters from off-frame at an angle and arrives at rest, more frontal than it started. The closing yaw is how you say it can be read now.",
- b:"Two poses in slab.ts and one interpolate between them. The final pose lives in the module rather than in the scene, because it is where the next one attaches.",
+ b:"Two poses in topics/geometry.ts and one interpolate between them. The final pose lives in the module rather than in the scene, because it is where the next one attaches.",
  c:"yaw -18 to -9, pitch 5 to 2.5, pushZ 0 to 48, slideX 900 to 0. 108 frames of inOut cubic, then 42 at rest.",
- d:"A geometric fill check: project the slab at the sampled frames and require it to cover all four edges of the frame. fill-measure.sh was that bench and could not fail: it reads 20 samples out of 20 on a slab shrunk to 60 per cent with the real background around it, because the background is as bright as its threshold and the blurred plane behind the slab looks like content to any pixel measure."},
+ d:"fill-geom.py. From 20 per cent of the duration to the last frame, the four corners of the slab are projected with the camera of that frame, and the four corners of the frame have to fall inside: five scenes, every frame, at least 5.4 px of cover. With the camera pushed back it fails all five. The pixel version, fill-measure.sh, could not fail at all: a slab shrunk to 60 per cent reads 20 of 20, and it passed BoardOrbit, whose orbit leaves the edges of the frame uncovered on purpose, so that scene no longer declares fill."},
 
 {fam:"cam",code:"CAM-02",t:"Truck with parallax",demo:"truck",src:"translateZ per layer",
  a:"The camera slides sideways and sidebar, board and panel separate because they sit at different depths. It is what tells a slab apart from a photograph being panned.",
@@ -1783,29 +1788,29 @@ var CAT=[
  c:"header 6, sidebar 10, panel 18, board 26, active card 40, and the truck runs pushed in at 780 rather than from the wide pose. That is not a taste: at the wide pose those same offsets buy four pixels of shear over the whole move, which is real and invisible. Close in they buy twenty, and the readout measures them rather than claiming them.",
  d:"demo-check.py. Panel and board travel different pixels even flat, because they sit at different points on an inclined plane, so the differential travel on its own measures nothing. What measures the depth is how much that difference changes when the z offsets come off: nineteen pixels, and the readout takes them off the rendering rather than from this sentence."},
 
-{fam:"cam",code:"CAM-03",p:2,t:"Orbit that shows the edge",demo:"orbit",src:"scenes/BoardOrbit.tsx",
+{fam:"cam",code:"CAM-03",p:2,t:"Orbit that shows the edge",demo:"orbit",src:"topics/scenes/BoardOrbit.tsx",
  a:"The camera goes around the slab far enough to show it has an edge. It establishes the thing as an object, and a film does that once.",
  b:"A second plane behind the first, slightly larger, with the contact shadow. Past forty degrees of yaw the text stops reading, so the orbit stops before that.",
  c:"In the film: from frontal out to -34 over 118 frames, then 32 frames of stillness, so the piece ends on a pose and not on an interrupted move. Thirty-four is where the board still reads. In the demo: yaw +10 to -36, then out to -56 and back. The overshoot is there so the limit is something you see rather than something you are told: past forty degrees the board foreshortens to 59 per cent of its width and the titles stop being titles. Edge 30, shadow 90 offset and 180 blur.",
  d:"legibility.sh. A wide orbit drops the text under the legibility threshold, and the bench says down to what size it survives instead of leaving it to taste. It reads the reference films beside the render, and those are not in git, so it cannot run in CI."},
 
-{fam:"cam",code:"CAM-04",t:"Descent to macro",demo:"macro",src:"scenes/CardFocus.tsx",
+{fam:"cam",code:"CAM-04",t:"Descent to macro",demo:"macro",src:"topics/scenes/CardFocus.tsx",
  a:"The camera carries on past the readable pose and into a single element, which fills the frame and stays sharp.",
  b:"A growing translateZ plus a translation that puts the element centre on the perspective origin. The sharpness is not the move doing something: it is why the slab has to be DOM.",
  c:"In the repo: pushZ 96 to 1493.6 over 169 frames of inOut cubic, 2.35 times, with the translation coming out of centreOn. The demo above takes its translation from the same formula measured on its own stage, and it has to: with the repo numbers hardcoded on a stage of a different width the camera goes past the card and the frame ends black.",
  d:"focus-sharpness.sh. It compares the high-frequency energy of the card crop against the same content magnified from the wide shot: 2.09× on the real render, 1.03× on the fixture. Its first version compared the crop to a blurred copy of itself, scored the fixture 4.14× and passed it."},
 
-{fam:"cam",code:"CAM-05",t:"Attention by opacity",demo:"attn",src:"scenes/PromptInput.tsx",
+{fam:"cam",code:"CAM-05",t:"Attention by opacity",demo:"attn",src:"topics/scenes/PromptInput.tsx",
  a:"Instead of blurring the rest, the rest drops in opacity. The eye goes where the contrast is full and no pixel becomes unreadable.",
- b:"One value applied to every layer that is not the subject. It used to live in theme.ts as BACKDROP_OPACITY and go unread by every scene, so it was deleted; a number no scene uses is a proposal wearing the clothes of a fact. It is back now because a scene finally does the thing: while the answer streams, the board above it, the earlier messages and the composer all go to 0.62, and the answer alone keeps full contrast.",
+ b:"One value applied to every layer that is not the subject. It used to live in topics/tokens.ts as BACKDROP_OPACITY and go unread by every scene, so it was deleted; a number no scene uses is a proposal wearing the clothes of a fact. It is back now because a scene finally does the thing: while the answer streams, the board above it, the earlier messages and the composer all go to 0.62, and the answer alone keeps full contrast.",
  c:"0.62. The demo goes down to it and then carries on to 0.25, because a floor you never touch is a number somebody wrote down: at 0.25 the attenuated content is under 3:1 and reads as dirt on the background rather than as a plane behind.",
- d:"contrast-floor.py, and the number the 0.62 was supposed to come from turns out to be 4.17:1 here and 3.84:1 in CI, because Linux renders the same text with different fonts — same verdict, and a reminder of why the threshold is a floor and not an equality. It reads the WCAG ratio between the attenuated thread heading and its background on frame 430 of the real render, with the crop projected out of slab.ts rather than picked by eye, and it fails the same scene rendered at 0.25, where the ratio collapses to 1.71. It took two wrong versions to get there, and both are worth keeping. The first measured the composer placeholder and failed the scene at 1.76:1 — correct reading, wrong subject: that placeholder is deliberately faint and sits at 2.93:1 with no attenuation at all, so the bench was failing CAM-05 for a decision about the input field. The second measured real content in a place that moves: the messages have natural heights and the thread is anchored to the bottom, so the moment the font metrics differ — which is exactly what happens between a Mac and the Linux in CI — everything shifts and the crop lands on empty background. It exits 3 there, not 1, which at least was the honest answer. The heading sits at THREAD_TOP, which is a constant."},
+ d:"contrast-floor.py, and the number the 0.62 was supposed to come from turns out to be 4.17:1 here and 3.84:1 in CI, because Linux renders the same text with different fonts — same verdict, and a reminder of why the threshold is a floor and not an equality. It reads the WCAG ratio between the attenuated thread heading and its background on frame 430 of the real render, with the crop projected out of topics/geometry.ts rather than picked by eye, and it fails the same scene rendered at 0.25, where the ratio collapses to 1.71. It took two wrong versions to get there, and both are worth keeping. The first measured the composer placeholder and failed the scene at 1.76:1 — correct reading, wrong subject: that placeholder is deliberately faint and sits at 2.93:1 with no attenuation at all, so the bench was failing CAM-05 for a decision about the input field. The second measured real content in a place that moves: the messages have natural heights and the thread is anchored to the bottom, so the moment the font metrics differ — which is exactly what happens between a Mac and the Linux in CI — everything shifts and the crop lands on empty background. It exits 3 there, not 1, which at least was the honest answer. The heading sits at THREAD_TOP, which is a constant."},
 
-{fam:"cam",code:"CAM-06",t:"The point that does not run",demo:"centre",src:"slab.ts · centreOn",
+{fam:"cam",code:"CAM-06",t:"The point that does not run",demo:"centre",src:"kit/rig.ts · centreOn",
  a:"Under a push in Z there is exactly one point of the frame that stays put, the perspective origin. Everything else runs for the edge, faster the further out it sits.",
- b:"Work out where the subject centre lands on screen with yaw and pitch at zero, then translate the slab by enough to put it on the origin. From there the push magnifies it without moving it. In slab.ts that is slabPointOnScreen and centreOn, and the final pose of CardFocus comes out of them instead of out of numbers nudged by eye.",
- c:"Origin at (960, 496.8), that is 50% and 46% of 1920 by 1080. The 46 is the term people drop: centring vertically is not half the slab minus the subject, and with the wrong formula the subject sits forty pixels off. The demo measures the drift on the rendering every frame: at the same push it is 477 px without compensation and 0 with.",
- d:"demo-check.py measures the distance between the subject centre and the origin on the last frame of each half: 477 px uncompensated, 0 with. If it is not within a couple of pixels the descent is sliding past the subject rather than into it, and you only notice at the end."},
+ b:"Work out where the subject centre lands on screen with yaw and pitch at zero, then translate the slab by enough to put it on the origin. From there the push magnifies it without moving it. kit/rig.ts does that for any stage and any slab, topics/geometry.ts calls it with the numbers of Topics, and the final pose of CardFocus comes out of it instead of out of numbers nudged by eye.",
+ c:"The origin is a choice written into the rig and read by both the CSS and the maths: 50% and 46% of the stage, so (960, 496.8) in 16:9, (540, 883.2) in 9:16 and (540, 621) in 4:5. It is not a result of the slab or of the pitch, and it does not change between formats; the slide that brings the subject onto it does. The 46 is the term people drop, and with the wrong formula the subject sits forty pixels off. The demo measures the drift on the rendering every frame: at the same push it is 477 px without compensation and 0 with.",
+ d:"demo-check.py on this page, and drift.py on the renders: six specimens, the delivered Topics card and the card of a light, vertical probe slab, in 16:9, 9:16 and 4:5, with the marked subject within 4 px of the origin on the first and the last frame (2.03 at worst). It fails all six with the slide removed, and all six with the slide worked out for 46 per cent while the CSS says 50: there the subject starts exactly in place and drifts 40 to 100 px as the camera pushes in, so a bench that looked at one frame would pass it."},
 
 {fam:"cur",code:"CUR-01",t:"Arc and overshoot",demo:"arc",src:"primitives/Cursor.tsx",
  a:"The pointer arrives on a curve, overshoots the target slightly and settles on it. In red, over the same time, the straight line at constant speed.",
@@ -1825,7 +1830,7 @@ var CAT=[
  c:"In the repo: the send lands at f271 and the bubble at f276, five frames apart. Under one the link disappears, over eight it stops reading as a consequence and starts reading as lag.",
  d:"click-gap.sh, and it is not told the answer: it finds both events in the render. The send is the first frame whose changed-pixel count blows past the window baseline, because the composer empties and the text leaves; the consequence is the first frame that climbs back above the quiet following it. Every threshold is a ratio inside that window, since the same renders read five to ten times higher on Linux. Measured f271 and f276, which is the f271 and f275 the source declares. It exits 1 on the four scenes with no click at all, and on a clip with the frames between the two events removed. That baseline used to be the median, and the median was wrong: once the camera stops during the performance — which is how it should be shot, nobody moves the camera while someone is typing — half the frames change nothing at all, the median is zero, and five times zero is any flicker. It reported a click at f181, with confidence, ninety frames before the real one. The baseline is the ninetieth percentile now."},
 
-{fam:"cur",code:"CUR-04",t:"Drag with weight",demo:"drag",src:"scenes/CardHandoff.tsx",
+{fam:"cur",code:"CUR-04",t:"Drag with weight",demo:"drag",src:"topics/scenes/CardHandoff.tsx",
  a:"The dragged object lags the pointer and tilts into the direction of travel. Without the lag the card looks welded to the cursor.",
  b:"The card position is the cursor position three frames earlier: arithmetic on the frame, no stored state. The tilt comes from the difference between two samples. Getting this into a scene needed the pointer's position, not just its drawing, so Cursor.tsx now exports pointOnPath and keeps the drawing to itself — otherwise the scene would carry a second copy of the trajectory, equal to the first exactly as long as nobody touched one of them.",
  c:"3 frames of lag, 0.11 degrees per pixel of speed, shadow from 18/30 to 44/74, border lit from the lift onward. In the film the grab is at f78 and the release at f178, and the card is not on a scripted path: it sits where the hand was three frames ago, so the trajectory belongs to the pointer and the card only follows it.",
@@ -1861,7 +1866,7 @@ var CAT=[
  c:"Typing at 13 characters per second, 0.43 per frame. Deletion at 1.6 per frame, the cadence of a held key, nearly four times faster. It stops at 22 characters, the nearest word boundary.",
  d:"The ratio between deletion speed and typing speed. Near one, the deletion reads as a second typing pass in reverse, which nobody has ever watched happen."},
 
-{fam:"chr",code:"CHR-01",t:"Handoff",demo:"handoff",src:"scenes/CardHandoff.tsx",
+{fam:"chr",code:"CHR-01",t:"Handoff",demo:"handoff",src:"topics/scenes/CardHandoff.tsx",
  a:"An element crosses the layout and the layout absorbs it. The hard part is not the flight: it is the destination column opening the slot first, and the source closing behind.",
  b:"The card lifts off the plane, travels an arc and lands. The two columns move on their own windows, offset from the flight, and every position comes from cardY.",
  c:"Gap at f30, flight f40 to f126, close at f56. A step of 123, the active card height plus the gap.",
@@ -1873,7 +1878,7 @@ var CAT=[
  c:"Delay equals distance over 1400, times 22 frames.",
  d:"demo-check.py ranks the cards by the frame they start on and by their distance from the change: the correlation is 1.00 in the first half and 0.43 in the second, over the same 24 frames of spread. Same duration, same easing, only the order changes, and the eye reads one as a space reacting and the other as a list scrolling."},
 
-{fam:"chr",code:"CHR-03",t:"State propagating",demo:"prop",src:"scenes/CardHandoff.tsx",
+{fam:"chr",code:"CHR-03",t:"State propagating",demo:"prop",src:"topics/scenes/CardHandoff.tsx",
  a:"A change in one place causes another somewhere else, after a delay. It is the delay that reads as cause.",
  b:"Three cascading windows on the same timeline. No events and no state: three different frame thresholds, so it stays a function of the frame.",
  c:"In the demo: card at f30, count at f35, panel at f41. In the film the third link is not the panel, and the reason came from looking at the render rather than at the source. At CardHandoff's pose the camera is already close enough that the detail panel runs off the right edge — the labels read and the values do not — and a link of the chain outside the frame is not a link. So the card lands at f178, the destination count moves at f183, and at f189 the card rewrites its own age from 12h to ora, which is what a real board does to something that just moved. Five and six frames, on an element that sits in the middle of the shot.",
@@ -1885,7 +1890,7 @@ var CAT=[
  c:"First card at f52, second at f88, metric from 128 to 64 ms between f120 and f200. The camera is not still at any of those.",
  d:"The frame a count changes on must not coincide with a frame where the camera is still. If they coincide, what you made is a cut with the camera parked over it."},
 
-{fam:"mat",code:"MAT-01",t:"Edge and contact shadow",demo:"thick",src:"SlabChrome · SlabEdge",
+{fam:"mat",code:"MAT-01",t:"Edge and contact shadow",demo:"thick",src:"kit/Shot.tsx · edge",
  a:"The slab has an edge and it rests on something. In the second half of the demo the edge is switched off, to see what goes.",
  b:"A second plane behind the first, slightly larger, with a deep shadow. It costs one div, and it decides whether the object reads as an object. In the repo it is a SIBLING of the slab and not a child, which is not a detail: the slab clips, and any clipping flattens preserve-3d, so a child at translateZ(-30) would be squashed onto its parent's plane and never stick out. As a sibling inside the same perspective its Z is real.",
  c:"Edge 30 behind the plane, 6 px of overhang per side, shadow 90 offset and 180 blur at 75 per cent. All six scenes draw it and only the last one shows it: at small yaw angles it sits exactly behind the slab, which is why it went unwritten for so long — nothing in the film turned far enough to need it.",
@@ -1897,7 +1902,7 @@ var CAT=[
  c:"Opacity between 0.72 and 0.98, blur 22, laid at 76 degrees with its origin on the top edge, pinned to the bottom edge of the slab.",
  d:"The glow tint against the frame dominant tint. If they do not move together, the glow is decoration."},
 
-{fam:"mat",code:"MAT-03",p:1,t:"The attenuated plane behind",demo:"backdrop",src:"theme.ts · SLAB_BACKDROP",
+{fam:"mat",code:"MAT-03",p:1,t:"The attenuated plane behind",demo:"backdrop",src:"topics/tokens.ts · SLAB_BACKDROP",
  a:"Behind the slab sits a second copy, smaller and turned further, at reduced opacity. Switch it off and the frame under the board goes empty and the slab floats in black.",
  b:"It is the same board drawn a second time, not a blurred image: an image falls behind the moment the content changes, and in a single take the content always changes. It costs a clone and a negative translateZ.",
  c:"0.45 opacity with a 14 px blur, 60 back, eight more degrees of yaw and four of pitch, at 0.92 scale. All five scenes read it from SLAB_BACKDROP now. They did not always: three wrote the four numbers out by hand and a fourth read a different constant called BACKDROP_OPACITY, worth 0.62, which described a backdrop only PromptInput had. Copies of a number nobody named stay equal exactly as long as nobody touches one of them.",
@@ -1981,11 +1986,11 @@ var CAT=[
  c:"yaw -30 closing to -19, pitch 3, inside the range the slab's own poses cover — UIMockup starts at -18. At the slab's closing angles the foreshortening is real and invisible: the two ends of the line differ by a couple of per cent, which measures but does not read. The second half lays the plane flat, which is what type does when nobody puts it anywhere, and turns it back before the loop closes; the sentence never leaves.",
  d:"demo-check.py compares the rendered height of the first word against the last: 0.909 on the plane, because perspective makes the near end larger, and 1.000 flat. It is the cheapest test for whether type is in the room or on the glass."},
 
-{fam:"giu",code:"GIU-04",p:1,t:"Monotonic derivative",demo:"chain",src:"the three boundary poses",
+{fam:"giu",code:"GIU-04",t:"Monotonic derivative",demo:"chain",src:"the three boundary poses",
  a:"Across the whole chain yaw, pitch and push always move the same way. Not fussiness: the eye follows the derivative of the movement, and a reversal at a join reads as a cut even when the pixels of the two frames match.",
  b:"The boundary poses live in one module, so the monotonicity is checked by reading three constants instead of opening three scenes. The graph in the corner is exactly that: the three quantities across the chain, with the two joins marked.",
  c:"yaw -18, -9, -4, 0. pitch 5, 2.5, 1.2, 0. push 0, 48, 96, 1493.6. None of the three ever goes back.",
- d:"The sign of the difference between consecutive frames across each join. seam.sh says the pixels match; this says the movement did not reverse. They are different defects, and the first bench does not see the second."}
+ d:"chain-check.py, on the camera tracks the scenes hand to the render: inside a scene the derivative never changes sign, at a join the last pose is the next scene's first, and a reversal is allowed only where the camera is still on both sides. The Topics chain has seven, all at rest. With the easing taken out of every track the same seven become reversals in motion and it fails. seam.sh says the pixels match; this says the movement did not reverse."}
 ];
 
 /* ============================================================ costruzione */

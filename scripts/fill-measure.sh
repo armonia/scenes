@@ -37,9 +37,9 @@
 #
 # Quindi il verdetto sul riempimento non si prende dai pixel: si prende dalla
 # geometria, proiettando la lastra ai frame campionati e chiedendo che copra i
-# quattro bordi del quadro. Finche' quel banco non esiste lo script resta una
-# lettura, esce dalle misure della CI, e CAM-01 sulla pagina e' in grigio. Un
-# banco che non puo' fallire non va lasciato in un elenco di banchi che possono.
+# quattro bordi del quadro. E' fill-geom.py, e gira in CI al posto di questo, che
+# resta una lettura. Un banco che non puo' fallire non va lasciato in un elenco
+# di banchi che possono.
 #
 # Uso:  ./scripts/fill-measure.sh <video.mp4>
 set -uo pipefail
