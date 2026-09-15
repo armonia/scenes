@@ -10,8 +10,10 @@ il silenzio diventa un errore.
 
 COSA CONTROLLA, sul report di expect.sh: per ogni banco che ha almeno un
 positivo, esiste almeno un negativo dello stesso banco uscito col codice
-atteso, diverso da 0. Un negativo che esce 0 non e' un negativo. Stampa la
-tabella banco per banco.
+atteso. Il codice atteso di un negativo puo' essere 0 quando il banco ha un
+`--must-fail`, che rovescia il verdetto ed esce 0 solo se il difetto e' stato
+visto: conta il codice dichiarato, non il numero. Stampa la tabella banco per
+banco.
 
 IL NEGATIVO DI QUESTO BANCO: `--without <banco>` toglie dal report i negativi di
 quel banco, cioe' simula un elenco di controlli in cui qualcuno l'ha
@@ -51,10 +53,10 @@ if not positives:
     sys.exit(3)
 
 scoperti = []
-print("Banco per banco: positivi passati, negativi passati (codice atteso diverso da 0).")
+print("Banco per banco: positivi passati, negativi usciti col codice atteso.")
 for bench in sorted(positives):
     pos = positives[bench]
-    neg = [n for n in negatives.get(bench, []) if n["ok"] and n["expected"] != 0]
+    neg = [n for n in negatives.get(bench, []) if n["ok"]]
     esito = "coperto" if neg else "SCOPERTO"
     if not neg:
         scoperti.append(bench)

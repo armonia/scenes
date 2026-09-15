@@ -45,13 +45,14 @@ const catalogJson = async () => {
 };
 
 // La geometria di un banco sta in un modulo suo, sotto il prodotto:
-// video/src/products/topics/benches/<nome>.ts, che esporta geometry(ratio).
+// video/src/products/topics/benches/<nome>.ts, che esporta
+// geometry(ratio, { catalog }) e restituisce un oggetto serializzabile.
 // Il nome del file e' il nome del banco, quindi aggiungerne uno non tocca
 // questo file.
 const benchGeometry = async (name, ratio) => {
   if (!/^[a-z0-9-]+$/.test(name)) throw new Error(`nome di banco non valido: ${name}`);
   const mod = await load(`video/src/products/topics/benches/${name}.ts`);
-  return mod.geometry(ratio);
+  return mod.geometry(ratio, { catalog: await catalogJson() });
 };
 
 const commands = {
