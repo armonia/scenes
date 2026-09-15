@@ -28,7 +28,15 @@ export type { Waypoint } from "./path";
 
 export type CursorProps = {
   /** I punti da toccare, in coordinate della scena, ciascuno col suo frame. */
-  path: Waypoint[];
+  path?: Waypoint[];
+  /**
+   * Oppure la posizione come funzione del frame, per un percorso che non e' fatto
+   * di waypoint: l'arco con scavalco di kit/cursorArc.ts (CUR-01). Se c'e', vince
+   * su `path`.
+   */
+  at?: (frame: number) => { x: number; y: number };
+  /** Il colore dell'anello del clic: bianco su una UI scura, scuro su una chiara. */
+  ringColor?: string;
   /** I frame in cui parte un click. */
   clicks?: number[];
   /**
@@ -49,7 +57,9 @@ export type CursorProps = {
 const CLICK_LEN = 20;
 
 export const Cursor: React.FC<CursorProps> = ({
-  path,
+  path = [],
+  at,
+  ringColor = "#ffffff",
   clicks = [],
   progress,
   frame: sceneFrame,
@@ -61,9 +71,9 @@ export const Cursor: React.FC<CursorProps> = ({
     sceneFrame ??
     (progress === undefined ? localFrame : progress * (durationInFrames - 1));
 
-  if (path.length === 0) return null;
+  if (!at && path.length === 0) return null;
 
-  const { x, y } = pointOnPath(path, frame);
+  const { x, y } = at ? at(frame) : pointOnPath(path, frame);
 
   // Il click piu' recente ancora dentro la sua finestra.
   const active = clicks
@@ -123,7 +133,7 @@ export const Cursor: React.FC<CursorProps> = ({
             cy={0}
             r={ringR}
             fill="none"
-            stroke="#ffffff"
+            stroke={ringColor}
             strokeWidth={2}
             opacity={ringO}
           />
