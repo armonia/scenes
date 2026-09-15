@@ -20,6 +20,14 @@ import {
 import { LETTER_TEXT } from "./timeline";
 import type { DemoState } from "./timeline";
 
+/**
+ * Il carattere di Registro: Inter 4.001, da file (video/public/fonts, licenza OFL
+ * nella stessa cartella). Da file e non di sistema perche' il film deve avere le
+ * stesse righe sul Mac e in CI: film-type.py misura quanto le frasi stanno dal
+ * bordo. Lo carica DemoFilm con useFontFile.
+ */
+export const DEMO_FONT = { family: "InterVariable", file: "fonts/InterVariable.woff2" };
+
 /** La palette di Registro: chiara, con un viola d'interfaccia. Inventata. */
 export const DEMO = {
   bg: "#f5f4f1",
@@ -30,7 +38,7 @@ export const DEMO = {
   ui: "#6d5ae6",
   uiSoft: "#ece9fd",
   ok: "#1f9d6b",
-  font: "Inter, 'Helvetica Neue', Arial, sans-serif",
+  font: `${DEMO_FONT.family}, sans-serif`,
 };
 
 type Part = "header" | "rail" | "doc" | "panel" | "active";

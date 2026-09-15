@@ -30,13 +30,17 @@
 #   ./scripts/framelocked-verdict.sh                  i due rami della sonda GSAP
 #   ./scripts/framelocked-verdict.sh PromptInput      una o piu' composition
 #   FRAMES="150 175 200" ./scripts/framelocked-verdict.sh PromptInput
+#   PROGETTO=../films ./scripts/framelocked-verdict.sh CifraFilm
+#
+# PROGETTO e' il progetto Remotion da impacchettare, di default video/ di questo
+# repo: un altro repository che usa il kit ci passa il suo.
 #
 # Esce 0 se ogni frame e' ripetibile e la timeline avanza, 1 se un frame
 # diverge o la timeline e' ferma, 3 se un render non e' uscito: in quel caso lo
 # strumento non ha misurato niente e un verdetto sulla scena sarebbe inventato.
 set -uo pipefail
 
-cd "$(dirname "$0")/../video" || exit 1
+cd "${PROGETTO:-$(dirname "$0")/../video}" || exit 1
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT

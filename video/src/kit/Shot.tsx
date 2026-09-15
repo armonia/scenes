@@ -110,6 +110,12 @@ export type ShotLayer = {
   content: React.ReactNode;
   radius?: number;
   background?: string;
+  /**
+   * Se lo strato si ritaglia sul suo rettangolo (di default si'). Uno strato di
+   * tipografia non deve: una frase ritagliata dal suo strato perde lettere in
+   * silenzio, mentre una che esce dal quadro la vede film-type.py.
+   */
+  clip?: boolean;
 };
 
 export type ShotProps = {
@@ -286,7 +292,7 @@ export const Shot: React.FC<ShotProps> = ({
                 top: layer.rect.y,
                 width: layer.rect.w,
                 height: layer.rect.h,
-                overflow: "hidden",
+                overflow: layer.clip === false ? "visible" : "hidden",
                 borderRadius: layer.radius,
                 background: layer.background,
               }}

@@ -89,6 +89,11 @@ export type WordState = {
   in: number;
   /** 0..1: quanto la parola e' uscita alla fine della frase. */
   exit: number;
+  /**
+   * 0..1: quanto la cella ha preso la larghezza della parola nuova invece di
+   * quella vecchia. Va con lo scambio; 1 per le parole che non si scambiano.
+   */
+  mix: number;
   /** 0..1: quanto la parola ha preso l'accento. */
   accent: number;
   /** La scala della parola chiave (1 se non lo e'). */
@@ -122,6 +127,7 @@ export const wordStates = (
       const same = oldWord !== null && oldWord === word;
       let wIn: number;
       let oldOut = 0;
+      let mix = 1;
       let accentStart: number;
       if (!live) {
         const start = cue.at + order * timing.stagger;
@@ -134,6 +140,7 @@ export const wordStates = (
         const swap = interpolate(frame, [cue.at, cue.at + timing.swapFrames], [0, 1], ease);
         wIn = swap;
         oldOut = oldWord === null ? 0 : swap;
+        mix = swap;
         accentStart = cue.at + timing.swapFrames;
       }
       const isAccent = cue.accent !== undefined && cue.accent[0] === r && cue.accent[1] === k;
@@ -144,6 +151,7 @@ export const wordStates = (
         oldOut,
         in: wIn,
         exit,
+        mix,
         accent: isAccent ? interpolate(frame, [accentStart, accentStart + timing.accentFrames], [0, 1], ease) : 0,
         scale: isKey
           ? interpolate(frame, [accentStart, accentStart + timing.keyFrames], [1, (cue.key as { scale: number }).scale], ease)

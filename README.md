@@ -1000,6 +1000,147 @@ scene's end pose from the product's `geometry.ts` rather than retyping the
 numbers, and name that scene in `seamAfter`. Two copies of the same pose stay equal exactly as long as nobody
 edits one of them.
 
+## Making a commercial
+
+A commercial is one shot: 45 seconds, 1350 frames, in 16:9, 9:16 and 4:5. From
+the product it needs three things and nothing else: **the slab** (the product's
+UI in DOM, cut into the parts the camera separates), **a film file** (camera keys
+per ratio, what happens on the slab frame by frame, the sentences) and **the
+data** (texts, numbers, states). The motion comes from the kit, with the numbers
+of the scripts already inside; the checks run by themselves in the three ratios.
+
+`video/src/products/demo/` is the proof. Registro is an invented request desk,
+light like the panels of Cifra and Zeno, built only from kit pieces; nothing in it
+comes from either product. `DemoFilm`, `DemoFilm-9x16` and `DemoFilm-4x5` are in
+the project, and the `film` job renders and checks them on every push.
+
+### The files of a film
+
+| File | What it holds |
+|---|---|
+| `geometry.ts` | Slab size and rig, every rectangle of the UI as arithmetic (no natural heights, so a bench knows where things are without rendering), the camera subjects, and the camera keys per ratio |
+| `timeline.ts` | `stateAt(frame)`: what the slab shows at a frame, each beat computed by a kit function. `cuesFor(ratio)`: the sentences, with the line breaks of each format |
+| `Slab.tsx` | The UI drawn by parts (header, rail, document, panel, active block), so the film can put each at its own depth |
+| `DemoFilm.tsx` | The assembly on the kit's `Film`: material, layers, typography, typeface, and the two props the benches use (`solo`, `guasto`) |
+| `rules.ts` | The directing rules computed on the data, and one broken copy of the film per rule |
+| `typeSamples.ts` | The frames at which the typography is measured, with the layer and the role of each |
+| `products/topics/benches/film-demo.ts` | What the manifest gives the benches: composition, rules, samples |
+| `scripts/checks/film-demo.mjs` | The checks, each rule with the negative that must trip it |
+
+A new film copies the folder and rewrites those files. The kit does not change.
+
+### The kit, entry by entry
+
+| Grammar | Kit | Built-in numbers |
+|---|---|---|
+| CAM-06, GIU-04 | `filmCamera.ts`: one track for the whole film from keys per ratio, monotone cubic, still at both ends; `checkFilmCamera` reports reversals | Poses from `centreOn` and `pushForZoom`, never by eye |
+| CAM-02 | `Shot` `layers`: sibling planes, each at its depth and clipped to its rectangle (`clip: false` for type) | Header 6, rail 10, panel 18, document 26, active block 40 |
+| CAM-05 | Opacity of the parts while one of them speaks; `FilmShot.dim` for the close, a veil between the shot and the typography | 0.62 while reading, 0.42 at the close |
+| MAT-01, MAT-03 | `ShotMaterial.edge`, `ShotMaterial.backdrop` | Edge 30 deep with 6 px overhang, contact shadow 90/180 at 75%; backdrop at 0.45, blur 14 |
+| MAT-02 | `Shot` `light` with `screenLight`: the screen's light folded onto the floor under the slab | Takes the UI colour, turns yellow on approval |
+| CHR-01 | `choreo.ts` `handoffAt`, `handoffOrder` | Gap at +30, flight +40 to +126, origin closes at +56 |
+| CHR-02, CHR-03 | `staggerByDistance`, `chain`, `chainProblems` | 22 frames per 1400 px; 2 to 40 frames between links |
+| TXT-04 | `insertAt` | The gap opens 18 frames before the row lands |
+| TXT-01, TXT-05, TXT-03, TXT-02 | `text.ts`: seeded typing plans, erasing back to a word boundary, `settleAt`, `streamedWords` | Erasing at 1.6 characters per frame; overshoot 7.5% by default |
+| CUR-01, CUR-02, CUR-03 | `cursorArc.ts` `cursorAt`, `hesitationProblems`; `Cursor` takes `at` | Travel 78, settle 12, overshoot 7.5%; 10 to 25 frames before a press |
+| TYP-01 to TYP-05 | `type.ts` (cues, `wordStates`, `dwellProblems`, `cueProblems`) and `TypeLine` | Word 26 frames, stagger 3.4, swap 24, accent 24, key 44, travel 160%; at most 15.5 characters per second of net dwell |
+| TYP-09 | `Companion`, anchored at the bottom or at the top | 1.5cqw bottom left in 16:9, 2.4cqw anchored top in portrait, never under 34 px from an edge |
+| TYP-10 | A `TypeLine` inside a layer on the slab's plane | |
+| Typeface | `font.ts` `useFontFile`: the render waits for the file and fails without it | |
+
+### The order
+
+0. **List what the product really does**, on the product's own repository, before
+   writing a frame. The script revisions of Cifra and Zeno both had to change
+   copy that the product does not say ("PRV-" numbering, "locali" for languages).
+1. **The slab.** Draw the UI by parts, every rectangle computed.
+2. **The subjects, then the camera.** One subject per scene, ordered so that the
+   camera never has to come back on any axis: left to right, top to bottom. Keys
+   per ratio from `centreOn`. `./scripts/film-rules.py --ratio R` answers in a
+   second, so run it while moving keys.
+3. **The beats.** Each one from a kit function with its numbers, in `timeline.ts`.
+4. **The sentences per ratio.** Same words and frames, different line breaks. A
+   key word sits alone on its row, or at the end of a short one.
+5. **The typeface from a file**, with `useFontFile`.
+6. **The rules module, the samples, the checks.** One broken copy per rule; the
+   checks name the rule that has to catch it.
+7. **Check the three ratios**, then render: `./scripts/film-type.py --ratio R`
+   renders only the sampled frames.
+
+### What the checks found on the example film
+
+Every item here looked fine in the frame someone had checked by eye:
+
+- **The ground under the glass sentences was tuned on 16:9.** In 9:16 the
+  sentence sits higher, above the platform controls, and read at 2.8:1. The ground
+  now rises with the sentence: 6.3 to 9:1.
+- **The swap left a hole.** A word cell held both copies and was as wide as the
+  wider one, so after "una" became "un" a letter's width stayed between "un" and
+  "lavoro.". The cell now goes from one width to the other during the swap, with
+  no measuring in JavaScript: two invisible copies side by side, the old one's
+  size going to zero and the new one's going to full, and text width is
+  proportional to size.
+- **The mask reached into the next row.** With 0.28em above and below every row,
+  the word leaving the second row crossed the baseline of the first. Between rows
+  the mask is now 0.06em, enough for descenders at a line height of 1.08.
+- **The close dimmed the UI and not the slab.** The parts went to 0.42 opacity
+  over a slab background that stayed light, and under "Richieste che" one tile
+  measured 1.53:1. The close now veils the whole shot (`dim`), and the 16:9 last
+  key comes down 108 slab units so the slab ends above the sentence.
+- **The average hid the caption.** Measured over the whole caption, contrast was
+  3.34:1; its last three characters were white on the white slab, 1.03:1. Contrast
+  is now the worst 48 px tile, with 3:1 for sentences and 4.5:1 for captions.
+- **The typeface depended on the machine.** A system stack renders Helvetica Neue
+  on a Mac and a metric clone of Arial on Linux, so a sentence 36 px from the edge
+  on one can leave the frame on the other. The film loads Inter from a file.
+- **The mask depended on the film remembering.** `film-type.py` finds the
+  letters in a render of the typography alone, and each film used to build that
+  pass with its own transparent material. The first film written outside this
+  repository forgot, and its mask held the whole slab. `Film` now takes `solo`
+  and removes the slab, edge, backdrop, light and veil itself, and a mask that
+  lights more than 30% of the frame exits 3: the instrument is not looking at
+  letters.
+
+### Using the kit from another repository
+
+The films of real products live in a private repository, with the brand
+typeface and the product's UI. This was tried end to end on a separate Remotion
+project that imports the kit and runs these benches on its own film, in the
+three ratios, with `expect.sh` and `bench-coverage.py` green. What it needs:
+
+- **This repository as a git submodule**, for example at `vendor/scenes`, not as
+  an npm dependency. The benches load the film's pure modules with Node's type
+  stripping, and Node refuses to strip types under `node_modules`. The bundler
+  does not care: Remotion's Rspack rule compiles any `.ts` file it reaches.
+- **One copy of React and Remotion.** Install them in the film project only, at
+  the versions of `video/package.json`, and do not run `npm ci` inside the
+  submodule: the kit then resolves `remotion` from the film project, and there is
+  a single instance.
+- **The same `tsconfig.json` options** as `video/`, `allowImportingTsExtensions`
+  above all: the pure modules import each other with `.ts` extensions so that
+  Node can load them.
+- **The typeface in the film project's `public/`**, loaded with `useFontFile`.
+  `staticFile` resolves against the project being bundled, so the brand font
+  never has to be in this repository.
+- **A bench module and a checks module in the film project.** The bench module
+  exports `geometry(ratio, { guasto })` and returns the composition, the rules and
+  the samples, as `products/topics/benches/film-demo.ts` does. The checks module
+  builds the same lines as `scripts/checks/film-demo.mjs`, with absolute paths.
+  Then, from the film project:
+
+```bash
+node vendor/scenes/scripts/manifest.mjs checks --ratio 9x16 --moduli checks > checks.tsv
+vendor/scenes/scripts/expect.sh checks.tsv report.json
+vendor/scenes/scripts/bench-coverage.py report.json
+```
+
+The scripts take the film from outside: `film-rules.py` and `film-type.py`
+accept `--film path/to/bench.ts`, `film-type.py` bundles the project given with
+`--progetto`, and `framelocked-verdict.sh` bundles `$PROGETTO`. Coverage works the
+same way there: the first typography negative of the test film doubled the type
+size, which in 9:16 still fitted the frame, and `bench-coverage.py` refused the
+report until the negative really failed.
+
 ## Licensing, which has two halves
 
 **Our code is MIT** (see `LICENSE`). That covers everything under `video/src`,
@@ -1010,6 +1151,12 @@ headcount threshold needs a paid company licence to render with it. Nothing in
 the MIT grant above covers that. It is between you and Remotion, so check
 [remotion.dev/license](https://www.remotion.dev/license) before rendering
 commercially.
+
+**Inter is not MIT either.** The example film's typeface,
+`video/public/fonts/InterVariable.woff2` (Inter 4.001, © 2016 The Inter Project
+Authors), is under the SIL Open Font License 1.1, whose full text sits next to it
+in `OFL.txt`. The films of real products load their own typeface the same way
+from their own repository: the brand fonts never enter this one.
 
 Of the scene libraries surveyed in `CATALOG.md`, only
 [Curvable/motion](https://github.com/Curvable/motion) carries a license (MIT).

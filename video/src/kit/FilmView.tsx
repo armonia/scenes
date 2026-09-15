@@ -22,6 +22,15 @@ export type FilmShot = {
   /** MAT-02: colore e intensita' della luce dello schermo sul piano. */
   light?: ScreenLight;
   highlight?: boolean;
+  /**
+   * CAM-05: quanto resta della ripresa sotto la tipografia, da 1 (tutta) in giu'.
+   * La ripresa si ritira verso il colore del fondo con un velo fra la ripresa e
+   * `overlay`, quindi la tipografia non si attenua. Gli script chiudono a 0,42:
+   * una frase bianca sopra una lastra chiara regge fra 0,40 e 0,45. Abbassare
+   * l'opacita' delle parti della UI non basta, perche' il fondo della lastra
+   * resta chiaro (film-type.py lo misurava a 1,5:1 sotto la frase di chiusura).
+   */
+  dim?: number;
 };
 
 export type FilmProps = {
@@ -35,7 +44,25 @@ export type FilmProps = {
   shot: (f: FilmFrame) => FilmShot;
   /** Quello che sta sopra la ripresa, nello spazio del quadro: tipografia sul vetro, chiusura. */
   overlay?: (f: FilmFrame) => React.ReactNode;
+  /**
+   * La passata della sola tipografia, che film-type.py usa come maschera delle
+   * lettere: fondo nero, e della ripresa restano solo gli strati (`layers`), con
+   * la stessa camera. Lastra, bordo, copia dietro, luce e velo spariscono qui, e
+   * `content` e `backdrop` non si disegnano: il film decide solo quale tipografia
+   * mostrare. La prima volta lo faceva ogni film col suo materiale trasparente, e
+   * il primo film scritto fuori da questo repo lo ha dimenticato: la maschera
+   * conteneva tutta la lastra.
+   */
+  solo?: boolean;
 };
+
+const soloMaterial = (m: ShotMaterial): ShotMaterial => ({
+  stage: { ...m.stage, background: "#000000" },
+  slab: { background: "transparent", radius: 0, border: "none", shadow: "none", highlight: "none" },
+  edge: { ...m.edge, background: "transparent", shadow: "none" },
+  backdrop: { ...m.backdrop, opacity: 0 },
+  lighting: { vignette: "none", sheen: "none" },
+});
 
 /**
  * Un commercial: una ripresa sola dal primo all'ultimo fotogramma.
@@ -53,7 +80,7 @@ export type FilmProps = {
  * quelle di un 16:9 ristrette: gli script le ricalcolano per formato. Se manca,
  * il film lo dice invece di uscire con l'inquadratura sbagliata.
  */
-export const Film: React.FC<FilmProps> = ({ rig, slab, material, screenLight, camera, shot, overlay }) => {
+export const Film: React.FC<FilmProps> = ({ rig, slab, material, screenLight, camera, shot, overlay, solo = false }) => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
   const stage = stageFor(width, height);
@@ -67,16 +94,19 @@ export const Film: React.FC<FilmProps> = ({ rig, slab, material, screenLight, ca
       <Shot
         rig={rig}
         slab={slab}
-        material={material}
+        material={solo ? soloMaterial(material) : material}
         pose={pose}
-        backdrop={s.backdrop}
+        backdrop={solo ? null : s.backdrop}
         layers={s.layers}
-        light={s.light}
-        screenLight={screenLight}
-        highlight={s.highlight ?? true}
+        light={solo ? undefined : s.light}
+        screenLight={solo ? undefined : screenLight}
+        highlight={solo ? false : (s.highlight ?? true)}
       >
-        {s.content}
+        {solo ? null : s.content}
       </Shot>
+      {!solo && s.dim !== undefined && s.dim < 1 ? (
+        <AbsoluteFill style={{ background: material.stage.background, opacity: 1 - Math.max(0, s.dim) }} />
+      ) : null}
       {overlay ? <AbsoluteFill>{overlay(f)}</AbsoluteFill> : null}
     </AbsoluteFill>
   );

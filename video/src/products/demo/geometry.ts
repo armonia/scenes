@@ -105,12 +105,18 @@ export const SUBJECTS = {
  * Il 9:16 cambia soggetto, come chiede la derivazione verticale degli script: piu'
  * pitch e meno yaw (la camera guarda giu' per il documento), e ingrandimenti piu'
  * alti perche' il quadro e' stretto. Il 4:5 sta in mezzo.
+ *
+ * LA CHIUSURA LASCIA IL BASSO ALLA FRASE. L'ultima chiave raddrizza la camera e
+ * scende ancora di `close` unita' della lastra oltre gli stati, cosi' la lastra
+ * finisce sopra la frase finale invece di starle sotto. Nei verticali il quadro
+ * alto lo fa gia'; nel 16:9 "Richieste che" passava sopra la riga "Approvato".
+ * Scendere e' la stessa direzione dei tratti prima: la traccia non si inverte.
  */
-const PLAN: Record<Ratio, { enter: { yaw: number; pitch: number; slide: number }; beats: [number, number, number][] }> = {
+const PLAN: Record<Ratio, { enter: { yaw: number; pitch: number; slide: number }; beats: [number, number, number][]; close: number }> = {
   // [zoom, yaw, pitch] per le sei scene.
-  "16x9": { enter: { yaw: -18, pitch: 5, slide: 900 }, beats: [[1.02, -13, 3.8], [1.06, -9.5, 3.0], [1.14, -6.5, 2.2], [1.45, -4.5, 1.6], [1.6, -2.5, 0.9], [2.1, -0.5, 0.2]] },
-  "9x16": { enter: { yaw: -11, pitch: 8, slide: 420 }, beats: [[1.62, -8, 6.2], [1.66, -6, 4.8], [1.72, -4, 3.4], [1.95, -2.8, 2.4], [2.05, -1.5, 1.4], [2.3, -0.4, 0.4]] },
-  "4x5": { enter: { yaw: -14, pitch: 6.5, slide: 640 }, beats: [[1.22, -10.5, 5.0], [1.26, -7.8, 3.9], [1.32, -5.3, 2.8], [1.62, -3.6, 2.0], [1.78, -2.0, 1.1], [2.2, -0.45, 0.3]] },
+  "16x9": { enter: { yaw: -18, pitch: 5, slide: 900 }, beats: [[1.02, -13, 3.8], [1.06, -9.5, 3.0], [1.14, -6.5, 2.2], [1.45, -4.5, 1.6], [1.6, -2.5, 0.9], [2.1, -0.5, 0.2]], close: 108 },
+  "9x16": { enter: { yaw: -11, pitch: 8, slide: 420 }, beats: [[1.62, -8, 6.2], [1.66, -6, 4.8], [1.72, -4, 3.4], [1.95, -2.8, 2.4], [2.05, -1.5, 1.4], [2.3, -0.4, 0.4]], close: 0 },
+  "4x5": { enter: { yaw: -14, pitch: 6.5, slide: 640 }, beats: [[1.22, -10.5, 5.0], [1.26, -7.8, 3.9], [1.32, -5.3, 2.8], [1.62, -3.6, 2.0], [1.78, -2.0, 1.1], [2.2, -0.45, 0.3]], close: 0 },
 };
 
 /** I fotogrammi in cui finisce ogni scena (gli stessi del master di un film da 45 secondi). */
@@ -133,7 +139,7 @@ const keysFor = (ratio: Ratio): PoseKey[] => {
       pose: { yaw: plan.enter.yaw, pitch: plan.enter.pitch, pushZ: 0, slideX: first.slideX + plan.enter.slide, slideY: first.slideY },
     },
     ...poses.map((pose, i) => ({ at: SCENE_ENDS[i] as number, pose })),
-    { at: 1349, pose: { ...last, yaw: 0, pitch: 0 } },
+    { at: 1349, pose: { ...last, ...centreOn(stage, DEMO_RIG, DEMO_SLAB, { x: SUBJECTS.firma.x, y: SUBJECTS.firma.y + plan.close }), yaw: 0, pitch: 0 } },
   ];
 };
 

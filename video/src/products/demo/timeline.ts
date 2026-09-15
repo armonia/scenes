@@ -130,6 +130,8 @@ export type DemoState = {
   pressed: number;
   statuses: { name: string; on: number }[];
   light: { color: string; opacity: number };
+  /** CAM-05 in chiusura: quanto resta della ripresa sotto la frase finale. */
+  dim: number;
 };
 
 export const stateAt = (frame: number): DemoState => {
@@ -168,13 +170,8 @@ export const stateAt = (frame: number): DemoState => {
   return {
     inbox,
     highlight: interpolate(frame, [READ_FROM, READ_TO], [0, 1], clamp),
-    // CAM-05: mentre la lettera si legge, tutto il resto scende a 0,62; alla
-    // chiusura la lastra scende a 0,42, sotto il pavimento di CAM-05, perche' la
-    // frase bianca sopra una lastra chiara regge solo fra 0,40 e 0,45.
-    attn:
-      frame < 1265
-        ? interpolate(frame, [READ_FROM - 10, READ_FROM + 20, READ_TO, READ_TO + 30], [1, 0.62, 0.62, 1], inOut)
-        : interpolate(frame, [1265, 1295], [1, 0.42], inOut),
+    // CAM-05: mentre la lettera si legge, tutto il resto scende a 0,62.
+    attn: interpolate(frame, [READ_FROM - 10, READ_FROM + 20, READ_TO, READ_TO + 30], [1, 0.62, 0.62, 1], inOut),
     chips,
     sections,
     total: settleAt(TOTAL_SETTLE, frame),
@@ -190,10 +187,24 @@ export const stateAt = (frame: number): DemoState => {
       color: approved > 0.5 ? "#fff96b" : "#7747ec",
       opacity: 0.72 + 0.26 * approved,
     },
+    // Alla chiusura tutta la ripresa scende a 0,42, sotto il pavimento di CAM-05,
+    // perche' la frase bianca sopra una lastra chiara regge solo fra 0,40 e 0,45.
+    dim: interpolate(frame, [1265, 1295], [1, 0.42], inOut),
   };
 };
 
 /* ------------------------------------------------------------- le frasi */
+
+/**
+ * TYP-09: il compagno della chiusura, su un altro asse. Entra in dissolvenza e
+ * resta bianco pieno: e' piccolo, e la gerarchia con la frase la fa il corpo.
+ * Era al 70%, e la sua coda passa sopra la lastra (nel 16:9 in basso, nei
+ * verticali in alto): anche velata a 0,42 la lastra lasciava un bianco al 70% a
+ * 1,03:1 nel riquadro peggiore, e al 90% il 4:5 stava a 4,6:1, a un soffio dal
+ * 4,5:1 del testo piccolo. Sta qui e non nel componente perche' film-type.py
+ * deve sapere quando guardarlo.
+ */
+export const COMPANION = { text: "Registro · RQ-2026-014", from: 1290, to: 1310, opacity: 1 } as const;
 
 /**
  * Le battute per formato. Le frasi e i frame sono gli stessi; cambia dove si va a
@@ -205,8 +216,8 @@ export const cuesFor = (ratio: Ratio): { plane: TypeCue[]; glass: TypeCue[] } =>
     // TYP-10, sul piano della lastra: entra con la maschera, poi cambiano solo le
     // parole che cambiano (TYP-04), e l'accento si mescola (TYP-03).
     plane: [
-      { at: 100, rows: narrow ? [["Arriva"], ["una", "richiesta."]] : [["Arriva", "una", "richiesta."]] },
-      { at: 200, rows: narrow ? [["Arriva"], ["un", "lavoro."]] : [["Arriva", "un", "lavoro."]], accent: narrow ? [1, 1] : [0, 2], exitAt: 400 },
+      { at: 120, rows: narrow ? [["Arriva"], ["una", "richiesta."]] : [["Arriva", "una", "richiesta."]] },
+      { at: 215, rows: narrow ? [["Arriva"], ["un", "lavoro."]] : [["Arriva", "un", "lavoro."]], accent: narrow ? [1, 1] : [0, 2], exitAt: 400 },
     ],
     // Sul vetro: le tre parole della struttura (TYP-02), la seconda persona, la
     // chiusura.
@@ -216,7 +227,10 @@ export const cuesFor = (ratio: Ratio): { plane: TypeCue[]; glass: TypeCue[] } =>
       { at: 625, rows: [["Stima."]], key: { word: [0, 0], scale: 1.6 }, exitAt: 760 },
       { at: 900, rows: narrow ? [["Il", "resto"], ["lo", "decidi", "tu."]] : [["Il", "resto", "lo", "decidi", "tu."]], accent: narrow ? [1, 2] : [0, 4], exitAt: 1050 },
       { at: 1190, rows: [["Approvato."]], exitAt: 1244 },
-      { at: 1270, rows: narrow ? [["Richieste"], ["che", "chiudono."]] : [["Richieste", "che", "chiudono."]], key: { word: narrow ? [1, 1] : [0, 2], scale: 1.4 }, accent: narrow ? [1, 1] : [0, 2] },
+      // La parola chiave sta da sola sulla sua riga, in ogni formato: cresce dal
+      // centro, e la riga le tiene libero lo spazio sopra. In fondo a una riga
+      // lunga cresceva verso destra e usciva dal quadro del 16:9.
+      { at: 1270, rows: [["Richieste", "che"], ["chiudono."]], key: { word: [1, 0], scale: 1.4 }, accent: [1, 0] },
     ],
   };
 };
