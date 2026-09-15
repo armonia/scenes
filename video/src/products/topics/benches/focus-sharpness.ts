@@ -37,8 +37,8 @@ export const geometry = (ratio: Ratio, { catalog }: { catalog: Catalog }) => {
   if (!scene) throw new Error("catalog.json: manca CardFocus");
   const stage = STAGES[ratio];
   const track = cardFocusTrack(scene.durationInFrames, ratio);
-  const first = { slideY: 0, ...poseAt(track, 0) };
-  const last = { slideY: 0, ...poseAt(track, scene.durationInFrames - 1) };
+  const first = poseAt(track, 0);
+  const last = poseAt(track, scene.durationInFrames - 1);
   const card = handoffLandedRect();
 
   const full = projectRect(stage, TOPICS_RIG, TOPICS_SLAB, last, card);
