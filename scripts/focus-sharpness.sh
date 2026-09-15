@@ -26,7 +26,11 @@
 # quel punto l'unica differenza rimasta e' dove sono stati rasterizzati.
 #
 # COME SI MISURA LA NITIDEZZA. Media della differenza fra l'immagine e la stessa
-# immagine sfocata di un pixel, cioe' quanta energia sta nelle alte frequenze.
+# immagine sfocata di mezzo pixel, cioe' quanta energia sta nelle frequenze piu'
+# alte. Era un pixel intero; mezzo pixel guarda proprio la banda che un
+# ingrandimento di K butta via, e a K basso e' quasi l'unica differenza che
+# resta: in 9:16 (K 1,31) il render vero passa da 1,57x a 1,79x mentre lo
+# screenshot resta a 1,14x.
 # Non e' una grandezza percettiva ed e' inutile in assoluto: conta solo il
 # rapporto fra le righe della tabella, che passano tutte per lo stesso
 # trattamento.
@@ -34,16 +38,39 @@
 # IL CONTROLLO NEGATIVO E' VERIFICATO, e sta in un file accanto.
 # `fixture-screenshot.sh` costruisce la stessa discesa fatta di pixel che
 # esistono solo alla scala del campo largo, cioe' il difetto da intercettare.
-# Misurato: il render vero da' 2,09x, la fixture 1,03x. Su quella lo script esce
-# 1. E' la condizione che il README chiede prima di fidarsi del verde, e la
-# prima versione di questo banco non la superava: promuoveva la fixture.
+# Misurato su macOS, render vero contro fixture: 2,81x e 1,09x nel 16:9 (K 2,21),
+# 1,79x e 1,14x in 9:16 (K 1,31), 2,02x e 1,06x in 4:5 (K 1,90). Sulla fixture lo
+# script esce 1. E' la condizione che il README chiede prima di fidarsi del
+# verde, e la prima versione di questo banco non la superava: promuoveva la
+# fixture.
 #
 # La geometria del ritaglio non e' scritta qui. La calcola il manifest
-# (scripts/manifest.mjs) da products/topics/geometry.ts, che e' la stessa sorgente da cui
-# la scena prende la sua posa finale: una costante ricopiata a mano in bash resta
-# giusta solo fino alla prima modifica della lastra.
+# (`bench focus-sharpness --ratio R`) dalle tracce della camera del rapporto,
+# con la proiezione esatta: la card all'ultimo fotogramma, tagliata sul bordo del
+# quadro dove deborda (in 9:16 e 4:5 esce a destra), la stessa zona della lastra
+# al primo fotogramma, e K, quanto la camera l'ha ingrandita.
 #
-# Uso:  ./scripts/focus-sharpness.sh [card-focus.mp4]
+# UNA SOGLIA SOLA, VICINA ALLO SCREENSHOT. Il render vero si allontana da 1 tanto
+# piu' quanto piu' la camera ingrandisce, lo screenshot no: resta fra 1,06x e
+# 1,14x in tutti e tre i rapporti. La soglia di prima, 1,50 a meta' strada nel
+# 16:9, sarebbe caduta troppo vicino al 9:16. Si e' provato anche a ricavarla da
+# K col giro di rimpicciolimento e ritorno del ritaglio stesso, ed era di nuovo
+# una grandezza relativa a se stessa: sulla fixture, gia' sfocata, la soglia
+# calava con lei e il banco usciva 2 invece di 1. 1,35 sta 1,18 volte sopra lo
+# screenshot peggiore e 1,33 volte sotto il render vero piu' debole. Sotto K_MIN
+# i due casi sono troppo vicini per una soglia sola, e il banco esce 2.
+#
+# NIENTE VERDETTO SU UN RITAGLIO SBAGLIATO. Con i numeri del 16:9 su un render
+# verticale il ritaglio cadeva fuori dall'immagine, ImageMagick restituiva un
+# PNG di un pixel e il banco usciva 0 con "449159000x". Adesso il quadro del file
+# deve essere lo stage del rapporto, e ogni ritaglio deve uscire della
+# dimensione chiesta: altrimenti 3.
+#
+# Uso:  ./scripts/focus-sharpness.sh <card-focus.mp4> --ratio R
+#
+# Esce 0 se il testo regge, 1 se sta sotto la soglia, 2 se lo strumento non
+# risponde o l'ingrandimento e' troppo basso per decidere, 3 se il file, il
+# quadro o un ritaglio non tornano.
 set -uo pipefail
 
 . "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
@@ -51,64 +78,64 @@ export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="${1:-$ROOT/video/out/card-focus.mp4}"
+RATIO=16x9
+[ "${2:-}" = "--ratio" ] && RATIO="${3:?serve il rapporto}"
 
-# Quante volte il nostro ritaglio deve essere piu' nitido del controinfattuale.
-# Non e' un numero scelto: e' la media geometrica fra le due letture misurate,
-# 2,09 sul render vero e 1,03 sulla fixture costruita da fixture-screenshot.sh.
-# Sta in mezzo perche' e' li' che separa, e se un giorno il render scendesse
-# sotto vorrebbe dire che si sta avvicinando al caso che deve bocciare.
-SOGLIA=1.50
+SOGLIA=1.35
+K_MIN=1.2
 
 [ -f "$SRC" ] || {
   echo "manca il render: ${SRC#"$ROOT"/}" >&2
-  echo "  cd video && npx remotion render CardFocus out/card-focus.mp4" >&2
-  exit 1
+  exit 3
 }
-
-# La card, in pixel di composizione, all'ultimo fotogramma: dimensioni, centro,
-# ingrandimento finale, dove stava nel campo largo e quanto manca da li' alla
-# scala finale. Li calcola il manifest (video/src/products/topics/benches.ts) dagli
-# stessi numeri che usa la scena.
-read -r CW CH CX CY ZOOM WX WY K < <(node "$ROOT/scripts/manifest.mjs" focus-sharpness 2>/dev/null)
-
-case "${CW:-}|${CH:-}|${ZOOM:-}|${K:-}" in
-  *'|'|'|'*|'') echo "la geometria non e' arrivata dal manifest: '$CW' '$CH' '$ZOOM'" >&2; exit 3 ;;
-esac
-case "$CW$CH" in ''|*[!0-9]*) echo "geometria non numerica: '$CW' '$CH'" >&2; exit 3 ;; esac
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
+
+if ! node "$ROOT/scripts/manifest.mjs" bench focus-sharpness --ratio "$RATIO" > "$TMP/g.json" 2> "$TMP/g.err"; then
+  echo "la geometria non e' arrivata dal manifest:" >&2; cat "$TMP/g.err" >&2; exit 3
+fi
+read -r SW SH iw ih ix iy K sx sy < <(python3 -c "
+import json; g = json.load(open('$TMP/g.json')); o = g['ours']; w = g['wide']; k = g['k']
+print(g['stage']['w'], g['stage']['h'], o['w'], o['h'], o['x'], o['y'], k,
+      round(w['x'] * k), round(w['y'] * k))")
+case "$SW$SH$iw$ih$ix$iy$sx$sy" in ''|*[!0-9-]*) echo "geometria non numerica dal manifest" >&2; exit 3 ;; esac
+
+dims=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "$SRC" | cut -d, -f1,2)
+if [ "$dims" != "$SW,$SH" ]; then
+  echo "il quadro di $(basename "$SRC") e' ${dims/,/x}, lo stage di $RATIO e' ${SW}x${SH}: geometria di un altro rapporto" >&2
+  exit 3
+fi
+
+# Un ritaglio deve uscire della dimensione chiesta. ImageMagick tronca in
+# silenzio un ritaglio che esce dall'immagine, e se ne esce del tutto restituisce
+# un pixel: in entrambi i casi la misura sarebbe su un'altra cosa.
+dimensione() {
+  local got
+  got=$("${IM_IDENTIFY[@]}" -format '%wx%h' "$1" 2>/dev/null)
+  [ "$got" = "${iw}x${ih}" ] || { echo "ritaglio $(basename "$1") di $got invece di ${iw}x${ih}" >&2; exit 3; }
+}
 
 # L'ultimo fotogramma. `-update 1` riscrive lo stesso file a ogni frame, quindi
 # alla fine resta l'ultimo senza dover sapere quanti sono.
 ffmpeg -nostdin -v error -i "$SRC" -fps_mode passthrough -update 1 -y "$TMP/last.png"
 [ -s "$TMP/last.png" ] || { echo "estrazione dell'ultimo fotogramma fallita" >&2; exit 3; }
-
-# Il ritaglio: la card meno un margine dell'8%, per restare dentro il bordo e
-# non misurare la nitidezza del bordo stesso, che e' un filo da un pixel e
-# sopravvive a qualsiasi trattamento.
-iw=$(python3 -c "print(int($CW * 0.84))")
-ih=$(python3 -c "print(int($CH * 0.84))")
-ix=$(python3 -c "print(int($CX - $iw / 2))")
-iy=$(python3 -c "print(int($CY - $ih / 2))")
 "${IM_CONVERT[@]}" "$TMP/last.png" -crop "${iw}x${ih}+${ix}+${iy}" +repage -colorspace Gray "$TMP/ours.png"
-[ -s "$TMP/ours.png" ] || { echo "ritaglio fallito: ${iw}x${ih}+${ix}+${iy}" >&2; exit 3; }
+dimensione "$TMP/ours.png"
 
 # Il controinfattuale: il campo largo portato alla scala finale. Se la lastra
 # fosse stata uno screenshot, l'ultimo fotogramma sarebbe stato questo.
 ffmpeg -nostdin -v error -i "$SRC" -frames:v 1 -y "$TMP/wide.png"
 [ -s "$TMP/wide.png" ] || { echo "estrazione del primo fotogramma fallita" >&2; exit 3; }
 pc=$(python3 -c "print(f'{$K * 100:.4f}%')")
-sx=$(python3 -c "print(int($WX * $K - $iw / 2))")
-sy=$(python3 -c "print(int($WY * $K - $ih / 2))")
 "${IM_CONVERT[@]}" "$TMP/wide.png" -resize "$pc" -crop "${iw}x${ih}+${sx}+${sy}" +repage \
   -colorspace Gray "$TMP/mockup.png"
-[ -s "$TMP/mockup.png" ] || { echo "costruzione del controinfattuale fallita" >&2; exit 3; }
+dimensione "$TMP/mockup.png"
 
-# Nitidezza: quanto si perde sfocando di un pixel.
+# Nitidezza: quanto si perde sfocando di mezzo pixel.
 nitidezza() {
   local img="$1"
-  "${IM_CONVERT[@]}" "$img" -blur 0x1 "$TMP/b.png"
+  "${IM_CONVERT[@]}" "$img" -blur 0x0.5 "$TMP/b.png"
   local v
   v=$("${IM_CONVERT[@]}" "$img" "$TMP/b.png" -compose difference -composite \
     -colorspace Gray -format '%[fx:mean*255]' info:)
@@ -142,7 +169,7 @@ echo "a che scala i pixel sono stati rasterizzati."
 echo
 printf '  %-46s %9s\n' "riga" "energia"
 printf '  %-46s %9.3f\n' "ultimo fotogramma (DOM, alla scala finale)" "$n_ours"
-printf '  %-46s %9.3f\n' "primo fotogramma portato a ${ZOOM}x (screenshot)" "$n_mock"
+printf '  %-46s %9.3f\n' "primo fotogramma portato a ${K}x (screenshot)" "$n_mock"
 printf '  %-46s %9.3f\n' "  (controllo strumento: il nostro, sfocato)" "$n_prova"
 echo
 
@@ -155,7 +182,14 @@ if ! python3 -c "exit(0 if $n_prova < $n_ours * 0.9 else 1)"; then
   exit 2
 fi
 
-rapporto=$(python3 -c "print(f'{$n_ours / max($n_mock, 1e-9):.2f}')")
+case "$n_mock" in 0|0.0|0.00|0.000) echo "il controinfattuale e' vuoto: nessuna energia da confrontare" >&2; exit 3 ;; esac
+if ! python3 -c "exit(0 if $K >= $K_MIN else 1)"; then
+  echo "MISURA INUTILE: in $RATIO la camera ingrandisce la card di ${K}x, sotto ${K_MIN}x:" >&2
+  echo "DOM e screenshot sono troppo vicini per decidere con una soglia sola." >&2
+  exit 2
+fi
+
+rapporto=$(python3 -c "print(f'{$n_ours / $n_mock:.2f}')")
 if python3 -c "exit(0 if $rapporto >= $SOGLIA else 1)"; then
   echo "VERDETTO: il testo regge l'ingrandimento. ${rapporto}x piu' nitido dello"
   echo "stesso contenuto ingrandito dal campo largo (soglia ${SOGLIA}x)."
@@ -164,6 +198,6 @@ fi
 
 echo "FALLITO: solo ${rapporto}x contro lo screenshot, sotto la soglia di ${SOGLIA}x." >&2
 echo "O la lastra ha smesso di essere DOM da qualche parte lungo la catena," >&2
-echo "oppure CARD_FOCUS_ZOOM in products/topics/geometry.ts e' salito oltre quello che" >&2
-echo "la rasterizzazione regge." >&2
+echo "oppure l'ingrandimento di CardFocus in questo rapporto e' salito oltre quello" >&2
+echo "che la rasterizzazione regge." >&2
 exit 1

@@ -23,7 +23,7 @@
  *
  *   LE SOGLIE PERCETTIVE no. I quattro frame fra il clic e la sua conseguenza
  *   non sono ritmo, sono la finestra in cui l'occhio lega un gesto al suo
- *   effetto: `click-gap.sh` misura che stiano fra 1 e 8, e a velocita' doppia
+ *   effetto: `click-gap.py` misura che stiano fra 2 e 8, e a velocita' doppia
  *   diventerebbero due, cioe' sul bordo di sparire. I tre frame di ritardo
  *   della card sulla mano sono il peso dell'oggetto, non la fretta del
  *   montaggio. Il lampeggio del caret e' una frequenza, non una durata.

@@ -25,3 +25,25 @@ export const STAGES: Record<Ratio, Stage> = {
 };
 
 export const RATIOS: readonly Ratio[] = ["16x9", "9x16", "4x5"];
+
+/**
+ * Lo stage di una composition, dalle sue dimensioni. Una scena lo chiede con
+ * `useVideoConfig()` per scegliere le pose del suo rapporto: la stessa scena
+ * registrata in tre formati sa in quale sta senza una prop in piu'. Dimensioni
+ * che non sono uno dei tre stage non hanno pose, e lo si dice invece di
+ * ripiegare in silenzio sul 16:9.
+ */
+export const stageFor = (w: number, h: number): Stage => {
+  const s = RATIOS.map((r) => STAGES[r]).find((x) => x.w === w && x.h === h);
+  if (!s) throw new Error(`${w}x${h} non e' uno stage del kit (${RATIOS.join(", ")})`);
+  return s;
+};
+
+/**
+ * Il nome di una variante: il 16:9 tiene l'id e lo slug di sempre, gli altri
+ * rapporti li portano come suffisso (CardFocus-9x16, card-focus-9x16.mp4).
+ * Cosi' i link pubblicati, i banchi e la pagina che parlano del 16:9 restano
+ * validi, e un rapporto nuovo si aggiunge accanto invece di rinominare tutto.
+ */
+export const variantName = (base: string, ratio: Ratio): string =>
+  ratio === "16x9" ? base : `${base}-${ratio}`;

@@ -7,30 +7,28 @@ import {
 } from "remotion";
 import { Board } from "../Board";
 import { bubbleCurve } from "../Assistant";
-import { Cursor, type Waypoint } from "../../../primitives/Cursor";
-import { typedCount, typingSchedule } from "../../../primitives/rhythm";
-import { tempo } from "../../../primitives/tempo";
+import { Cursor } from "../../../primitives/Cursor";
+import { typedCount } from "../../../primitives/rhythm";
+import {
+  CARET_PERIOD,
+  DEFAULT_PROMPT,
+  DEFAULT_RESPONSE,
+  promptInputPath,
+  promptInputTimeline,
+  streamedWordCount,
+} from "../promptTiming";
 import {
   COLUMNS,
-  COMPOSER_H,
-  COMPOSER_X,
-  COMPOSER_Y,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
-  SEND_H,
-  SEND_W,
-  SEND_X,
-  SEND_Y,
   handoffCard,
   handoffLandedRect,
   TOPICS_RIG,
   TOPICS_SLAB,
 } from "../geometry";
 import { poseAt } from "../../../kit/camera";
-import {
-  PROMPT_INPUT_BASE as BASE,
-  promptInputTrack,
-} from "../tracks";
+import { stageFor } from "../../../kit/stage";
+import { promptInputTrack } from "../tracks";
 import { Shot } from "../../../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../material";
 
@@ -75,42 +73,8 @@ export type PromptInputProps = {
   attnFloor?: number;
 };
 
-// I frame della recita. La pausa prima dell'invio e' la parte che la rende
-// credibile: senza, l'invio parte insieme all'ultimo tasto e legge come uno
-// script che esegue, non come qualcuno che rilegge.
-/* La durata di riferimento a cui sono scritti i tempi (BASE) sta in
-   products/topics/tracks.ts, perche' la legge anche la traccia della camera. */
-
-const T = {
-  travelStart: 56,
-  travelEnd: 114,
-  clickField: 116,
-  typeStart: 132,
-  pauseAfterTyping: 24,
-  travelToSend: 32,
-  bubble: 14,
-  thinking: 26,
-} as const;
-
-/**
- * IL BATTITO DEL CARET NON SI SCALA: quindici frame sono una frequenza, non una
- * durata. Un cursore che lampeggia al doppio della velocita' non legge come una
- * scena piu' rapida, legge come un cursore rotto.
- */
-const CARET_PERIOD = 15;
-
-/**
- * QUATTRO FRAME FRA IL COLPO E LA CONSEGUENZA, e non si scalano nemmeno questi.
- * click-gap.sh misura che stiano fra 1 e 8: e' la finestra in cui l'occhio lega
- * il gesto al suo effetto, non una decisione di ritmo. A velocita' doppia
- * diventerebbero due, sul bordo di sparire.
- */
-const BUBBLE_AFTER_CLICK = 4;
-
-const DEFAULT_PROMPT = "Rifai il flusso di auth e apri la PR";
-
-const DEFAULT_RESPONSE =
-  "Trovati tre punti di chiamata in server/auth.ts. Sposto il refresh del token dentro un guard solo, poi apro la PR su topics/auth-refresh.";
+// I frame della recita, la battitura, i testi e il percorso del cursore sono
+// in products/topics/promptTiming.ts: li leggono anche click-gap.py e beats.py.
 
 export const PromptInput: React.FC<PromptInputProps> = ({
   prompt = DEFAULT_PROMPT,
@@ -120,55 +84,22 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   attnFloor = 0.62,
 }) => {
   const localFrame = useCurrentFrame();
-  const { durationInFrames, fps } = useVideoConfig();
+  const { durationInFrames, fps, width, height } = useVideoConfig();
+  const { ratio } = stageFor(width, height);
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
-  const last = durationInFrames - 1;
-  const K = tempo(durationInFrames, BASE);
 
-  /**
-   * LA BATTITURA SCALA, e SI DIVIDE invece di moltiplicarsi. Tredici caratteri
-   * al secondo e' un ritmo umano, quindi sarebbe da lasciare fermo; ma una
-   * scena piu' rapida in cui il testo si scrive alla stessa velocita' non ci
-   * sta dentro: la spedizione arriva dopo l'ultimo fotogramma e la scena
-   * finisce a meta' gesto.
-   *
-   * `cps` e' una VELOCITA', non una durata, quindi va all'inverso del fattore:
-   * a meta' durata servono il doppio dei caratteri al secondo. Scrivendolo
-   * moltiplicato - come era la prima volta - una scena piu' corta si ritrovava
-   * un dattilografo piu' LENTO, la spedizione slittava all'83 per cento della
-   * durata invece del 60, e `beats.sh` trovava il campo ancora pieno dove si
-   * aspettava il segnaposto. Sbagliato di un reciproco, e visibile solo
-   * misurando.
-   *
-   * Il limite superiore esiste e non e' misurato: oltre una certa velocita' la
-   * battitura smette di leggere come una mano e comincia a leggere come un
-   * incolla. A meta' durata sono 26 caratteri al secondo, ed e' probabilmente
-   * la' intorno.
-   */
-  const schedule = typingSchedule({
-    text: prompt,
-    startFrame: K.at(T.typeStart),
-    fps,
-    cps: 13 / K.k,
-  });
-
-  const typeEnd = schedule[schedule.length - 1] ?? T.typeStart;
+  const tl = promptInputTimeline(durationInFrames, fps, prompt);
+  const { schedule, sendClick, bubbleAt, thinkAt, streamAt } = tl;
   const nTyped = typedCount(schedule, frame);
   const typed = prompt.slice(0, nTyped);
-
-  const sendTravelStart = typeEnd + K.at(T.pauseAfterTyping);
-  const sendClick = sendTravelStart + K.at(T.travelToSend);
-  const bubbleAt = sendClick + BUBBLE_AFTER_CLICK;
-  const thinkAt = bubbleAt + K.at(T.bubble);
-  const streamAt = thinkAt + K.at(T.thinking);
 
   const sent = frame >= sendClick;
 
   /**
    * LA CAMERA SI FERMA A f132, e non alla fine della scena.
    *
-   * Non e' una scelta di gusto, e' venuta da un banco. `click-gap.sh` trova il
+   * Non e' una scelta di gusto, e' venuta da un banco. `click-gap.py` trova il
    * colpo e la conseguenza nel render cercando il fotogramma il cui conto di
    * pixel cambiati sfonda la mediana della finestra. Con la camera che scivola
    * per tutti i 450 frame, ogni fotogramma cambia molto e il clic non sfonda
@@ -184,28 +115,16 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   // Lo streaming va a blocchi di parole, non a caratteri. Un LLM non scrive
   // lettera per lettera: arriva a token, e l'occhio lo riconosce.
   const words = response.split(" ");
-  const streamed = Math.max(
-    0,
-    Math.min(
-      words.length,
-      Math.floor(
-        interpolate(frame, [streamAt, last - K.at(18)], [0, words.length], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        }),
-      ),
-    ),
-  );
+  const streamed = streamedWordCount(tl, frame, words.length);
   const answer = words.slice(0, streamed).join(" ");
 
   // La camera: una curva sola, inOut, derivata nulla ai due capi. A sinistra
   // per agganciarsi alla fine di CardRelease, a destra perche' la scena si
   // ferma e un'altra ci si possa attaccare. La curva, e la finestra di 132 frame
   // spiegata qui sopra, stanno in products/topics/tracks.ts.
-  const pose = poseAt(promptInputTrack(durationInFrames), frame);
+  const pose = poseAt(promptInputTrack(durationInFrames, ratio), frame);
 
-
-  const focused = frame >= K.at(T.clickField);
+  const focused = frame >= tl.fieldClick;
   // Il caret lampeggia a 15 frame, e il calcolo e' sul frame: nessun keyframe CSS.
   const caretOn = focused && !sent && Math.floor(frame / CARET_PERIOD) % 2 === 0;
 
@@ -220,7 +139,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
    * pavimento: sotto, il contenuto attenuato scende sotto 3:1 una volta
    * renderizzato e legge come sporco sul fondo invece che come un piano dietro.
    */
-  const attn = interpolate(frame, [streamAt - K.at(6), streamAt + K.at(26)], [1, attnFloor], {
+  const attn = interpolate(frame, [tl.attnFrom, tl.attnTo], [1, attnFloor], {
     easing: Easing.inOut(Easing.cubic),
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -233,23 +152,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
 
-  // Il percorso del cursore, in coordinate della lastra condivisa. Le mire sono
-  // le costanti di topics/geometry.ts, non due numeri copiati dal layout: se il composer
-  // si sposta il puntatore lo segue.
-  const path: Waypoint[] = [
-    { x: 2620, y: 1330, at: 0 },
-    { x: 2620, y: 1330, at: K.at(T.travelStart) },
-    { x: 1760, y: 1214, at: K.at(T.travelStart + 22) },
-    { x: COMPOSER_X + 110, y: COMPOSER_Y + COMPOSER_H / 2, at: K.at(T.travelEnd) },
-    { x: COMPOSER_X + 110, y: COMPOSER_Y + COMPOSER_H / 2, at: sendTravelStart },
-    { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: sendClick },
-    // La mano si ritira mentre la risposta scorre. Non e' una gentilezza: al
-    // suo posto resterebbe una freccia sull'ultimo fotogramma, e la scena dopo
-    // un cursore non ce l'ha, quindi la giunta la mostrerebbe sparire.
-    { x: SEND_X + SEND_W / 2, y: SEND_Y + SEND_H / 2, at: streamAt + K.at(16) },
-    { x: 2620, y: 1330, at: streamAt + K.at(58) },
-    { x: 2620, y: 1330, at: durationInFrames },
-  ];
+  const path = promptInputPath(tl, durationInFrames);
 
   // La board sta come l'ha lasciata CardRelease: consegna avvenuta, niente in
   // volo. E' lo stesso componente con gli stessi valori, quindi il primo frame
@@ -299,7 +202,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       {/* Il cursore sta DENTRO la lastra, quindi prende la stessa
           prospettiva e appoggia sul piano. Uno disegnato sopra il quadro,
           dritto, tradisce subito che la lastra e' un'immagine. */}
-      <Cursor path={path} clicks={[T.clickField, sendClick]} frame={frame} />
+      <Cursor path={path} clicks={[tl.fieldClick, sendClick]} frame={frame} />
     </Shot>
   );
 };

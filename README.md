@@ -349,7 +349,7 @@ kinds of number in a scene. *Edit tempi* scale — when the hand arrives, how lo
 the travel runs, when the camera settles: those are rhythm decisions, and rhythm
 is exactly what you want to change. *Perceptual thresholds* do not. The four
 frames between a click and its consequence are not rhythm, they are the window
-in which the eye ties a gesture to its effect — `click-gap.sh` measures that they
+in which the eye ties a gesture to its effect — `click-gap.py` measures that they
 sit between 1 and 8, and at double speed they would be two, on the edge of
 disappearing. The three frames the card lags behind the hand are the weight of
 the object. The caret's fifteen-frame blink is a frequency, not a duration.
@@ -361,7 +361,7 @@ One of those got the sign wrong first time round, and only measuring caught it.
 `cps` — the typing rate — is a *speed*, so it goes as the inverse of the factor:
 half the duration needs twice the characters per second. Written as a
 multiplication, a shorter scene got a *slower* typist, the send slid to 83 per
-cent of the duration instead of 60, and `beats.sh` found the field still full
+cent of the duration instead of 60, and `beats.py` found the field still full
 where it expected the placeholder.
 
 `tempo.py` proves the mechanism the only way it can be proved: if the beats
@@ -374,7 +374,7 @@ retimed, which is exactly what lowering the duration produced before any of
 this, and there the normalised comparison is the wrong one.
 
 Every bench with a hardcoded frame number now follows the duration too —
-`beats.sh`, `handoff-travel.sh`, `contrast-floor.py` — because a bench that
+`beats.py`, `handoff-travel.py`, `contrast-floor.py` — because a bench that
 looks at frame 430 of a scene that is now 300 frames long is measuring a scene
 that no longer exists. They all pass on both the film and the retimed fixtures,
 and that is the real regression guard: retime a scene and the perceptual
@@ -457,16 +457,17 @@ what almost every product film has, needs to know where an element is at a
 tilted pose rather than guess a crop by eye. It redoes the CSS chain of `Shot`
 in arithmetic (scale, then rotateX, then rotateY, then the push, then the
 container's perspective around the rig origin), and `project-check.py` compares
-it with Chromium on 36 cases: two slabs, three stages, the six poses of the
-Topics chain, five points each, off-centre and off-axis on purpose. The largest
+it with Chromium on 42 cases: two slabs, three stages, the seven poses of the
+Topics chain in that stage's ratio, five points each, off-centre and off-axis on
+purpose. The largest
 error is 0.040 px. With the CSS origin set to 50% 50% instead of the rig's, the
 error reaches 103.7 px and the check says so.
 
 The four benches that worked out the geometry of Topics inside a `node -e`
-snippet of their own (`handoff-travel.sh`, `focus-sharpness.sh`,
+snippet of their own (`handoff-travel.py`, `focus-sharpness.sh`,
 `fixture-screenshot.sh`, `contrast-floor.py`) now ask `manifest.mjs`, which
-computes it once in `video/src/products/topics/benches.ts`. Their output is identical
-line for line, and the screenshot fixture comes out with the same hash.
+computes it in one module per bench under `video/src/products/topics/benches/`
+(`node scripts/manifest.mjs bench <name> --ratio <r>`).
 `no-product-literals.sh` keeps it that way: a bench that reads `video/src` by
 itself fails it, and pointed at the benches of the commit before this one it
 names exactly those four.
@@ -512,17 +513,101 @@ uncompensated point fell on the origin, the negative could not fail, and
 Everything that belongs to Topics now sits in one folder, `video/src/products/topics/`:
 the slab geometry (`geometry.ts`, which was `primitives/slab.ts`), the tokens
 (`tokens.ts`, which was `theme.ts`), the furniture, the material, the tracks, the
-bench geometry (`benches.ts`) and the six scenes. What stays outside is what
+bench geometry (`benches/`) and the six scenes. What stays outside is what
 another product can use as it is: `kit/`, the cursor, the frame-locked helpers.
 The move changed no number. `geometry-snapshot.mjs` gives the same 52 values as
 before the kit existed, and every still is identical to `main`.
+
+## Three formats
+
+Every scene now exists in 16:9, 9:16 and 4:5. `catalog.json` lists the ratios,
+`Root.tsx` registers a composition per scene and per ratio (`CardFocus`,
+`CardFocus-9x16`, `CardFocus-4x5`), and a scene picks its camera from the size
+of its own composition. The 16:9 keeps the ids, the slugs and every pixel: the
+published videos are identical to `main`. The page still shows 16:9; the other
+two ratios are in the run artifacts until someone has looked at them.
+
+The portrait poses are derived, not drawn. A 2:1 slab in a 9:16 frame shows a
+vertical strip of the board, so each pose keeps the yaw and pitch of 16:9 and
+the push ratio between one pose and the next, raises the zoom only as far as
+covering the frame needs, and keeps its subject in frame: the column in
+`UIMockup`, the delivered card in `CardHandoff`, the tag and title of that card
+in `CardFocus`, the thread heading and the prompt in `PromptInput`. In 9:16 the
+two columns the card flies between do not fit together, so the camera follows
+the card during the drag. The numbers live in `products/topics/poses.ts`.
+Measured on the tracks: the slab covers the frame on every frame from 20 per
+cent of each scene with at least 2 px to spare (exactly 0 on `PromptInput`, by
+construction, as in 16:9), and the camera never reverses while it moves. In 9:16
+a message 1180 px wide ran off the frame mid-line, so the thread now wraps at the
+visible edge of the slab: 1180 in 16:9, 825 in 4:5, 468 in 9:16.
+
+`kit/film.ts` and `kit/SceneWindow.tsx` put the same scenes one after another in
+a single composition, `TopicsFilm`, which is how the product films will be
+built. Inside a `<Sequence>` a scene reads its own frame and its own duration,
+so nothing in the scenes changed, and `film-identity.sh` checks it: the first,
+middle and last frame of every window are the same PNG as the scene on its own,
+and a window started one frame late is caught in every scene.
+
+### The benches, per ratio
+
+The benches no longer list their own negatives in the workflow. Each one declares
+its checks in `scripts/checks/<bench>.mjs`, the manifest resolves them for a ratio
+(`node scripts/manifest.mjs checks --ratio 9x16`), `expect.sh` runs every line
+against its expected exit code without stopping at the first failure, and
+`bench-coverage.py` fails any bench that passes something without a case that it
+fails. The bench geometry for a ratio comes from
+`video/src/products/topics/benches/<bench>.ts`; the scripts only read it through
+the manifest.
+
+Moving the benches to portrait found faults that 16:9 had been hiding, and each
+one was a bench that could pass without measuring:
+
+- `click-gap` counted changed pixels in the whole frame. In 9:16 and 4:5 the send
+  button is out of frame, the frames after the click were still, the quiet was
+  zero, and it passed a two-frame gap whatever the real one was. It now looks at
+  the composer text and the tail of the thread, projected per ratio: f271 and
+  f276 in all three, and the fused, slowed and missing clicks exit 1.
+- `handoff-travel` measured on screen, where in 9:16 it measured the pan, and a
+  hard cut passed because half its samples fell before the grab. It now
+  rectifies every sample of the drag onto the slab with that frame's camera. The
+  first version of that let a freeze frame "cross" 208 px, because rectifying the
+  same image with two cameras moves it; the column headers now check the
+  rectification (zero changed pixels on real renders, 40 to 150 on a freeze).
+  The card crosses 170, 195 and 183 px of the slab.
+- `focus-sharpness`, fed 16:9 geometry on a portrait render, cropped outside the
+  image and passed with 449159000x. It now checks the frame size and every crop,
+  and reads sharpness at half a pixel: real renders 2.81x, 1.79x and 2.02x
+  against 1.09x, 1.14x and 1.06x for the upscaled screenshot, threshold 1.35.
+- `contrast-floor` exited 1 on an empty crop, blaming the attenuation floor for a
+  crop that had landed on background. It exits 3 now, and the fixture is one still
+  instead of 450 frames. 4.25:1, 4.54:1 and 4.51:1.
+- `tempo` compared the top 480x270 bytes of each frame, which in 9:16 is the top
+  third. On the whole frame the correct 9:16 render read like a trimmed one,
+  because the card's three-frame lag (which does not scale, on purpose) weighs more
+  on a card twice the size. The scene now declares that window: outside it the fast
+  render matches exactly, inside it the residual has to be there.
+- `seam` never exited 1: a broken join exited 2, "measurement useless". A reversed
+  pair exits 1 now in every ratio. The first CI run of this block then showed that
+  `seam` and `rest-point` did not count the same way on the Mac and in CI:
+  `compare -fuzz` on ImageMagick 6 found the reversed pair almost identical and
+  failed the start of `BoardOrbit` in 9:16, which ImageMagick 7 passed. Both now
+  count with ffmpeg (`_pixeldiff.sh`), which gives the same number in both places.
+- `beats` gets its frames from the scene's timeline and leaves out the words the
+  thread already showed ("solo" was in both). A freeze frame and a covered thread
+  exit 1.
+
+Locally the checks take about three minutes per ratio on renders that already
+exist. In CI each ratio is its own job (render, fixtures, checks, coverage): the
+first run took 14, 15 and 20 minutes against a limit of 25, with the page checks
+in a fourth job of 5 minutes from the start, and the deploy waiting for all of
+them.
 
 ## Layout
 
 | | |
 |---|---|
 | `video/` | The Remotion project. The product-independent kit in `video/src/kit/`, one folder per product in `video/src/products/` (`topics/` holds the slab, its tokens, tracks, bench geometry and the six scenes; `probe/` the synthetic slab), shared primitives such as the cursor and the frame-locked helpers in `video/src/primitives/`, the catalogue in `video/src/scenes/catalog.json`, bench specimens in `video/src/specimens/` |
-| `scripts/` | The measurements, the review page, the showcase build, and `catalog.mjs`, which is how shell and CI read `catalog.json` without a compiler. See below |
+| `scripts/` | The measurements, the review page, the showcase build, and `catalog.mjs`, which is how shell and CI read `catalog.json` without a compiler. `scripts/checks/` holds each bench's checks and negatives, which `manifest.mjs checks` resolves per ratio and `expect.sh` runs. See below |
 | `showcase/` | The public pages. `index.template.html` and `grammatica.html` are committed; the scene section and the renders are not, `showcase-build.sh` generates the first from `catalog.json` and copies the second into `showcase/dist/` |
 | `CATALOG.md` | The surveyed libraries with verified licenses, the 81 templates grouped, the market gap |
 | `ref/` | Reference commercials and their contact sheets. **Not in git**, see below |
@@ -539,34 +624,38 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 
 ./scripts/contact-sheet.sh out/prompt-input-vs-ref.png  # composition, frozen
 ./scripts/review-page.sh                                # composition + rhythm, moving
-./scripts/beats.sh                                      # are all four beats on screen
+./scripts/beats.py <scene.mp4> --ratio R                # are all four beats on screen
 ./scripts/fill-measure.sh video/out/prompt-input.mp4    # border readout only, it cannot fail (see below)
 ./scripts/legibility.sh                                 # down to what size it reads
 ./scripts/framelocked-verdict.sh [Composition ...]      # is it really frame-locked
 ./scripts/seam.sh [A.mp4] [B.mp4]                       # is the join really cutless
-./scripts/handoff-travel.sh                             # does the card actually cross
-./scripts/focus-sharpness.sh                            # does the text survive the push-in
-./scripts/rest-point.sh [scene.mp4]                     # is the scene still at both edges
-./scripts/click-gap.sh [scene.mp4]                      # does the UI answer the click, or fire with it
-./scripts/fixture-screenshot.sh                         # build the scene focus-sharpness must fail
+./scripts/handoff-travel.py <scene.mp4> --ratio R       # does the card actually cross, measured on the slab
+./scripts/focus-sharpness.sh <scene.mp4> --ratio R      # does the text survive the push-in
+./scripts/rest-point.sh [--ratio R] [scene.mp4]         # is the scene still at both edges
+./scripts/click-gap.py <scene.mp4> --ratio R            # does the UI answer the click, or fire with it
+./scripts/fixture-screenshot.sh <src> <dst> --ratio R   # build the scene focus-sharpness must fail
+./scripts/film-identity.sh [--ratio R] [--offset N]     # is a film frame the same frame as the scene on its own
 ./scripts/demo-check.py [page.html]                     # do the catalogue demos still show their thesis
 ./scripts/loop-close.py [page.html]                     # does every demo loop close, or tear every pass
 ./scripts/type-check.py [page.html]                     # does the type cover, leave the frame, vanish, snap, or stop mid-move
-./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
-./scripts/drift.py [--props JSON] [--must-fail]         # does the subject stay on the origin, on two slabs and three formats
+./scripts/contrast-floor.py <scene.mp4|frame.png> --ratio R  # is the attenuated content still readable
+./scripts/drift.py [--ratio R] [--props JSON] [--must-fail]  # does the subject stay on the origin, on two slabs and three formats
 ./scripts/project-check.py [--origin-mismatch]          # does the kit's projection agree with Chromium
-./scripts/chain-check.py [--linear] [--must-fail]       # does the camera ever reverse while it moves
-./scripts/fill-geom.py [--push-offset N] [--must-fail]  # does the slab cover the four edges of the frame
+./scripts/chain-check.py [--ratio R] [--linear] [--must-fail]       # does the camera ever reverse while it moves
+./scripts/fill-geom.py [--ratio R] [--push-offset N] [--must-fail]  # does the slab cover the four edges of the frame
 ./scripts/no-product-literals.sh [scripts-dir]          # does any bench read product geometry by itself
-node scripts/manifest.mjs cam06                          # what the benches must find, from the kit
+node scripts/manifest.mjs bench <name> --ratio R         # what a bench must find, from the product
+node scripts/manifest.mjs checks --ratio R > checks.tsv  # every bench and its negatives for a ratio
+./scripts/expect.sh checks.tsv report.json              # run them all, each against its expected exit code
+./scripts/bench-coverage.py report.json                 # does every bench have a negative that fails
 node scripts/geometry-snapshot.mjs [geometry.ts]         # the geometry as a string, to prove a refactor left it alone
-./scripts/tempo.py [long.mp4 short.mp4]                 # does shortening a scene retime it or just trim it
-./scripts/fixture-tempo.sh                              # render the two retimed fixtures
-./scripts/fixture-trim.sh                               # build the trimmed scene tempo.py must fail
-./scripts/fixture-attenuation.sh                        # build the scene contrast-floor must fail
+./scripts/tempo.py long.mp4 short.mp4 [--percettive a-b] # does shortening a scene retime it or just trim it
+./scripts/fixture-tempo.sh [--ratio R]                  # render the retimed fixtures of a ratio
+./scripts/fixture-trim.sh <scene> <fast> <out>          # build the trimmed scene tempo.py must fail
+./scripts/fixture-attenuation.sh <comp> <frame> <out.png> # build the frame contrast-floor must fail
 ./scripts/showcase-build.sh                             # assemble showcase/dist for deploy
 
-node scripts/catalog.mjs render                          # the render command for every scene
+node scripts/catalog.mjs render [--ratio R]              # the render command for every scene
 node scripts/catalog.mjs measures                        # the benches the catalogue implies
 ```
 
@@ -576,7 +665,7 @@ node scripts/catalog.mjs measures                        # the benches the catal
 to a file to redo every scene from scratch — not straight into `sh`, because a
 bench that reads standard input will eat the lines it has not run yet.
 
-`beats.sh` is the one that earns its keep. `prompt-input` promises four beats:
+`beats.py` is the one that earns its keep. `prompt-input` promises four beats:
 the cursor arrives, types, sends, and the answer streams in. For a full day the
 render delivered three. The thread is anchored to the bottom and ran to y=922,
 the composer is opaque and starts at y=838, so the newest message sat
@@ -737,12 +826,12 @@ small fraction of the pixels, the 97th percentile is still measuring background,
 and the same scene read 2.59:1 or 4.17:1 depending on how much text happened to
 fall inside the rectangle.
 
-`beats.sh` was not running anywhere, and had not been for months. It is not in
+`beats.py` was not running anywhere, and had not been for months. It is not in
 the workflow's measurement step, and on the machine these scenes are written on
 `tesseract` was never installed — so every OCR read came back empty, every count
 came back zero, and the verdict came back "the answer is never visible". A
 diagnosis about the scene for a missing tool, which is the same shape as the
-`handoff-travel.sh` failure below and the reason that one is described at
+`handoff-travel.py` failure below and the reason that one is described at
 length. It now refuses to give a verdict without the OCR: exit 3 means it could
 not measure, which is a different thing from exit 1, which means it measured and
 the scene is wrong. It runs in CI, and CI proves both halves — that it passes
@@ -750,7 +839,7 @@ with `tesseract` present, and that it exits 3 with only `tesseract` taken away.
 Taking the whole `PATH` away instead would have proved nothing: the script would
 have died at 127 for want of a shell.
 
-`click-gap.sh` was repaired after it reported a click, with confidence, ninety
+`click-gap.py` was repaired after it reported a click, with confidence, ninety
 frames before the real one. Its rule was "the hit is the first frame whose
 changed-pixel count is at least five times the window median", which held while
 the camera drifted through the whole scene. Once the camera settles before the
@@ -771,7 +860,7 @@ tell a locked shot from a freeze frame. That check now runs only against scenes
 that promised something. A file passed as an argument still counts as a promise,
 which is what keeps the freeze-frame control failing.
 
-`handoff-travel.sh` needed a crop it did not need before, and this is the cost of
+`handoff-travel.py` needed a crop it did not need before, and this is the cost of
 putting the assistant on the slab. It isolates the travelling card by diffing
 whole frames, which worked while the bottom half of the slab was empty. With a
 thread down there — static relative to the slab, but moving with the camera like
@@ -781,14 +870,14 @@ for a change in the instrument's surroundings. It now diffs only the board's hal
 of the frame, and where that half ends is read from `topics/geometry.ts` rather than picked
 by eye, so it follows if the assistant moves.
 
-`handoff-travel.sh` had never run on macOS. Its centroid step was a heredoc
+`handoff-travel.py` had never run on macOS. Its centroid step was a heredoc
 inside a process substitution, which bash 3.2 cannot parse, so the script died
 before the first sample and printed "the card does not travel": a diagnosis about
 the scene for a fault in the equipment. CI runs bash 5 and went green, which is
-why it stayed invisible from one side and total from the other. The Python now
-lives in `scripts/_centroid.py`.
+why it stayed invisible from one side and total from the other. Since block 6
+the whole bench is Python, and the question is gone with the heredoc.
 
-`handoff-travel.sh` checks the thing none of the others look at: whether the
+`handoff-travel.py` checks the thing none of the others look at: whether the
 gesture happens. A scene where the card never moves passes `seam.sh` and
 `fill-measure.sh` with full marks, because a freeze frame has a perfect join and
 live edges. So this one tracks the centroid of changed pixels across the travel
@@ -876,7 +965,9 @@ The order matters, and step 4 is the one people skip.
    `CARD_HANDOFF_END_POSE` spent three scenes as three literals inside
    `CardHandoff.tsx`, which was fine exactly as long as nothing came after it.
 1. **Write it in `video/src/products/<product>/scenes/`.** Take `progress?: number` and derive
-   everything else from `useCurrentFrame()`. If you reach for `Date.now()`,
+   everything else from `useCurrentFrame()`; read the ratio with
+   `stageFor(width, height)` from `useVideoConfig()` and take the poses of that
+   ratio. If you reach for `Date.now()`,
    `Math.random()` or a CSS keyframe, the scene is no longer reproducible and
    `framelocked-verdict.sh` will say so.
 2. **Reuse the kit and the product folder.** `kit/Shot.tsx` draws the slab,
@@ -887,14 +978,16 @@ The order matters, and step 4 is the one people skip.
    the blurb for the page, and `seamAfter` if it follows another scene — then
    the one line in `COMPONENTS` in `Root.tsx` that binds the id to the import.
    That entry is what the render step, the generic benches and the showcase
-   page all read: there is no second list to keep in sync. Leave out the
+   page all read, in every ratio the catalogue lists: there is no second list to
+   keep in sync. Leave out the
    `COMPONENTS` line and the project refuses to load and says which id is
    unbound, which is the one failure mode a JSON file cannot cover on its own.
 4. **Give it a check that can fail.** Every scene here has one bench that
-   fails when the scene's own promise is broken: `beats.sh` for the four beats,
-   `handoff-travel.sh` for the card crossing. Write the negative control first,
-   confirm it exits non-zero on a broken input, and only then trust the pass.
-   `npm run lint` proves nothing about a video.
+   fails when the scene's own promise is broken: `beats.py` for the four beats,
+   `handoff-travel.py` for the card crossing. Declare its checks in
+   `scripts/checks/<bench>.mjs`, write the negative first, and run
+   `expect.sh` on the three ratios before trusting the pass; `bench-coverage.py`
+   will refuse a bench without one. `npm run lint` proves nothing about a video.
 5. **Push.** CI renders, measures, deploys — the scene is on the site without
    any of those three files being touched. Rendering only happens when it can
    change something: the renders are cached under a key made of the scene

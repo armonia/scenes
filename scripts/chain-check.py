@@ -22,7 +22,7 @@ IL NEGATIVO: --linear toglie gli easing a tutte le tracce. Le giunte smettono di
 essere a riposo e le stesse inversioni diventano inversioni in moto. Con
 --must-fail il banco esce 0 solo se se ne accorge.
 
-Uso:  chain-check.py [--linear] [--must-fail]
+Uso:  chain-check.py [--ratio 16x9|9x16|4x5] [--linear] [--must-fail]
 
 Esce 0 se la catena non ha salti ne' inversioni in moto (con --must-fail: se ne
 ha), 1 altrimenti, 3 se il manifest non risponde.
@@ -37,10 +37,11 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--linear", action="store_true")
+ap.add_argument("--ratio", default="16x9")
 ap.add_argument("--must-fail", action="store_true")
 args = ap.parse_args()
 
-cmd = ["node", os.path.join(ROOT, "scripts/manifest.mjs"), "chain"]
+cmd = ["node", os.path.join(ROOT, "scripts/manifest.mjs"), "chain", "--ratio", args.ratio]
 if args.linear:
     cmd.append("--linear")
 r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
@@ -49,7 +50,7 @@ if r.returncode != 0:
     sys.exit(3)
 data = json.loads(r.stdout)
 
-print(f"GIU-04 sulla catena: {' → '.join(data['scenes'])}"
+print(f"GIU-04 sulla catena in {args.ratio}: {' → '.join(data['scenes'])}"
       f"{'  (easing tolti)' if args.linear else ''}")
 gravi = [f for f in data["findings"] if f["kind"] != "inversione a riposo"]
 for f in data["findings"]:

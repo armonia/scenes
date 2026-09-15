@@ -12,13 +12,7 @@
 # CONSECUTIVI non si misura niente: le camere qui si muovono di frazioni di
 # grado al frame, e a meta' di prompt-input, dove si sta digitando, cambia lo
 # 0,076% dei pixel, cioe' quasi quanto ai bordi. Con cinque frame di distanza il
-# segnale si stacca dal rumore. Misurato sulle cinque scene, bordo e mezzo:
-#
-#   prompt-input   0,000%   0,434%
-#   ui-mockup      0,041%   0,218%
-#   card-handoff   0,000%   0,329%
-#   card-focus     0,000%   1,019%
-#   card-release   0,118%   0,952%
+# segnale si stacca dal rumore.
 #
 # La tolleranza al rumore di codifica e' la stessa di seam.sh, per lo stesso
 # motivo: due fotogrammi sopravvivono a una codifica H.264 e non tornano
@@ -44,55 +38,69 @@
 #   ffmpeg -ss 2 -t 2 -i video/out/card-focus.mp4 /tmp/mosso.mp4
 #   ./scripts/rest-point.sh /tmp/mosso.mp4     # esce 1
 #
-# Uso:  ./scripts/rest-point.sh [scena.mp4]
+# I controlli generati (scripts/checks/rest-point.mjs) prendono il ritaglio dal
+# 35% al 70% della scena invece che da 2 a 4 secondi, cosi' una CardFocus
+# ritempificata non sposta il ritaglio sui bordi rallentati.
+#
+# Uso:  ./scripts/rest-point.sh [--ratio 16x9|9x16|4x5] [scena.mp4]
+#
+# Esce 0 se le scene dichiarate ferme lo sono, 1 se una non lo e', 2 se il
+# mezzo non si muove e manca il controllo, 3 se un render manca o non si legge.
 set -uo pipefail
 
-. "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
 export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
+# Il rapporto: le scene dichiarate ferme e i loro file sono quelli di quel
+# formato (card-release-9x16.mp4). Senza, il 16:9 di sempre.
+RATIO=16x9
+if [ "${1:-}" = "--ratio" ]; then
+  RATIO="${2:?serve il rapporto}"
+  shift 2
+fi
+
 # Quanti frame di distanza fra i due fotogrammi confrontati.
 PASSO=5
-# UNA SOGLIA ASSOLUTA QUI NON REGGE, e averla lasciata ha tenuto main rossa.
-# 0,30 veniva dalle letture di macOS; su Linux, con ImageMagick 6, le stesse
-# scene leggono cinque-dieci volte tanto e tre su cinque la sfondavano:
+# UNA SOGLIA ASSOLUTA QUI NON REGGE, e averla lasciata ha tenuto main rossa: le
+# letture di ImageMagick 6 in CI valevano cinque-dieci volte quelle della 7 sul
+# Mac. Da allora il bordo si confronta col mezzo della sua stessa scena. Poi il
+# conto e' passato a ffmpeg (_pixeldiff.sh), che da' lo stesso numero nei due
+# posti, e le scene si misurano in tre rapporti. Bordo peggiore su mezzo, per le
+# scene che dichiarano i bordi fermi:
 #
-#                    macOS            Linux
-#   ui-mockup        0,041 / 0,000    0,688 / 0,021
-#   card-focus       0,000 / 0,229    0,053 / 2,166
-#   card-release     0,118 / 0,043    0,834 / 0,442
+#                    16:9    9:16    4:5
+#   card-release     0,20    0,19    0,21
+#   board-orbit      0,07    0,24    0,16
 #
-# Le scale non sono confrontabili, i rapporti si'. Un bordo e' fermo se si muove
-# molto meno del mezzo della sua stessa scena, che e' poi la cosa che si voleva
-# dire. Il rapporto peggiore misurato su una scena che dichiara i bordi fermi e'
-# 0,147 (card-release su Linux); su un ritaglio che si muove ovunque vale circa 1.
-FERMA_REL=0.30
+# In 9:16 l'inizio di BoardOrbit si muove di piu' perche' la board, attenuata a
+# fine PromptInput, risale d'opacita' su una lastra piu' ingrandita. 0,45 sta
+# quasi due volte sopra il peggiore; un ritaglio preso dal mezzo di una scena si
+# muove ai bordi quanto nel mezzo, cioe' circa 1.
+FERMA_REL=0.45
 # Il mezzo deve muoversi almeno questo, altrimenti un fermo immagine passerebbe:
 # tre zeri sono tre letture concordi e non provano niente. Il mezzo piu' fermo
-# misurato e' 0,218 (ui-mockup su macOS).
+# fra le scene che dichiarano i bordi fermi e' 2,53 (card-release in 9:16).
 MOTO_MIN=0.12
 # E deve muoversi almeno questo PIU' dei bordi, altrimenti l'indice non
 # distingue una scena ferma da una in movimento. Il rapporto piu' stretto
-# misurato e' 2,2 (ui-mockup su Linux).
+# misurato e' 4,1 (board-orbit in 9:16).
 SEPARA=2
 
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 
 # Quanti pixel diversi fra due fotogrammi, in percentuale sul quadro.
 coppia() {
-  local a="$1" b="$2" tot
-  tot=$("${IM_IDENTIFY[@]}" -format "%[fx:w*h]" "$a")
-  local d
-  d=$("${IM_COMPARE[@]}" -metric AE -fuzz 4% "$a" "$b" null: 2>&1 || true)
-  # AE stampa "542.562 (0.000261652)": si tiene l'intero iniziale, e su un
-  # conteggio esattamente zero la stringa e' "0 (0)", senza punti.
-  d=$(echo "$d" | tr -d '[:space:]' | sed 's/[^0-9].*$//')
-  case "${d:-}" in ''|*[!0-9]*) echo "confronto fallito su $(basename "$a")" >&2; exit 3 ;; esac
-  python3 -c "print(f'{$d / $tot * 100:.3f}')"
+  # Il conto lo fa ffmpeg (_pixeldiff.sh), uguale su macOS e sulla CI. Con
+  # `compare -fuzz` di ImageMagick l'inizio di BoardOrbit in 9:16, dove
+  # l'opacita' della board risale piano, valeva 0,11 del mezzo sul Mac e 0,32
+  # in CI: la stessa scena passava da una parte e veniva bocciata dall'altra.
+  local out
+  out=$("$(dirname "${BASH_SOURCE[0]}")/_pixeldiff.sh" "$1" "$2" 20) || {
+    echo "confronto fallito su $(basename "$1")" >&2; exit 3; }
+  python3 -c "print(f'{${out%% *} * 100:.3f}')"
 }
 
-# I primi due e gli ultimi due fotogrammi di un render.
 estremi() {
   local src="$1" n m i f
   # csv=p=0 stampa "150," con la virgola in coda, e la guardia numerica sotto
@@ -133,19 +141,19 @@ echo
 printf '  %-16s %10s %10s %12s\n' "scena" "inizio" "fine" "mezzo (ctrl)"
 
 # Niente mapfile e niente array associativi: sono bash 4, e `/usr/bin/env bash`
-# su macOS trova la 3.2. E' lo stesso inciampo che ha tenuto handoff-travel.sh
+# su macOS trova la 3.2. E' lo stesso inciampo che ha tenuto handoff-travel.py
 # fermo per mesi su questa piattaforma mentre in CI passava.
 rotte=""
-DICHIARANO=$(node "$ROOT/scripts/catalog.mjs" rest | tr '\n' ' ')
+DICHIARANO=$(node "$ROOT/scripts/catalog.mjs" rest --ratio "$RATIO" | tr '\n' ' ')
 # Con un argomento si misura quello e basta: e' cosi' che si prova che il banco
 # sa uscire rosso. Senza, si misura tutto il catalogo.
 UNO=no
 if [ "$#" -gt 0 ]; then
-  [ -f "$1" ] || { echo "non trovo $1" >&2; exit 1; }
+  [ -f "$1" ] || { echo "non trovo $1" >&2; exit 3; }
   echo "$1" > "$TMP/slugs.txt"
   UNO=si
 else
-  node "$ROOT/scripts/catalog.mjs" slugs > "$TMP/slugs.txt" || {
+  node "$ROOT/scripts/catalog.mjs" slugs --ratio "$RATIO" > "$TMP/slugs.txt" || {
     echo "il catalogo non ha restituito nessuna scena" >&2; exit 3; }
   [ -s "$TMP/slugs.txt" ] || { echo "il catalogo non ha restituito nessuna scena" >&2; exit 3; }
 fi
@@ -158,8 +166,8 @@ while IFS= read -r slug; do
   esac
   if [ ! -f "$src" ]; then
     echo "manca il render: video/out/$slug.mp4" >&2
-    echo "  cd video && node ../scripts/catalog.mjs render" >&2
-    exit 1
+    echo "  cd video && node ../scripts/catalog.mjs render --ratio $RATIO" >&2
+    exit 3
   fi
   # `estremi` gira in una sottoshell, quindi un suo exit non ferma questo
   # ciclo: il risultato va controllato qui.
@@ -181,7 +189,7 @@ while IFS= read -r slug; do
   # bordi e' "sotto FERMA_REL volte il mezzo", e con il mezzo a zero quella
   # soglia e' zero: qualunque granello di rumore sui bordi la sfonda, e il
   # banco dichiara mossa una scena che sta ferma. E' la stessa degenerazione
-  # che click-gap.sh aveva sulla mediana, e va intercettata prima di dare
+  # che click-gap.py aveva sulla mediana, e va intercettata prima di dare
   # verdetti, non dopo. Un fermo immagine cade esattamente qui.
   if [ "$dichiara" = si ] &&
      python3 -c "exit(0 if $mid < $MOTO_MIN else 1)"; then

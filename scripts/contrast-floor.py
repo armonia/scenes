@@ -33,64 +33,108 @@ fondo e massimo. I percentili non bastavano: su un ritaglio in cui il testo e'
 poca roba, il novantasettesimo percentile misura ancora il fondo, e la stessa
 scena leggeva 2,59:1 o 4,17:1 secondo quanto testo capitava dentro il rettangolo.
 
-COME FALLISCE. Sul render fatto con attnFloor a 0,25, cioe' la stessa scena
-attenuata troppo, esce rosso. E se il ritaglio non contiene testo - perche'
-qualcuno ha cambiato il layout e la fascia adesso e' vuota - le due letture
-coincidono, il rapporto va verso 1, e allora esce 3: non ho potuto misurare, che
-e' un'altra cosa da "ho misurato e non va".
+COME FALLISCE. Sulla stessa scena resa con attnFloor a 0,25, cioe' attenuata
+troppo, esce 1.
 
-Uso:  ./scripts/contrast-floor.py [scena.mp4]
+UN RITAGLIO VUOTO ESCE 3, e prima usciva 1. La docstring lo prometteva gia', ma
+il controllo guardava solo quanti pixel stavano sopra la soglia del nucleo: su
+un fondo uniforme o sul rumore di codifica il massimo coincide col fondo, la
+soglia collassa sul fondo, il "nucleo" diventa mezzo ritaglio e il rapporto va a
+1,00. Il banco diceva "alza il pavimento" per un ritaglio finito sul vuoto, che
+in 9:16 e' esattamente quello che succede se la posa sposta l'intestazione fuori
+dal punto calcolato. Adesso, prima di ogni verdetto: se fra fondo e massimo ci
+sono meno di SEGNALE_MIN livelli, o se il nucleo occupa piu' di meta' del
+ritaglio, non c'e' testo e il banco non ha misurato niente.
+
+IN OGNI RAPPORTO. Il ritaglio e il fotogramma vengono dal manifest (`bench
+contrast-floor --ratio R`), per la scena e per il suo provino veloce. Il banco
+controlla che il quadro del file sia lo stage del rapporto: un 9:16 misurato con
+la geometria del 16:9 esce 3, non con un numero.
+
+UN FOTOGRAMMA SOLO BASTA. Il negativo non ha bisogno di rendere 450 fotogrammi
+per leggerne uno: con un .png il banco legge quel fotogramma, e la fixture e' un
+`remotion still` sul frame giusto.
+
+Uso:  ./scripts/contrast-floor.py <scena.mp4|fotogramma.png> --ratio R [--scene PromptInput|PromptInputFast]
+
+Esce 0 se il contrasto regge, 1 se sta sotto la soglia, 3 se il file manca, il
+quadro non e' quello del rapporto, il manifest non risponde o il ritaglio non
+contiene testo.
 """
-import json, pathlib, subprocess, sys
+import argparse, json, pathlib, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SRC = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "video/out/prompt-input.mp4"
+ap = argparse.ArgumentParser()
+ap.add_argument("src", nargs="?", default=str(ROOT / "video/out/prompt-input.mp4"))
+ap.add_argument("--ratio", default="16x9")
+ap.add_argument("--scene", default="PromptInput")
+args = ap.parse_args()
+SRC = pathlib.Path(args.src)
 SOGLIA = 3.0
 # Sotto questo numero di pixel il ritaglio non contiene testo, e non c'e' niente
 # di cui misurare il contrasto.
 NUCLEO_MINIMO = 120
-# Il fotogramma da guardare, tardi nello streaming, quando l'attenuazione e' a
-# regime - espresso alla durata di riferimento della scena e poi scalato.
-#
-# SEGUE LA DURATA perche' le battute interne la seguono (primitives/tempo.ts):
-# su un render ritempificato a due terzi il fotogramma 430 non esiste, e su uno
-# a meta' cadrebbe dopo la fine.
-BASE_FRAMES = 450
-FRAME_BASE = 430
+# Quanti livelli di grigio servono fra fondo e massimo perche' nel ritaglio ci
+# sia testo. Misurato sulla scena attenuata a 0,25, che e' il caso piu' debole
+# che il banco deve ancora leggere: fondo 20, massimo 67, cioe' 47 livelli, uguale
+# nei tre rapporti. Un fondo uniforme ne da' zero e il rumore di codifica due o
+# tre. Venti sta a due volte e mezzo sotto il caso debole e a sette sopra il
+# rumore; quaranta, il primo valore provato, lasciava solo sette livelli di
+# margine al negativo, e un font di Linux un filo piu' sottile l'avrebbe fatto
+# uscire 3 invece di 1.
+SEGNALE_MIN = 20
 
 if not SRC.exists():
     print("manca il render: %s" % SRC, file=sys.stderr)
-    raise SystemExit(1)
+    raise SystemExit(3)
 
-# La geometria viene dal manifest, non da due numeri copiati qui: l'intestazione
-# del thread all'ultima posa di PromptInput, proiettata e con dimensioni pari
-# (video/src/products/topics/benches.ts spiega perche').
+# La geometria viene dal manifest: l'intestazione del thread all'ultima posa di
+# PromptInput nel rapporto, proiettata e con dimensioni pari, e il fotogramma in
+# cui leggerla per ogni durata (video/src/products/topics/benches/contrast-floor.ts).
 geo = subprocess.run(
-    ["node", "%s/scripts/manifest.mjs" % ROOT, "contrast-crop"],
+    ["node", "%s/scripts/manifest.mjs" % ROOT, "bench", "contrast-floor", "--ratio", args.ratio],
     capture_output=True, text=True,
 )
 if geo.returncode != 0:
     print("non riesco a leggere la geometria dal manifest:\n" + geo.stderr, file=sys.stderr)
     raise SystemExit(3)
-r = json.loads(geo.stdout.strip().splitlines()[-1])
-if r["w"] < 40 or r["h"] < 12:
-    print("il ritaglio calcolato e' degenere: %s" % r, file=sys.stderr)
+g = json.loads(geo.stdout)
+r = g["crop"]
+variante = next((v for v in g["variants"] if v["id"] == args.scene), None)
+if variante is None:
+    print("il manifest non conosce la scena %s" % args.scene, file=sys.stderr)
     raise SystemExit(3)
 
-nf = subprocess.run(
-    ["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
-     "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", str(SRC)],
+dims = subprocess.run(
+    ["ffprobe", "-v", "error", "-select_streams", "v:0",
+     "-show_entries", "stream=width,height", "-of", "csv=p=0", str(SRC)],
     capture_output=True, text=True,
-).stdout
-nf = int("".join(c for c in nf if c.isdigit()) or 0)
-if nf <= 0:
-    print("non riesco a contare i fotogrammi di %s" % SRC, file=sys.stderr)
+).stdout.strip().split(",")[:2]
+if dims != [str(g["stage"]["w"]), str(g["stage"]["h"])]:
+    print("il quadro di %s e' %s, lo stage di %s e' %dx%d: geometria di un altro rapporto"
+          % (SRC.name, "x".join(dims), args.ratio, g["stage"]["w"], g["stage"]["h"]), file=sys.stderr)
     raise SystemExit(3)
-FRAME = round(FRAME_BASE * nf / BASE_FRAMES)
+
+if SRC.suffix.lower() == ".png":
+    FRAME = variante["frame"]
+    select = ""
+else:
+    nf = subprocess.run(
+        ["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
+         "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", str(SRC)],
+        capture_output=True, text=True,
+    ).stdout
+    nf = int("".join(c for c in nf if c.isdigit()) or 0)
+    if nf != variante["durationInFrames"]:
+        print("%s ha %d fotogrammi, %s ne ha %d: non e' il render di quella scena"
+              % (SRC.name, nf, args.scene, variante["durationInFrames"]), file=sys.stderr)
+        raise SystemExit(3)
+    FRAME = variante["frame"]
+    select = "select=eq(n\\,%d)," % FRAME
 
 raw = subprocess.run(
     ["ffmpeg", "-nostdin", "-v", "error", "-i", str(SRC),
-     "-vf", "select=eq(n\\,%d),crop=%d:%d:%d:%d,format=gray" % (FRAME, r["w"], r["h"], r["x"], r["y"]),
+     "-vf", "%scrop=%d:%d:%d:%d,format=gray" % (select, r["w"], r["h"], r["x"], r["y"]),
      "-frames:v", "1", "-f", "rawvideo", "-"],
     capture_output=True,
 ).stdout
@@ -119,6 +163,14 @@ mx = max(px)
 soglia_nucleo = bg + 0.6 * (mx - bg)
 nucleo = [v for v in px if v >= soglia_nucleo]
 
+if mx - bg < SEGNALE_MIN or len(nucleo) > len(px) / 2:
+    print("MISURA INUTILE: fra fondo (%d) e massimo (%d) ci sono %d livelli, e il nucleo"
+          % (bg, mx, mx - bg), file=sys.stderr)
+    print("occupa %d pixel su %d. Li' dentro non c'e' testo: il ritaglio e' finito sul"
+          % (len(nucleo), len(px)), file=sys.stderr)
+    print("fondo, e un rapporto di contrasto su quello non direbbe niente della scena.", file=sys.stderr)
+    raise SystemExit(3)
+
 if len(nucleo) < NUCLEO_MINIMO:
     print("MISURA INUTILE: nel ritaglio ci sono %d pixel di testo, sotto i %d che"
           % (len(nucleo), NUCLEO_MINIMO), file=sys.stderr)
@@ -131,8 +183,8 @@ l1, l2 = max(lum(fg), lum(bg)), min(lum(fg), lum(bg))
 ratio = (l1 + 0.05) / (l2 + 0.05)
 
 print("Contrasto del contenuto attenuato su %s, fotogramma %d." % (SRC.name, FRAME))
-print("Ritaglio sull'intestazione del thread, proiettato da topics/geometry.ts: %dx%d a (%d,%d)."
-      % (r["w"], r["h"], r["x"], r["y"]))
+print("Ritaglio sull'intestazione del thread in %s, proiettato dal manifest: %dx%d a (%d,%d)."
+      % (args.ratio, r["w"], r["h"], r["x"], r["y"]))
 print()
 print("  fondo (valore piu' frequente)      %3d" % bg)
 print("  testo attenuato (nucleo, %5d px) %5.1f" % (len(nucleo), fg))

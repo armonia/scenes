@@ -13,6 +13,7 @@ import {
   TOPICS_SLAB,
 } from "../geometry";
 import { poseAt } from "../../../kit/camera";
+import { stageFor } from "../../../kit/stage";
 import { cardReleaseTrack } from "../tracks";
 import { Shot } from "../../../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../material";
@@ -47,15 +48,15 @@ export type CardReleaseProps = {
 
 export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
   const localFrame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const { durationInFrames, width, height } = useVideoConfig();
+  const { ratio } = stageFor(width, height);
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
 
   // Una curva sola, inOut: derivata nulla a sinistra per agganciarsi alla fine
   // di CardFocus, derivata nulla a destra perche' e' l'ultimo frame del film.
   // La curva sta in products/topics/tracks.ts.
-  const pose = poseAt(cardReleaseTrack(durationInFrames), frame);
-
+  const pose = poseAt(cardReleaseTrack(durationInFrames, ratio), frame);
 
   const moving = handoffCard();
   const fromRest = COLUMNS[HANDOFF_FROM_COL]!.cards.filter(
