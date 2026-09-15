@@ -21,6 +21,17 @@
 # soglia sta sulla frazione di pixel oltre una tolleranza percettiva, non
 # sull'uguaglianza binaria.
 #
+# L'ORDINE DEI VERDETTI, e l'errore che c'era. Il controllo di separazione
+# veniva prima della soglia: su una giunta rotta la giunta e il taglio finto
+# danno numeri simili, quindi il banco diceva "misura inutile" (uscita 2) invece
+# di "salto" (uscita 1), e non usciva mai 1. Il taglio finto serve a dire se lo
+# strumento vede qualcosa, e lo strumento non vede niente solo quando anche il
+# taglio finto e' quasi zero, cioe' quando la scena B non si muove. Adesso: se il
+# taglio finto sta sotto TAGLIO_MIN la misura e' inutile (2); se la giunta resta
+# sotto la soglia e il taglio e' almeno dieci volte peggiore, la giunta e'
+# continua (0); altrimenti c'e' un salto (1). Una coppia al contrario
+# (card-handoff poi ui-mockup) esce 1 in tutti e tre i rapporti.
+#
 # Uso:  ./scripts/seam.sh [scena-A.mp4] [scena-B.mp4]
 #
 # I due argomenti sono opzionali e senza di essi la coppia e' quella storica,
@@ -41,6 +52,12 @@ B="${2:-$ROOT/video/out/card-handoff.mp4}"
 
 # Oltre questa frazione di pixel diversi, la giunta e' un taglio.
 SOGLIA=0.02
+# Sotto questa frazione anche il taglio finto e' quasi uguale: la scena B non si
+# muove abbastanza da provare che lo strumento veda una differenza. I tagli
+# finti delle scene del catalogo stanno fra 1,5% (macOS, ImageMagick 7) e 24%
+# (Linux, ImageMagick 6); un decimo di punto e' sotto tutti con un margine di
+# quindici volte.
+TAGLIO_MIN=0.001
 # Differenza per canale sotto cui due pixel sono "lo stesso pixel" a occhio.
 FUZZ="4%"
 
@@ -48,7 +65,7 @@ for f in "$A" "$B"; do
   if [ ! -f "$f" ]; then
     echo "manca il render: ${f#"$ROOT"/}" >&2
     echo "  cd video && npx remotion render <CompositionId> out/$(basename "$f")" >&2
-    exit 1
+    exit 3
   fi
 done
 
@@ -59,16 +76,16 @@ trap 'rm -rf "$TMP"' EXIT
 # quindi al termine resta l'ultimo. Costa una passata sul video e in cambio non
 # richiede di sapere quanti frame sono: la prima versione cercava con `-sseof`
 # e usciva a mani vuote, che e' il modo in cui una misura mente senza fallire.
-ffmpeg -v error -i "$A" -fps_mode passthrough -update 1 -y "$TMP/a-last.png"
+ffmpeg -nostdin -v error -i "$A" -fps_mode passthrough -update 1 -y "$TMP/a-last.png"
 # Primo fotogramma di B.
-ffmpeg -v error -i "$B" -frames:v 1 -y "$TMP/b-first.png"
+ffmpeg -nostdin -v error -i "$B" -frames:v 1 -y "$TMP/b-first.png"
 # Un fotogramma dal mezzo di B: il taglio finto, il controllo negativo.
 # La meta' si calcola, non si scrive: era 4 secondi, che e' meta' di
 # card-handoff e non meta' di nient'altro. Su una scena piu' corta quel valore
 # sarebbe caduto oltre la fine e il confronto avrebbe girato su un fotogramma
 # vuoto, cioe' su un controllo che boccia sempre e non prova niente.
 mid=$(python3 -c "print(f'{float('$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$B")') / 2:.3f}')")
-ffmpeg -v error -ss "$mid" -i "$B" -frames:v 1 -y "$TMP/b-mid.png"
+ffmpeg -nostdin -v error -ss "$mid" -i "$B" -frames:v 1 -y "$TMP/b-mid.png"
 
 # Se un'estrazione e' andata a vuoto, fermarsi qui. Senza questo controllo il
 # confronto gira su file inesistenti e stampa 0.000%, cioe' il numero che si
@@ -117,22 +134,25 @@ printf '  %-34s %8.3f%% %12s\n' "ultimo A  vs  meta' B  (taglio)" \
   "$(python3 -c "print($cut_frac * 100)")" "$cut_px"
 echo
 
-# Il controllo negativo deve essere almeno 10 volte peggiore, altrimenti la
-# misura non separa una giunta da un taglio e non prova niente. Il rapporto si
-# calcola sui conteggi di pixel: la frazione e' stampata a cinque decimali, e su
-# una giunta quasi perfetta vale 0.00000, quindi dividerci dentro stampava
-# numeri a sette cifre al posto di una separazione.
-if ! python3 -c "exit(0 if $cut_frac > $seam_frac * 10 else 1)"; then
-  echo "MISURA INUTILE: giunta e taglio danno numeri simili, la soglia non separa." >&2
+# Lo strumento vede qualcosa? Se anche il taglio finto e' quasi zero, la scena B
+# e' ferma e nessuna giunta si puo' giudicare contro di lui.
+if ! python3 -c "exit(0 if $cut_frac >= $TAGLIO_MIN else 1)"; then
+  echo "MISURA INUTILE: anche il taglio di controllo e' quasi uguale (sotto $(python3 -c "print($TAGLIO_MIN*100)")%)," >&2
+  echo "la scena B non si muove abbastanza per giudicare la giunta." >&2
   exit 2
 fi
 
-if python3 -c "exit(0 if $seam_frac <= $SOGLIA else 1)"; then
+# La giunta deve stare sotto la soglia E il taglio finto deve essere almeno
+# dieci volte peggiore. Il rapporto si calcola sui conteggi di pixel: la
+# frazione e' stampata a cinque decimali, e su una giunta quasi perfetta vale
+# 0.00000, quindi dividerci dentro stampava numeri a sette cifre.
+if python3 -c "exit(0 if $seam_frac <= $SOGLIA and $cut_frac > $seam_frac * 10 else 1)"; then
   echo "VERDETTO: giunta continua (sotto $(python3 -c "print($SOGLIA*100)")%), e il taglio di controllo e' $(python3 -c "print(f'{$cut_px/max($seam_px,1):.0f}')")x peggiore."
   exit 0
 fi
 
-echo "VERDETTO: c'e' un salto fra $(basename "$A" .mp4) e $(basename "$B" .mp4)." >&2
+echo "VERDETTO: c'e' un salto fra $(basename "$A" .mp4) e $(basename "$B" .mp4): la giunta non e' dieci volte" >&2
+echo "meglio del taglio di controllo, o supera la soglia." >&2
 echo "Le due pose non coincidono: la posa di giunzione va letta da" >&2
 echo "products/topics/geometry.ts da entrambe le scene, non riscritta in una delle due." >&2
 exit 1

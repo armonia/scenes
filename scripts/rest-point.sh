@@ -44,13 +44,28 @@
 #   ffmpeg -ss 2 -t 2 -i video/out/card-focus.mp4 /tmp/mosso.mp4
 #   ./scripts/rest-point.sh /tmp/mosso.mp4     # esce 1
 #
-# Uso:  ./scripts/rest-point.sh [scena.mp4]
+# I controlli generati (scripts/checks/rest-point.mjs) prendono il ritaglio dal
+# 35% al 70% della scena invece che da 2 a 4 secondi, cosi' una CardFocus
+# ritempificata non sposta il ritaglio sui bordi rallentati.
+#
+# Uso:  ./scripts/rest-point.sh [--ratio 16x9|9x16|4x5] [scena.mp4]
+#
+# Esce 0 se le scene dichiarate ferme lo sono, 1 se una non lo e', 2 se il
+# mezzo non si muove e manca il controllo, 3 se un render manca o non si legge.
 set -uo pipefail
 
 . "$(dirname "${BASH_SOURCE[0]}")/_magick.sh"
 export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Il rapporto: le scene dichiarate ferme e i loro file sono quelli di quel
+# formato (card-release-9x16.mp4). Senza, il 16:9 di sempre.
+RATIO=16x9
+if [ "${1:-}" = "--ratio" ]; then
+  RATIO="${2:?serve il rapporto}"
+  shift 2
+fi
 
 # Quanti frame di distanza fra i due fotogrammi confrontati.
 PASSO=5
@@ -136,16 +151,16 @@ printf '  %-16s %10s %10s %12s\n' "scena" "inizio" "fine" "mezzo (ctrl)"
 # su macOS trova la 3.2. E' lo stesso inciampo che ha tenuto handoff-travel.sh
 # fermo per mesi su questa piattaforma mentre in CI passava.
 rotte=""
-DICHIARANO=$(node "$ROOT/scripts/catalog.mjs" rest | tr '\n' ' ')
+DICHIARANO=$(node "$ROOT/scripts/catalog.mjs" rest --ratio "$RATIO" | tr '\n' ' ')
 # Con un argomento si misura quello e basta: e' cosi' che si prova che il banco
 # sa uscire rosso. Senza, si misura tutto il catalogo.
 UNO=no
 if [ "$#" -gt 0 ]; then
-  [ -f "$1" ] || { echo "non trovo $1" >&2; exit 1; }
+  [ -f "$1" ] || { echo "non trovo $1" >&2; exit 3; }
   echo "$1" > "$TMP/slugs.txt"
   UNO=si
 else
-  node "$ROOT/scripts/catalog.mjs" slugs > "$TMP/slugs.txt" || {
+  node "$ROOT/scripts/catalog.mjs" slugs --ratio "$RATIO" > "$TMP/slugs.txt" || {
     echo "il catalogo non ha restituito nessuna scena" >&2; exit 3; }
   [ -s "$TMP/slugs.txt" ] || { echo "il catalogo non ha restituito nessuna scena" >&2; exit 3; }
 fi
@@ -158,8 +173,8 @@ while IFS= read -r slug; do
   esac
   if [ ! -f "$src" ]; then
     echo "manca il render: video/out/$slug.mp4" >&2
-    echo "  cd video && node ../scripts/catalog.mjs render" >&2
-    exit 1
+    echo "  cd video && node ../scripts/catalog.mjs render --ratio $RATIO" >&2
+    exit 3
   fi
   # `estremi` gira in una sottoshell, quindi un suo exit non ferma questo
   # ciclo: il risultato va controllato qui.
