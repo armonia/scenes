@@ -587,14 +587,20 @@ one was a bench that could pass without measuring:
   on a card twice the size. The scene now declares that window: outside it the fast
   render matches exactly, inside it the residual has to be there.
 - `seam` never exited 1: a broken join exited 2, "measurement useless". A reversed
-  pair exits 1 now in every ratio.
+  pair exits 1 now in every ratio. The first CI run of this block then showed that
+  `seam` and `rest-point` did not count the same way on the Mac and in CI:
+  `compare -fuzz` on ImageMagick 6 found the reversed pair almost identical and
+  failed the start of `BoardOrbit` in 9:16, which ImageMagick 7 passed. Both now
+  count with ffmpeg (`_pixeldiff.sh`), which gives the same number in both places.
 - `beats` gets its frames from the scene's timeline and leaves out the words the
   thread already showed ("solo" was in both). A freeze frame and a covered thread
   exit 1.
 
-Locally the 16:9 checks take 193 s on renders that already exist. In CI each ratio
-is its own job (render, fixtures, checks, coverage), the page checks run in a
-fourth job from the start, and the deploy waits for all of them.
+Locally the checks take about three minutes per ratio on renders that already
+exist. In CI each ratio is its own job (render, fixtures, checks, coverage): the
+first run took 14, 15 and 20 minutes against a limit of 25, with the page checks
+in a fourth job of 5 minutes from the start, and the deploy waiting for all of
+them.
 
 ## Layout
 
