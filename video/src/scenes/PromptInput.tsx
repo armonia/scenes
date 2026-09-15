@@ -11,14 +11,12 @@ import { Cursor, type Waypoint } from "../primitives/Cursor";
 import { typedCount, typingSchedule } from "../primitives/rhythm";
 import { tempo } from "../primitives/tempo";
 import {
-  CARD_RELEASE_END_POSE,
   COLUMNS,
   COMPOSER_H,
   COMPOSER_X,
   COMPOSER_Y,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
-  PROMPT_INPUT_END_POSE,
   SEND_H,
   SEND_W,
   SEND_X,
@@ -28,6 +26,11 @@ import {
   TOPICS_RIG,
   TOPICS_SLAB,
 } from "../primitives/slab";
+import { poseAt } from "../kit/camera";
+import {
+  PROMPT_INPUT_BASE as BASE,
+  promptInputTrack,
+} from "../primitives/tracks";
 import { Shot } from "../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 
@@ -75,8 +78,8 @@ export type PromptInputProps = {
 // I frame della recita. La pausa prima dell'invio e' la parte che la rende
 // credibile: senza, l'invio parte insieme all'ultimo tasto e legge come uno
 // script che esegue, non come qualcuno che rilegge.
-/** La durata di riferimento a cui sono scritti i tempi. Vedi primitives/tempo.ts. */
-const BASE = 450;
+/* La durata di riferimento a cui sono scritti i tempi (BASE) sta in
+   primitives/tracks.ts, perche' la legge anche la traccia della camera. */
 
 const T = {
   travelStart: 56,
@@ -176,7 +179,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
    * poi ci si ferma: nessuno muove la macchina mentre qualcuno scrive e legge,
    * perche' l'inquadratura in cui si legge deve stare ferma.
    */
-  const CAM_SETTLE = K.at(132);
+  // La finestra e' PROMPT_INPUT_CAM_SETTLE in primitives/tracks.ts.
 
   // Lo streaming va a blocchi di parole, non a caratteri. Un LLM non scrive
   // lettera per lettera: arriva a token, e l'occhio lo riconosce.
@@ -197,21 +200,9 @@ export const PromptInput: React.FC<PromptInputProps> = ({
 
   // La camera: una curva sola, inOut, derivata nulla ai due capi. A sinistra
   // per agganciarsi alla fine di CardRelease, a destra perche' la scena si
-  // ferma e un'altra ci si possa attaccare.
-  const at = (from: number, to: number): number =>
-    interpolate(frame, [0, CAM_SETTLE], [from, to], {
-      easing: Easing.inOut(Easing.cubic),
-      extrapolateRight: "clamp",
-    });
-
-  const yaw = at(CARD_RELEASE_END_POSE.yaw, PROMPT_INPUT_END_POSE.yaw);
-  const pitch = at(CARD_RELEASE_END_POSE.pitch, PROMPT_INPUT_END_POSE.pitch);
-  const pushZ = at(CARD_RELEASE_END_POSE.pushZ, PROMPT_INPUT_END_POSE.pushZ);
-  const slideX = at(CARD_RELEASE_END_POSE.slideX, PROMPT_INPUT_END_POSE.slideX);
-  const slideY = at(
-    CARD_RELEASE_END_POSE.slideY ?? 0,
-    PROMPT_INPUT_END_POSE.slideY ?? 0,
-  );
+  // ferma e un'altra ci si possa attaccare. La curva, e la finestra di 132 frame
+  // spiegata qui sopra, stanno in primitives/tracks.ts.
+  const pose = poseAt(promptInputTrack(durationInFrames), frame);
 
 
   const focused = frame >= K.at(T.clickField);
@@ -299,7 +290,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       rig={TOPICS_RIG}
       slab={TOPICS_SLAB}
       material={TOPICS_SHOT_MATERIAL}
-      pose={{ yaw, pitch, pushZ, slideX, slideY }}
+      pose={pose}
       highlight={false}
       backdrop={<Board {...board} assistant={assistant} boardOpacity={attn} dimmed />}
     >
@@ -308,7 +299,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       {/* Il cursore sta DENTRO la lastra, quindi prende la stessa
           prospettiva e appoggia sul piano. Uno disegnato sopra il quadro,
           dritto, tradisce subito che la lastra e' un'immagine. */}
-      <Cursor path={path} clicks={[T.clickField, sendClick]} />
+      <Cursor path={path} clicks={[T.clickField, sendClick]} frame={frame} />
     </Shot>
   );
 };

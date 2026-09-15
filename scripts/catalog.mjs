@@ -42,9 +42,8 @@ const commands = {
   // elenco, e fingere il contrario nasconderebbe che esistono.
   //
   // `fill` NON GENERA PIU' UN COMANDO. fill-measure.sh promuove anche una lastra
-  // arretrata (vedi la sua intestazione), quindi in questo elenco sarebbe un
-  // verde che non dice niente. Il campo resta nel catalogo: dichiara la promessa
-  // che il banco geometrico del riempimento verifichera'.
+  // arretrata (vedi la sua intestazione). Il campo lo legge fill-geom.py, che
+  // verifica il riempimento in geometria sulle tracce della camera.
   measures: () => {
     for (const s of scenes) {
       if (s.seamAfter) {

@@ -8,8 +8,6 @@ import {
 } from "remotion";
 import {
   COLUMNS,
-  UI_MOCKUP_END_POSE,
-  UI_MOCKUP_START_POSE,
   addCardY,
   cardY,
   columnX,
@@ -17,6 +15,8 @@ import {
   TOPICS_RIG,
   TOPICS_SLAB,
 } from "../primitives/slab";
+import { poseAt } from "../kit/camera";
+import { uiMockupTrack } from "../primitives/tracks";
 import { Shot } from "../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 import {
@@ -70,40 +70,12 @@ export const UIMockup: React.FC<UIMockupProps> = ({ progress }) => {
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
 
-  const last = durationInFrames - 1;
 
-  // Entrata: la lastra scivola da destra dentro il quadro.
-  const slideProgress = interpolate(frame, [0, 80], [0, 1], {
-    easing: Easing.bezier(0.16, 1, 0.3, 1),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const slideX = interpolate(
-    slideProgress,
-    [0, 1],
-    [UI_MOCKUP_START_POSE.slideX, UI_MOCKUP_END_POSE.slideX],
-  );
-
-  // La camera ruota lentamente: da piu' inclinata a piu' frontale. Finisce
-  // frontale cosi' la scena successiva puo' partire da qui.
-  const yaw = interpolate(
-    frame,
-    [0, last],
-    [UI_MOCKUP_START_POSE.yaw, UI_MOCKUP_END_POSE.yaw],
-    { easing: Easing.inOut(Easing.quad), extrapolateRight: "clamp" },
-  );
-  const pitch = interpolate(
-    frame,
-    [0, last],
-    [UI_MOCKUP_START_POSE.pitch, UI_MOCKUP_END_POSE.pitch],
-    { easing: Easing.inOut(Easing.quad), extrapolateRight: "clamp" },
-  );
-  const pushZ = interpolate(
-    frame,
-    [0, last],
-    [UI_MOCKUP_START_POSE.pushZ, UI_MOCKUP_END_POSE.pushZ],
-    { easing: Easing.inOut(Easing.quad), extrapolateRight: "clamp" },
-  );
+  // La camera: la lastra entra da destra in 80 frame e la camera si raddrizza
+  // per tutta la scena, finendo piu' frontale di come e' partita, cosi' la scena
+  // successiva puo' partire da qui. La curva sta in primitives/tracks.ts, la
+  // stessa che leggono i banchi.
+  const pose = poseAt(uiMockupTrack(durationInFrames), frame);
 
   const fadeIn = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -118,7 +90,7 @@ export const UIMockup: React.FC<UIMockupProps> = ({ progress }) => {
       rig={TOPICS_RIG}
       slab={TOPICS_SLAB}
       material={TOPICS_SHOT_MATERIAL}
-      pose={{ yaw, pitch, pushZ, slideX, slideY: 0 }}
+      pose={pose}
       opacity={fadeIn}
       backdrop={<SlabBody frame={frame} cardRevealStart={cardRevealStart} dimmed />}
     >

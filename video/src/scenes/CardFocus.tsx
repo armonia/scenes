@@ -1,13 +1,9 @@
 import React from "react";
 import {
-  Easing,
-  interpolate,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
 import {
-  CARD_FOCUS_END_POSE,
-  CARD_HANDOFF_END_POSE,
   COLUMNS,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
@@ -16,6 +12,8 @@ import {
   handoffCard,
   handoffLandedRect,
 } from "../primitives/slab";
+import { poseAt } from "../kit/camera";
+import { cardFocusTrack } from "../primitives/tracks";
 import { Board } from "../primitives/Board";
 import { Shot } from "../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
@@ -57,26 +55,12 @@ export const CardFocus: React.FC<CardFocusProps> = ({ progress }) => {
   const { durationInFrames } = useVideoConfig();
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
-  const last = durationInFrames - 1;
 
   // Una curva sola per tutta la scena, come nelle due precedenti. inOut arriva
   // agli estremi con derivata nulla: a sinistra si aggancia alla fine di
   // CardHandoff, che e' ferma, a destra lascia una scena che si puo' mettere
-  // prima di qualunque altra.
-  const at = (from: number, to: number): number =>
-    interpolate(frame, [0, last], [from, to], {
-      easing: Easing.inOut(Easing.cubic),
-      extrapolateRight: "clamp",
-    });
-
-  const yaw = at(CARD_HANDOFF_END_POSE.yaw, CARD_FOCUS_END_POSE.yaw);
-  const pitch = at(CARD_HANDOFF_END_POSE.pitch, CARD_FOCUS_END_POSE.pitch);
-  const pushZ = at(CARD_HANDOFF_END_POSE.pushZ, CARD_FOCUS_END_POSE.pushZ);
-  const slideX = at(CARD_HANDOFF_END_POSE.slideX, CARD_FOCUS_END_POSE.slideX);
-  const slideY = at(
-    CARD_HANDOFF_END_POSE.slideY ?? 0,
-    CARD_FOCUS_END_POSE.slideY ?? 0,
-  );
+  // prima di qualunque altra. La curva sta in primitives/tracks.ts.
+  const pose = poseAt(cardFocusTrack(durationInFrames), frame);
 
   // La board a consegna avvenuta: sono i tre valori che CardHandoff raggiunge
   // al suo ultimo frame, e la card sta dove dice `handoffLandedRect`.
@@ -103,7 +87,7 @@ export const CardFocus: React.FC<CardFocusProps> = ({ progress }) => {
       rig={TOPICS_RIG}
       slab={TOPICS_SLAB}
       material={TOPICS_SHOT_MATERIAL}
-      pose={{ yaw, pitch, pushZ, slideX, slideY }}
+      pose={pose}
       backdrop={<Board {...board} dimmed />}
     >
       <Board {...board} />

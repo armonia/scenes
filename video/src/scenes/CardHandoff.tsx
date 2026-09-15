@@ -6,11 +6,9 @@ import {
   useVideoConfig,
 } from "remotion";
 import {
-  CARD_HANDOFF_END_POSE,
   CARD_H,
   COLUMNS,
   COL_W,
-  UI_MOCKUP_END_POSE,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
   HANDOFF_TO_COL,
@@ -21,6 +19,8 @@ import {
   TOPICS_RIG,
   TOPICS_SLAB,
 } from "../primitives/slab";
+import { poseAt } from "../kit/camera";
+import { cardHandoffTrack } from "../primitives/tracks";
 import { Shot } from "../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 import { Board } from "../primitives/Board";
@@ -128,19 +128,9 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   const last = durationInFrames - 1;
   const T = tempo(durationInFrames, BASE);
 
-  // La camera continua l'arco di UIMockup: stessa direzione, stessa curva.
-  const yaw = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.yaw, CARD_HANDOFF_END_POSE.yaw], {
-    easing: Easing.inOut(Easing.quad),
-    extrapolateRight: "clamp",
-  });
-  const pitch = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.pitch, CARD_HANDOFF_END_POSE.pitch], {
-    easing: Easing.inOut(Easing.quad),
-    extrapolateRight: "clamp",
-  });
-  const pushZ = interpolate(frame, [0, last], [UI_MOCKUP_END_POSE.pushZ, CARD_HANDOFF_END_POSE.pushZ], {
-    easing: Easing.inOut(Easing.quad),
-    extrapolateRight: "clamp",
-  });
+  // La camera continua l'arco di UIMockup: stessa direzione, stessa curva
+  // (primitives/tracks.ts).
+  const pose = poseAt(cardHandoffTrack(durationInFrames), frame);
 
 
   const moving = handoffCard();
@@ -232,7 +222,7 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
       rig={TOPICS_RIG}
       slab={TOPICS_SLAB}
       material={TOPICS_SHOT_MATERIAL}
-      pose={{ yaw, pitch, pushZ, slideX: 0, slideY: 0 }}
+      pose={pose}
       backdrop={
         <Board
           closeGap={closeGap}
@@ -266,7 +256,7 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
           e appoggia sul piano. Al primo e all'ultimo frame sta fuori dai
           2400x1200 e l'overflow la taglia: e' cosi' che le due giunte
           restano identiche a scene che un cursore non ce l'hanno. */}
-      <Cursor path={path} clicks={[T.at(GRAB), T.at(RELEASE)]} />
+      <Cursor path={path} clicks={[T.at(GRAB), T.at(RELEASE)]} frame={frame} />
     </Shot>
   );
 };

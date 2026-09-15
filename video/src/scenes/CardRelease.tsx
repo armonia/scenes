@@ -1,13 +1,9 @@
 import React from "react";
 import {
-  Easing,
-  interpolate,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
 import {
-  CARD_FOCUS_END_POSE,
-  CARD_RELEASE_END_POSE,
   COLUMNS,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
@@ -16,6 +12,8 @@ import {
   TOPICS_RIG,
   TOPICS_SLAB,
 } from "../primitives/slab";
+import { poseAt } from "../kit/camera";
+import { cardReleaseTrack } from "../primitives/tracks";
 import { Shot } from "../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 import { Board } from "../primitives/Board";
@@ -52,24 +50,11 @@ export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
   const { durationInFrames } = useVideoConfig();
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
-  const last = durationInFrames - 1;
 
   // Una curva sola, inOut: derivata nulla a sinistra per agganciarsi alla fine
   // di CardFocus, derivata nulla a destra perche' e' l'ultimo frame del film.
-  const at = (from: number, to: number): number =>
-    interpolate(frame, [0, last], [from, to], {
-      easing: Easing.inOut(Easing.cubic),
-      extrapolateRight: "clamp",
-    });
-
-  const yaw = at(CARD_FOCUS_END_POSE.yaw, CARD_RELEASE_END_POSE.yaw);
-  const pitch = at(CARD_FOCUS_END_POSE.pitch, CARD_RELEASE_END_POSE.pitch);
-  const pushZ = at(CARD_FOCUS_END_POSE.pushZ, CARD_RELEASE_END_POSE.pushZ);
-  const slideX = at(CARD_FOCUS_END_POSE.slideX, CARD_RELEASE_END_POSE.slideX);
-  const slideY = at(
-    CARD_FOCUS_END_POSE.slideY ?? 0,
-    CARD_RELEASE_END_POSE.slideY ?? 0,
-  );
+  // La curva sta in primitives/tracks.ts.
+  const pose = poseAt(cardReleaseTrack(durationInFrames), frame);
 
 
   const moving = handoffCard();
@@ -93,7 +78,7 @@ export const CardRelease: React.FC<CardReleaseProps> = ({ progress }) => {
       rig={TOPICS_RIG}
       slab={TOPICS_SLAB}
       material={TOPICS_SHOT_MATERIAL}
-      pose={{ yaw, pitch, pushZ, slideX, slideY }}
+      pose={pose}
       backdrop={<Board {...board} dimmed />}
     >
       <Board {...board} />

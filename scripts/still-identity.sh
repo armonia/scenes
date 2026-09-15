@@ -22,6 +22,9 @@
 #
 # Uso:  ./scripts/still-identity.sh <commit-di-base> [Composition ...]
 #       senza composition, tutte quelle di catalog.json
+#       FRAMES="20 40 80" ./scripts/still-identity.sh main UIMockup
+#       per scegliere i fotogrammi: servono quando un refactor tocca una finestra
+#       che i cinque di default non attraversano, come i primi 80 frame di UIMockup
 #
 # Esce 0 se tutti i fotogrammi coincidono, 1 se almeno uno cambia, 2 se lo
 # strumento non e' ripetibile, 3 se un render non esce.
@@ -75,7 +78,7 @@ for comp in "${COMPS[@]}"; do
     exit 3
   fi
   mid=$((n / 2))
-  frames="0 1 $mid $((n - 2)) $((n - 1))"
+  frames="${FRAMES:-0 1 $mid $((n - 2)) $((n - 1))}"
   line="  $(printf '%-13s' "$comp")"
   for f in $frames; do
     still "$TMP/base/video" "$comp" "$f" "$TMP/b-$comp-$f.png" || { echo "$line base f$f: RENDER FALLITO"; exit 3; }
@@ -87,9 +90,14 @@ for comp in "${COMPS[@]}"; do
       DIFF=$((DIFF + 1))
     fi
   done
-  # Il controllo dello strumento: lo stesso fotogramma, due volte dal working tree.
-  still "$ROOT/video" "$comp" "$mid" "$TMP/r-$comp.png" || { echo "$line ripetizione: RENDER FALLITO"; exit 3; }
-  if [ "$(hash "$TMP/r-$comp.png")" != "$(hash "$TMP/h-$comp-$mid.png")" ]; then
+  # Il controllo dello strumento: lo stesso fotogramma, due volte dal working
+  # tree. Il primo dell'elenco, che esiste anche quando i fotogrammi li sceglie
+  # chi lancia il banco: la prima versione ripeteva sempre quello di mezzo, e con
+  # FRAMES lo confrontava con un file mai renderizzato.
+  set -- $frames
+  rep="$1"
+  still "$ROOT/video" "$comp" "$rep" "$TMP/r-$comp.png" || { echo "$line ripetizione: RENDER FALLITO"; exit 3; }
+  if [ "$(hash "$TMP/r-$comp.png")" != "$(hash "$TMP/h-$comp-$rep.png")" ]; then
     echo "$line  (lo stesso fotogramma reso due volte cambia: strumento non ripetibile)"
     exit 2
   fi

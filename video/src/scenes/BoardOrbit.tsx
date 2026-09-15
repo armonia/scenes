@@ -6,16 +6,20 @@ import {
   useVideoConfig,
 } from "remotion";
 import {
-  BOARD_ORBIT_END_POSE,
   COLUMNS,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
-  PROMPT_INPUT_END_POSE,
   handoffCard,
   handoffLandedRect,
   TOPICS_RIG,
   TOPICS_SLAB,
 } from "../primitives/slab";
+import { poseAt } from "../kit/camera";
+import {
+  BOARD_ORBIT_BASE as BASE,
+  BOARD_ORBIT_SETTLE as SETTLE,
+  boardOrbitTrack,
+} from "../primitives/tracks";
 import { Shot } from "../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../primitives/material";
 import { Board } from "../primitives/Board";
@@ -51,11 +55,8 @@ export type BoardOrbitProps = {
   progress?: number;
 };
 
-/** La durata di riferimento a cui e' scritto SETTLE. Vedi primitives/tempo.ts. */
-const BASE = 150;
-
-/** Il frame in cui la camera arriva e si ferma. */
-const SETTLE = 118;
+/* BASE, la durata di riferimento, e SETTLE, il frame in cui la camera arriva e
+   si ferma, stanno in primitives/tracks.ts: li legge anche la traccia. */
 
 export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
   const localFrame = useCurrentFrame();
@@ -71,14 +72,9 @@ export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
       extrapolateRight: "clamp",
     });
 
-  const yaw = at(PROMPT_INPUT_END_POSE.yaw, BOARD_ORBIT_END_POSE.yaw);
-  const pitch = at(PROMPT_INPUT_END_POSE.pitch, BOARD_ORBIT_END_POSE.pitch);
-  const pushZ = at(PROMPT_INPUT_END_POSE.pushZ, BOARD_ORBIT_END_POSE.pushZ);
-  const slideX = at(PROMPT_INPUT_END_POSE.slideX, BOARD_ORBIT_END_POSE.slideX);
-  const slideY = at(
-    PROMPT_INPUT_END_POSE.slideY ?? 0,
-    BOARD_ORBIT_END_POSE.slideY ?? 0,
-  );
+  // La camera sta in primitives/tracks.ts, con la stessa curva e la stessa
+  // finestra: `at` resta qui per l'attenuazione, che non e' camera.
+  const pose = poseAt(boardOrbitTrack(durationInFrames), frame);
 
   // Il quadro si riapre: 0,62 e' dove PromptInput ha lasciato l'attenuazione.
   const attn = at(0.62, 1);
@@ -117,7 +113,7 @@ export const BoardOrbit: React.FC<BoardOrbitProps> = ({ progress }) => {
       rig={TOPICS_RIG}
       slab={TOPICS_SLAB}
       material={TOPICS_SHOT_MATERIAL}
-      pose={{ yaw, pitch, pushZ, slideX, slideY }}
+      pose={pose}
       highlight={false}
       backdrop={<Board {...board} assistant={assistant} boardOpacity={attn} dimmed />}
     >

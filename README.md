@@ -99,8 +99,8 @@ cent of its width and the titles stop being titles, and it holds still for the
 last 32 frames so the piece finishes on a pose rather than on an interrupted
 move.
 
-The thickness it shows — `SlabEdge` — is drawn by all six scenes and visible in
-exactly one, because at small yaw angles it sits precisely behind the slab. It
+The thickness it shows, the edge that `Shot` draws, is there in all six scenes and
+visible in exactly one, because at small yaw angles it sits precisely behind the slab. It
 is a *sibling* of the slab and not a child, and that is not a detail: the slab
 clips, any clipping flattens `preserve-3d`, and a child at `translateZ(-30)`
 would be squashed onto its parent's plane and never stick out. The same fact is
@@ -471,6 +471,38 @@ line for line, and the screenshot fixture comes out with the same hash.
 itself fails it, and pointed at the benches of the commit before this one it
 names exactly those four.
 
+The fourth piece takes the camera out of the scenes. Each scene used to compute
+its own camera inside the component, five `interpolate` calls written by hand,
+which meant that only the render could say what the pose was at frame 137, so
+no bench could ask whether the camera reverses in motion or whether the slab
+leaves an edge of the frame uncovered. `kit/camera.ts` makes the camera data: a
+track is one curve per axis (from, to, a window, an easing) and `poseAt` reads it
+with Remotion's own `interpolate` and `Easing`, called with the same arguments
+the scenes used. The six tracks live in `primitives/tracks.ts`, and the scenes
+read them. `still-identity.sh` now takes the frames to compare, because the five
+default ones miss the windows that matter: frames 20 to 81 of `UIMockup`, where
+the slab slides in, and the frames either side of where `PromptInput` and
+`BoardOrbit` settle. All of them are identical to the previous commit. The cursor
+also takes the scene's frame now: it used to read its own clock, so in a scene
+driven by `progress` the hand would have gone its own way.
+
+Two benches that the catalogue named and nobody had written read those tracks.
+`chain-check.py` is `GIU-04`: along the six scenes, in the order they join, no
+axis changes direction inside a scene, every join is continuous, and a reversal
+at a join is allowed only where the camera is still on both sides. It finds
+seven, all at rest, with boundary velocities under a thousandth of the peak; with
+the easing taken out of every track the same seven become reversals in motion
+and it fails. `fill-geom.py` is `CAM-01`: from 20 per cent of each scene to its
+last frame, the four corners of the frame have to fall inside the projected slab.
+Its first run failed `BoardOrbit`, by up to 260 px from frame 30, and it is right:
+the orbit exists to show the vertical edges of the slab, so the edges of the
+frame show the background on purpose. The scene had declared `fill` anyway, and
+the pixel bench had passed it. It does not declare it any more. The other five
+scenes are covered on every frame with at least 5.4 px to spare, and
+`PromptInput` sits at exactly zero, because its final pose puts the bottom edge
+of the slab on the bottom edge of the frame by construction. Pushed back by 1500,
+all five fail.
+
 `scripts/manifest.mjs` is where a bench asks what it should find. It prints, from
 the same modules that produce the render, the variants, their frames, the origin,
 where the subject would sit without compensation, and the tolerance. If the
@@ -515,6 +547,8 @@ npx remotion render PromptInput out/prompt-input.mp4   # from video/
 ./scripts/contrast-floor.py [scene.mp4]                 # is the attenuated content still readable
 ./scripts/drift.py [--props JSON] [--must-fail]         # does the subject stay on the origin, on two slabs and three formats
 ./scripts/project-check.py [--origin-mismatch]          # does the kit's projection agree with Chromium
+./scripts/chain-check.py [--linear] [--must-fail]       # does the camera ever reverse while it moves
+./scripts/fill-geom.py [--push-offset N] [--must-fail]  # does the slab cover the four edges of the frame
 ./scripts/no-product-literals.sh [scripts-dir]          # does any bench read product geometry by itself
 node scripts/manifest.mjs cam06                          # what the benches must find, from the kit
 node scripts/geometry-snapshot.mjs [slab.ts]             # the geometry as a string, to prove a refactor left it alone
@@ -565,10 +599,9 @@ between the local variance of a border strip and of the centre falls to 0.014 on
 `card-release` with the slab in frame and rises to 0.043 on `board-orbit`, where
 the borders show the background on purpose, because the attenuated plane behind
 the slab is the board drawn a second time and any pixel measure reads it as
-content. So the script is kept as a readout, it is out of the CI measurements,
-and `CAM-01` on the catalogue page is grey. Whether a slab covers the frame is a
-question for the geometry: project the slab at the sampled frames and require it
-to cover all four edges.
+content. So the script is kept as a readout and is out of the CI measurements.
+Whether a slab covers the frame is a question for the geometry, and
+`fill-geom.py` asks it on the camera tracks (see the kit, below).
 
 `framelocked-verdict.sh` had the opposite problem. It measured the right thing
 and then exited 0 whatever it found, so a real divergence would have scrolled past
@@ -774,9 +807,9 @@ playing
 `BoardOrbit`, in the order they join), the four rules, the
 license note. Beside it, `showcase/grammatica.html` is the catalogue: thirty-six
 movements with a live demo each, the numbers they start from, and the bench that
-can fail them. Seven of those benches are printed in grey, because six have not
-been written and one needs material that is not in git; the page counts them from
-its own data, since the hand-written count said thirty-two when it was twenty-nine. The demos are browser re-creations of the slab, not the renders,
+can fail them. The ones without a bench that runs and can fail are printed in grey,
+and the page counts them from its own data: the hand-written count once said
+thirty-two when it was twenty-nine. The demos are browser re-creations of the slab, not the renders,
 which is the point of keeping them next to the renders rather than instead of
 them. Neither page carries a build step or a dependency, so what you open
 locally is what ships.
