@@ -32,8 +32,16 @@
     "e' cambiare un numero qui. Le soglie percettive - i quattro frame fra il clic e",
     "la sua conseguenza, i tre di ritardo della card sulla mano, il periodo del",
     "caret - restano ferme di proposito: vedi primitives/tempo.ts. Lo verifica",
-    "tempo.py, che boccia una scena tagliata invece che ritempificata."
+    "tempo.py, che boccia una scena tagliata invece che ritempificata.",
+    "",
+    "ratios = i formati in cui ogni scena esce. Larghezza e altezza non stanno",
+    "piu' nelle scene: le da' lo stage del kit (video/src/kit/stage.ts), e il",
+    "16:9 tiene id e slug di sempre mentre gli altri li portano come suffisso",
+    "(CardFocus-9x16, card-focus-9x16.mp4). Root.tsx registra una composition",
+    "per scena e per rapporto, il workflow ne renderizza e misura un rapporto",
+    "per job."
   ],
+  "ratios": ["16x9", "9x16", "4x5"],
   "scenes": [
     {
       "id": "UIMockup",
@@ -41,8 +49,6 @@
       "title": "UI mockup",
       "durationInFrames": 300,
       "fps": 30,
-      "width": 1920,
-      "height": 1080,
       "fill": true,
       "blurb": "A slab of real product UI enters from off-frame onto an inclined 3D plane, and the camera rotates toward frontal while the board fills in. It ends more frontal than it started, so the next scene can enter from this final state instead of cutting to it."
     },
@@ -52,8 +58,6 @@
       "title": "Card handoff",
       "durationInFrames": 240,
       "fps": 30,
-      "width": 1920,
-      "height": 1080,
       "fill": true,
       "seamAfter": "UIMockup",
       "blurb": "This one starts where the last one stopped. Not roughly: both scenes read the same camera pose from the same module, so the first frame here <em>is</em> the last frame above, and <code>seam.sh</code> proves it by diffing the two — the join comes out 32× closer than a deliberate cut taken from the middle of this same scene, which is the control that stops the number from being decoration. The card lifts, crosses in an arc and lands, and the column below only closes up while it is landing. Snapping the gap shut on the frame it leaves would be a cut wearing an animation costume."
@@ -64,8 +68,6 @@
       "title": "Card focus",
       "durationInFrames": 170,
       "fps": 30,
-      "width": 1920,
-      "height": 1080,
       "fill": true,
       "seamAfter": "CardHandoff",
       "blurb": "The third link. It enters from the pose <code>CardHandoff</code> stops in and descends onto the card that scene has just delivered, magnifying it 2.35 times. One measured join made the no-cuts rule true of a pair; two make it a property of the sequence, and <code>seam.sh</code> now takes the pair as arguments because a join exists for every adjacent couple. Across the four scenes yaw runs -18, -9, -4, 0 and pitch 5, 2.5, 1.2, 0 without ever reversing: a join reads as a cut when the derivative flips, even when the pixels match. The text holds up under the push-in because the slab is DOM and gets rasterised at the final size, and <code>focus-sharpness.sh</code> measures that at 2.09× against the same content magnified from the wide shot, 1.03× on a fixture built to be exactly the defect it looks for."
@@ -76,8 +78,6 @@
       "title": "Card release",
       "durationInFrames": 150,
       "fps": 30,
-      "width": 1920,
-      "height": 1080,
       "fill": true,
       "seamAfter": "CardFocus",
       "blurb": "The camera lets go of the card and comes back wide and frontal, with the board readable again, because the shot has to breathe before it goes anywhere else, and finishing on a detail leaves the piece open. It is the one scene in the chain that reverses the push, and it is allowed to: a reversal reads as a cut where the join is <em>moving</em>, and both sides of this one are at rest. <code>rest-point.sh</code> measures that instead of taking it on trust, and it fails on <code>CardHandoff</code>, which deliberately does not start at rest.",
@@ -89,8 +89,6 @@
       "title": "Prompt input",
       "durationInFrames": 450,
       "fps": 30,
-      "width": 1920,
-      "height": 1080,
       "fill": true,
       "blurb": "The fifth link, and the one that used to be homeless. Four beats in one unbroken shot: the cursor comes down onto the composer, the prompt is typed with uneven human rhythm, it is sent after a pause, and the answer streams back word by word. It used to draw a slab of its own — 2200 wide at perspective 2800, its own chrome, its own sidebar — which made it a second screen, and between two screens the passage is a cut whatever you do with it. Now it is the same slab as the other four, with the assistant living in the bottom half the board never used, and the move from the board to the composer is a camera descending. <code>seam.sh</code> measures the join.",
       "seamAfter": "CardRelease"
@@ -101,8 +99,6 @@
       "title": "Board orbit",
       "durationInFrames": 150,
       "fps": 30,
-      "width": 1920,
-      "height": 1080,
       "fill": false,
       "seamAfter": "PromptInput",
       "restAtEdges": true,

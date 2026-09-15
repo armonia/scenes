@@ -1,31 +1,21 @@
 import React from "react";
+import { useCurrentFrame, useVideoConfig } from "remotion";
 import {
-  Easing,
-  interpolate,
-  useCurrentFrame,
-  useVideoConfig,
-} from "remotion";
-import {
-  CARD_H,
   COLUMNS,
-  COL_W,
   HANDOFF_FROM_COL,
   HANDOFF_FROM_IDX,
-  HANDOFF_TO_COL,
-  cardY,
-  columnX,
   handoffCard,
-  handoffTargetCards,
   TOPICS_RIG,
   TOPICS_SLAB,
 } from "../geometry";
 import { poseAt } from "../../../kit/camera";
 import { cardHandoffTrack } from "../tracks";
+import { GRAB, RELEASE, cardHandoffMotion } from "../handoff";
+import { stageFor } from "../../../kit/stage";
 import { Shot } from "../../../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../material";
 import { Board } from "../Board";
-import { Cursor, pointOnPath, type Waypoint } from "../../../primitives/Cursor";
-import { tempo } from "../../../primitives/tempo";
+import { Cursor } from "../../../primitives/Cursor";
 
 /**
  * CardHandoff: la terza scena, e quella che rende dimostrabile la regola
@@ -61,161 +51,34 @@ export type CardHandoffProps = {
   progress?: number;
 };
 
-// I tempi. La card non parte al frame 0: prima l'occhio deve riconoscere la
-// board come la stessa di prima, poi deve arrivare la mano. Se si muovesse
-// subito la giunta sarebbe corretta e illeggibile.
-//
-// LA MANO C'E' PERCHE' SENZA NON E' UN PRODOTTO. Una card che attraversa da
-// sola e' un'animazione; una card che qualcuno prende e sposta e' un software
-// che si usa. Erano due voci del catalogo che nessuna scena implementava, CUR-01
-// per l'arrivo in arco e CUR-04 per il peso del trascinamento, e stavano ferme
-// li' mentre la scena faceva volare la card con una interpolazione.
-/**
- * La durata di riferimento a cui sono scritti i tempi qui sotto. Cambiare
- * `durationInFrames` in catalog.json li scala tutti insieme: e' cosi' che si
- * cambia la velocita' della scena senza riscriverne nessuno.
- */
-const BASE = 240;
-
-const GRAB = 78;
-const DRAG_START = 84;
-const DRAG_END = 176;
-const RELEASE = 178;
-const SETTLE_END = 196;
-
-/**
- * NON SI SCALANO, e i motivi sono diversi fra loro.
- *
- * LAG e' il peso dell'oggetto: la card sta dove stava la mano tre frame fa
- * perche' e' una cosa che ha inerzia, non perche' il montaggio ha quel ritmo.
- * A velocita' doppia diventerebbe un frame e mezzo, cioe' la card tornerebbe
- * saldata al puntatore, che e' esattamente il difetto che CUR-04 descrive.
- *
- * TILT_PER_PX non e' nemmeno un tempo: e' gradi per pixel di velocita'. Scala
- * da se' quando la corsa si accorcia, perche' la velocita' cresce.
- */
-const LAG = 3;
-const TILT_PER_PX = 0.11;
-
-/**
- * CHR-03, la catena di conseguenze, e i due ritardi che la rendono una catena.
- *
- * La card si posa, POI il contatore della colonna recepisce, POI la card si
- * riscrive l'eta': "12h" diventa "ora", che e' quello che fa una board vera
- * quando qualcosa si sposta. Prima i due anelli scattavano tutti e due a meta'
- * tragitto, sullo stesso frame: tre cose che cambiano insieme non leggono come
- * una causa, leggono come tre cose scollegate che si sono mosse per caso. Il
- * ritardo e' l'unica cosa che dice all'occhio quale evento ha provocato
- * l'altro, e cinque o sei frame bastano - sotto due spariscono, sopra venti
- * diventano lentezza.
- *
- * IL TERZO ANELLO NON E' IL PANNELLO, ed e' una correzione fatta guardando il
- * render. Il catalogo diceva "il pannello cambia stato sei frame dopo", ma a
- * questa posa la camera e' gia' abbastanza dentro che il pannello dei dettagli
- * esce dal bordo destro: si leggono le etichette e non i valori. Un anello
- * della catena fuori quadro non e' un anello. L'eta' della card sta al centro
- * dell'inquadratura, e cambia per lo stesso motivo per cui cambierebbe il
- * pannello.
- */
-const COUNT_AT = RELEASE + 5;
-const PANEL_AT = RELEASE + 11;
+// I tempi, il percorso della mano e dove sta la card a ogni frame sono in
+// products/topics/handoff.ts: li legge anche handoff-travel.sh, e nei rapporti
+// verticali la traccia della camera segue la card nella finestra del
+// trascinamento.
 
 export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
   const localFrame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const { durationInFrames, width, height } = useVideoConfig();
+  const { ratio } = stageFor(width, height);
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
-  const last = durationInFrames - 1;
-  const T = tempo(durationInFrames, BASE);
 
   // La camera continua l'arco di UIMockup: stessa direzione, stessa curva
   // (products/topics/tracks.ts).
-  const pose = poseAt(cardHandoffTrack(durationInFrames), frame);
-
+  const pose = poseAt(cardHandoffTrack(durationInFrames, ratio), frame);
 
   const moving = handoffCard();
 
-  // Colonna di partenza senza la card che vola, colonna di arrivo con la card
-  // in coda: sono gli elenchi da cui si calcolano le due posizioni di slot.
+  // Colonna di partenza senza la card che vola: l'elenco da cui la board
+  // ricalcola gli slot che restano.
   const fromRest = COLUMNS[HANDOFF_FROM_COL]!.cards.filter((_, i) => i !== HANDOFF_FROM_IDX);
-  const toWith = handoffTargetCards();
 
-  const x0 = columnX(HANDOFF_FROM_COL);
-  const y0 = cardY(COLUMNS[HANDOFF_FROM_COL]!.cards, HANDOFF_FROM_IDX);
-  const x1 = columnX(HANDOFF_TO_COL);
-  const y1 = cardY(toWith, toWith.length - 1);
-
-  // Dove la mano afferra la card: non al centro esatto, che legge come un
-  // bersaglio calcolato, ma sul corpo della card poco sopra la meta'.
-  const gdx = COL_W * 0.38;
-  const gdy = CARD_H * 0.42;
-
-  // Il percorso della mano. CUR-01 e' tutto qui dentro: entra da fuori lastra,
-  // curva - il waypoint di meta' strada sta fuori dall'asse, che e' cio' che
-  // rende l'arrivo un arco e non una diagonale - supera di poco il bersaglio e
-  // ci si posa. L'overshoot e' 26 px su 1130 di corsa.
-  const path: Waypoint[] = [
-    { x: 2620, y: 1330, at: 0 },
-    { x: 2620, y: 1330, at: T.at(14) },
-    { x: 1580, y: 700, at: T.at(46) },
-    { x: x0 + gdx + 26, y: y0 + gdy - 18, at: T.at(66) },
-    { x: x0 + gdx, y: y0 + gdy, at: T.at(76) },
-    { x: x0 + gdx, y: y0 + gdy, at: T.at(DRAG_START) },
-    { x: (x0 + x1) / 2 + gdx, y: Math.min(y0, y1) + gdy - 96, at: T.at(130) },
-    { x: x1 + gdx, y: y1 + gdy, at: T.at(DRAG_END) },
-    { x: x1 + gdx, y: y1 + gdy, at: T.at(186) },
-    // La mano se ne va prima della fine, e non e' una gentilezza: la scena dopo
-    // non ha nessun cursore, quindi se restasse in quadro all'ultimo frame la
-    // giunta con CardFocus mostrerebbe una freccia che sparisce.
-    { x: 2620, y: 1330, at: T.at(216) },
-    { x: 2620, y: 1330, at: last },
-  ];
-
-  // CUR-04: la card sta dove stava la mano tre frame fa, e l'inclinazione esce
-  // dalla differenza fra due campioni. Senza il ritardo la card sembra saldata
-  // al puntatore; senza l'inclinazione sembra trascinata su un tavolo.
-  const heldFrame = Math.min(frame, T.at(RELEASE)) - LAG;
-  const lagged = pointOnPath(path, heldFrame);
-  const before = pointOnPath(path, heldFrame - 3);
-  const held = frame >= T.at(GRAB);
-
-  // Dopo il rilascio la card scivola nello slot: la correzione e' piccola,
-  // perche' la mano ha gia' dimorato sul punto d'arrivo.
-  const settle = interpolate(frame, [T.at(RELEASE), T.at(SETTLE_END)], [0, 1], {
-    easing: Easing.inOut(Easing.cubic),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  const lift = interpolate(
-    frame,
-    [T.at(GRAB), T.at(GRAB + 12), T.at(RELEASE), T.at(SETTLE_END)],
-    [0, 1, 1, 0],
-    {
-    easing: Easing.inOut(Easing.quad),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  const dragX = lagged.x - gdx;
-  const dragY = lagged.y - gdy;
-  const cardX = !held ? x0 : dragX + (x1 - dragX) * settle;
-  const cardY_ = !held ? y0 : dragY + (y1 - dragY) * settle;
-  const tilt = held ? (lagged.x - before.x) * TILT_PER_PX * (1 - settle) : 0;
+  const m = cardHandoffMotion(durationInFrames, frame);
+  const { path, cardX, closeGap, lift, tilt, travel } = m;
+  const cardY_ = m.cardY;
 
   // Il terzo anello della catena: la card si riscrive l'eta'.
-  const movingNow = frame >= T.at(PANEL_AT) ? { ...moving, age: "ora" } : moving;
-
-  // Quanto del tragitto e' fatto: e' da qui che la board sa quando aggiornare i
-  // contatori e quando aprire lo slot di destinazione.
-  const travel = Math.max(0, Math.min(1, (cardX - x0) / (x1 - x0)));
-
-  // Le card sotto risalgono mentre quella sopra si sta gia' posando, non prima.
-  const closeGap = interpolate(frame, [T.at(DRAG_END - 22), T.at(SETTLE_END)], [0, 1], {
-    easing: Easing.inOut(Easing.cubic),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  const movingNow = m.aged ? { ...moving, age: "ora" } : moving;
 
   return (
     <Shot
@@ -233,8 +96,8 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
           moving={movingNow}
           fromRest={fromRest}
           tilt={tilt}
-          handed={frame >= T.at(COUNT_AT) ? 1 : 0}
-          statusChanged={frame >= T.at(PANEL_AT) ? 1 : 0}
+          handed={m.handed ? 1 : 0}
+          statusChanged={m.aged ? 1 : 0}
           dimmed
         />
       }
@@ -248,15 +111,15 @@ export const CardHandoff: React.FC<CardHandoffProps> = ({ progress }) => {
         moving={movingNow}
         fromRest={fromRest}
         tilt={tilt}
-        handed={frame >= T.at(COUNT_AT) ? 1 : 0}
-        statusChanged={frame >= T.at(PANEL_AT) ? 1 : 0}
+        handed={m.handed ? 1 : 0}
+        statusChanged={m.aged ? 1 : 0}
       />
 
       {/* La mano sta DENTRO la lastra, quindi prende la stessa prospettiva
           e appoggia sul piano. Al primo e all'ultimo frame sta fuori dai
           2400x1200 e l'overflow la taglia: e' cosi' che le due giunte
           restano identiche a scene che un cursore non ce l'hanno. */}
-      <Cursor path={path} clicks={[T.at(GRAB), T.at(RELEASE)]} frame={frame} />
+      <Cursor path={path} clicks={[m.T.at(GRAB), m.T.at(RELEASE)]} frame={frame} />
     </Shot>
   );
 };

@@ -13,6 +13,7 @@ import {
   handoffLandedRect,
 } from "../geometry";
 import { poseAt } from "../../../kit/camera";
+import { stageFor } from "../../../kit/stage";
 import { cardFocusTrack } from "../tracks";
 import { Board } from "../Board";
 import { Shot } from "../../../kit/Shot";
@@ -52,7 +53,8 @@ export type CardFocusProps = {
 
 export const CardFocus: React.FC<CardFocusProps> = ({ progress }) => {
   const localFrame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const { durationInFrames, width, height } = useVideoConfig();
+  const { ratio } = stageFor(width, height);
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
 
@@ -60,7 +62,7 @@ export const CardFocus: React.FC<CardFocusProps> = ({ progress }) => {
   // agli estremi con derivata nulla: a sinistra si aggancia alla fine di
   // CardHandoff, che e' ferma, a destra lascia una scena che si puo' mettere
   // prima di qualunque altra. La curva sta in products/topics/tracks.ts.
-  const pose = poseAt(cardFocusTrack(durationInFrames), frame);
+  const pose = poseAt(cardFocusTrack(durationInFrames, ratio), frame);
 
   // La board a consegna avvenuta: sono i tre valori che CardHandoff raggiunge
   // al suo ultimo frame, e la card sta dove dice `handoffLandedRect`.

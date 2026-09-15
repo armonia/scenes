@@ -11,14 +11,45 @@
 //   node scripts/catalog.mjs slugs    i nomi dei file .mp4, senza estensione
 //   node scripts/catalog.mjs measures i comandi dei banchi generici
 //   node scripts/catalog.mjs html     la sezione <section id="scenes"> intera
+//   node scripts/catalog.mjs ratios   i rapporti in cui escono le scene
+//
+// render, slugs, ids, rest e measures accettano `--ratio 9x16` (o 4x5): stessi
+// comandi per le varianti di quel rapporto. Senza, il 16:9, con gli id e gli
+// slug di sempre. La pagina resta sul 16:9.
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const { scenes } = JSON.parse(
+const catalog = JSON.parse(
   readFileSync(join(root, "video/src/scenes/catalog.json"), "utf8"),
 );
+const { STAGES, variantName } = await import(
+  pathToFileURL(join(root, "video/src/kit/stage.ts")).href
+);
+
+const ratioArg = (() => {
+  const i = process.argv.indexOf("--ratio");
+  return i === -1 ? "16x9" : process.argv[i + 1];
+})();
+if (!catalog.ratios.includes(ratioArg)) {
+  console.error(
+    `catalog.json non dichiara il rapporto "${ratioArg}" (ratios: ${catalog.ratios.join(", ")})`,
+  );
+  process.exit(2);
+}
+
+// Le scene nel rapporto chiesto: id e slug col suffisso, dimensioni dallo stage.
+const variant = (s, ratio) => ({
+  ...s,
+  id: variantName(s.id, ratio),
+  slug: variantName(s.slug, ratio),
+  seamAfter: s.seamAfter && variantName(s.seamAfter, ratio),
+  width: STAGES[ratio].w,
+  height: STAGES[ratio].h,
+});
+const scenes = catalog.scenes.map((s) => variant(s, ratioArg));
+const pageScenes = catalog.scenes.map((s) => variant(s, "16x9"));
 
 const out = (s) => process.stdout.write(s + "\n");
 
@@ -31,6 +62,8 @@ const commands = {
   slugs: () => scenes.forEach((s) => out(s.slug)),
 
   ids: () => scenes.forEach((s) => out(s.id)),
+
+  ratios: () => catalog.ratios.forEach((r) => out(r)),
 
   // Le scene che dichiarano di stare ferme sui bordi. rest-point.sh boccia solo
   // quelle: le altre le misura e basta.
@@ -86,7 +119,7 @@ const PLACEHOLDER = "<!-- SCENES -->";
 
 function sceneSection() {
     const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-    const blocks = scenes.map((s) => {
+    const blocks = pageScenes.map((s) => {
       // Il blurb e' HTML voluto (<em>, <code>), quindi passa intero; titolo e
       // dimensioni no, quelli si scappano.
       const meta = `${esc(s.id)} · ${s.width}×${s.height} · ${s.fps}fps`;

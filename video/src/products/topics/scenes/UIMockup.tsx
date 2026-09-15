@@ -16,6 +16,7 @@ import {
   TOPICS_SLAB,
 } from "../geometry";
 import { poseAt } from "../../../kit/camera";
+import { stageFor } from "../../../kit/stage";
 import { uiMockupTrack } from "../tracks";
 import { Shot } from "../../../kit/Shot";
 import { TOPICS_SHOT_MATERIAL } from "../material";
@@ -66,7 +67,8 @@ export type UIMockupProps = {
 
 export const UIMockup: React.FC<UIMockupProps> = ({ progress }) => {
   const localFrame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const { durationInFrames, width, height } = useVideoConfig();
+  const { ratio } = stageFor(width, height);
   const frame =
     progress === undefined ? localFrame : progress * (durationInFrames - 1);
 
@@ -75,7 +77,7 @@ export const UIMockup: React.FC<UIMockupProps> = ({ progress }) => {
   // per tutta la scena, finendo piu' frontale di come e' partita, cosi' la scena
   // successiva puo' partire da qui. La curva sta in products/topics/tracks.ts, la
   // stessa che leggono i banchi.
-  const pose = poseAt(uiMockupTrack(durationInFrames), frame);
+  const pose = poseAt(uiMockupTrack(durationInFrames, ratio), frame);
 
   const fadeIn = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",

@@ -30,7 +30,23 @@ const catalogScenes = async () => {
   return c.scenes;
 };
 
+const ratioArg = () => argValue("--ratio") ?? "16x9";
+
 const commands = {
+  // Il film di Topics come finestre: per ogni scena, nell'ordine delle giunte,
+  // l'id della composition da sola, dove comincia nel film e quanto dura. Lo
+  // legge film-identity.sh per sapere quali fotogrammi confrontare.
+  film: async () => {
+    const { chainOrder, filmWindows } = await load("video/src/kit/film.ts");
+    const { variantName } = await load("video/src/kit/stage.ts");
+    const ratio = ratioArg();
+    const windows = filmWindows(chainOrder(await catalogScenes()));
+    return {
+      film: variantName("TopicsFilm", ratio),
+      windows: windows.map((w) => ({ ...w, id: variantName(w.id, ratio) })),
+    };
+  },
+
   // GIU-04 sulla catena del catalogo: le tracce delle scene, nell'ordine in cui
   // si agganciano, lette da checkChain. --linear toglie tutti gli easing, ed e'
   // il controllo negativo: le giunte non sono piu' a riposo.

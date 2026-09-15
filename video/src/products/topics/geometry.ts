@@ -238,6 +238,25 @@ export const SEND_Y = COMPOSER_Y + (COMPOSER_H - SEND_H) / 2;
 export const THREAD_TOP = 616;
 
 /**
+ * Le misure orizzontali del thread: il margine del pannello, il quadratino
+ * dell'avatar e lo spazio dopo, dove comincia il testo di un messaggio, e le
+ * larghezze massime di un messaggio e della riga di uno strumento. Stavano
+ * scritte dentro Assistant.tsx; sono qui perche' nei rapporti verticali la
+ * larghezza di un messaggio dipende da quanto della lastra si vede (poses.ts).
+ */
+export const THREAD_PAD_X = 26;
+export const MSG_AVATAR_W = 26;
+export const MSG_GAP = 14;
+export const MSG_TEXT_X = SIDEBAR_W + THREAD_PAD_X + MSG_AVATAR_W + MSG_GAP;
+export const MSG_MAX_W = 1180;
+/** La bolla dell'utente: padding orizzontale 18 e un filo di bordo per lato. */
+export const USER_BUBBLE_EXTRA_W = 2 * (18 + 1);
+export const TOOL_ROW_INDENT = 40;
+export const TOOL_ROW_MAX_W = 820;
+/** La riga dello strumento: padding orizzontale 16 e un filo di bordo per lato. */
+export const TOOL_ROW_EXTRA_W = 2 * (16 + 1);
+
+/**
  * Quanto il thread si tiene alla larga dal composer.
  *
  * DERIVATO, non scritto a mano, e il motivo e' un difetto gia' pagato: il
