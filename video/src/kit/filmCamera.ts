@@ -133,14 +133,26 @@ export type CameraFinding = {
 };
 
 /**
- * GIU-02 e GIU-04 sull'intera traccia, fotogramma per fotogramma: nessun asse
- * inverte il verso mentre si muove, nessun asse scavalca le chiavi fra cui sta,
- * e ai due capi la camera e' ferma.
+ * GIU-02 e GIU-04 sull'intera traccia, fotogramma per fotogramma.
+ *
+ * L'INVERSIONE SI GUARDA SU IMBARDATA, BECCHEGGIO E SPINTA, non sugli
+ * spostamenti. La grammatica lo dice cosi': "yaw, pitch e push non invertono
+ * mai. L'occhio segue la derivata: un'inversione a una giunzione si legge come
+ * uno stacco anche quando i pixel dei due frame combaciano". Una panoramica che
+ * torna indietro non e' uno stacco, e' una panoramica: la prima versione di
+ * questo controllo la vietava, e il film di un prodotto vero non poteva seguire
+ * i suoi soggetti (in Cifra il documento sta a sinistra e la chat a destra).
+ *
+ * Il resto vale su tutti gli assi: nessuno scavalca le chiavi fra cui sta, e ai
+ * due capi la camera e' ferma (GIU-02).
  *
  * `restRatio` e' la frazione della velocita' massima dell'asse sotto cui l'asse
  * si considera fermo: un'inversione fra due tratti fermi non e' un'inversione
  * in moto, come nelle giunte a riposo di Topics.
  */
+/** Gli assi su cui un'inversione e' un difetto (GIU-04). */
+const INVERSIONE: readonly Axis[] = ["yaw", "pitch", "pushZ"];
+
 export const checkFilmCamera = (cam: FilmCamera, restRatio = 0.02): CameraFinding[] => {
   const findings: CameraFinding[] = [];
   for (const axis of AXES) {
@@ -154,7 +166,7 @@ export const checkFilmCamera = (cam: FilmCamera, restRatio = 0.02): CameraFindin
       const x = v[f] as number;
       if (Math.abs(x) <= rest) continue;
       const s = Math.sign(x);
-      if (lastSign !== 0 && s !== lastSign) {
+      if (lastSign !== 0 && s !== lastSign && INVERSIONE.includes(axis)) {
         findings.push({ kind: "inversione", axis, frame: f, detail: `${axis} cambia verso a f${f} (${x.toFixed(4)} per frame)` });
       }
       lastSign = s;
