@@ -39,6 +39,12 @@
 #     ogni banco abbia un negativo che fallisce (bench-coverage.py);
 #   - `deploy` aspetta tutti e quattro, assembla la pagina coi render del 16:9 e
 #     pubblica. La pagina resta sul 16:9: i verticali sono negli artefatti.
+#   - `film` gira tre volte in parallelo anche lui: renderizza il film di esempio
+#     (DemoFilm, 1350 frame) in quel rapporto, come artefatto da guardare, ed
+#     esegue i controlli del film (scripts/checks/film-demo.mjs). Sta fuori da
+#     `formato` per il tempo: un film intero costa quanto le scene. Il deploy non
+#     lo aspetta, perche' il film non e' sulla pagina; una PR con il film rotto
+#     resta comunque rossa.
 # Ogni rapporto ha la sua cache: un push che tocca solo la pagina non
 # ri-renderizza niente.
 
@@ -227,7 +233,7 @@ jobs:
       - name: chiave dei render
         id: key
         run: |
-          echo "value=renders-verificati-${{ matrix.ratio }}-${{ hashFiles('video/src/**', 'video/package-lock.json', 'video/remotion.config.ts', 'video/tsconfig.json', 'video/eslint.config.mjs', 'scripts/**') }}" >> "$GITHUB_OUTPUT"
+          echo "value=renders-verificati-${{ matrix.ratio }}-${{ hashFiles('video/src/**', 'video/public/**', 'video/package-lock.json', 'video/remotion.config.ts', 'video/tsconfig.json', 'video/eslint.config.mjs', 'scripts/**') }}" >> "$GITHUB_OUTPUT"
 
       - name: render gia' verificati?
         id: cache
@@ -283,7 +289,7 @@ jobs:
       - name: i banchi, e i casi che devono bocciare
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          node scripts/manifest.mjs checks --ratio ${{ matrix.ratio }} > /tmp/checks.tsv
+          node scripts/manifest.mjs checks --ratio ${{ matrix.ratio }} --tranne film-demo > /tmp/checks.tsv
           ./scripts/expect.sh /tmp/checks.tsv video/out/bench-report-${{ matrix.ratio }}.json
           ./scripts/bench-coverage.py video/out/bench-report-${{ matrix.ratio }}.json
 
@@ -315,6 +321,82 @@ jobs:
           path: |
             video/out/*.mp4
             video/out/bench-report-*.json
+          retention-days: 7
+
+  film:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        ratio: ["16x9", "9x16", "4x5"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # La stessa regola di `formato`: la chiave e' il contenuto di tutto quello
+      # che puo' cambiare il film o giudicarlo, e si scrive solo a controlli passati.
+      - name: chiave del film
+        id: key
+        run: |
+          echo "value=film-verificato-${{ matrix.ratio }}-${{ hashFiles('video/src/**', 'video/public/**', 'video/package-lock.json', 'video/remotion.config.ts', 'video/tsconfig.json', 'scripts/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: film gia' verificato?
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: video/out/film
+          key: ${{ steps.key.outputs.value }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: video/package-lock.json
+
+      - name: strumenti di misura
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick ffmpeg
+
+      - name: dipendenze
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: video
+        run: npm ci
+
+      # Prima i controlli, che guardano solo i fotogrammi che servono e dicono in
+      # pochi minuti se il film e' rotto; poi il render intero, che e' la cosa da
+      # guardare.
+      - name: i controlli del film, e i casi che devono bocciare
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p video/out/film
+          node scripts/manifest.mjs checks --ratio ${{ matrix.ratio }} --solo film-demo > /tmp/checks-film.tsv
+          ./scripts/expect.sh /tmp/checks-film.tsv video/out/film/film-report-${{ matrix.ratio }}.json
+          ./scripts/bench-coverage.py video/out/film/film-report-${{ matrix.ratio }}.json
+
+      - name: render del film
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: video
+        run: |
+          if [ "${{ matrix.ratio }}" = 16x9 ]; then id=DemoFilm; else id=DemoFilm-${{ matrix.ratio }}; fi
+          npx remotion render "$id" "out/film/demo-film-${{ matrix.ratio }}.mp4" < /dev/null
+
+      - name: salva il film verificato
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: video/out/film
+          key: ${{ steps.key.outputs.value }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: film-${{ matrix.ratio }}
+          path: |
+            video/out/film/*.mp4
+            video/out/film/film-report-*.json
           retention-days: 7
 
   deploy:

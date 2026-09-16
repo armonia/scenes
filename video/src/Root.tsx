@@ -13,6 +13,8 @@ import { CAM06_SPECIMENS } from "./specimens/list";
 import { STAGES, variantName, type Ratio } from "./kit/stage";
 import { chainOrder, filmFrames, filmWindows } from "./kit/film";
 import { SceneWindow } from "./kit/SceneWindow";
+import { DemoFilm } from "./products/demo/DemoFilm";
+import { DEMO_FRAMES } from "./products/demo/geometry";
 
 /**
  * Le composition della vetrina NON sono scritte qui a mano: escono da
@@ -93,6 +95,21 @@ export const RemotionRoot: React.FC = () => {
           />
         )),
       )}
+
+      {/* IL FILM DI ESEMPIO: Registro, un prodotto inventato, 45 secondi in una
+          ripresa sola, costruito solo con i pezzi del kit. E' la prova che un
+          commercial si produce senza scrivere animazioni da capo. */}
+      {RATIOS.map((ratio) => (
+        <Composition
+          key={variantName("DemoFilm", ratio)}
+          id={variantName("DemoFilm", ratio)}
+          component={DemoFilm}
+          durationInFrames={DEMO_FRAMES}
+          fps={30}
+          width={STAGES[ratio].w}
+          height={STAGES[ratio].h}
+        />
+      ))}
 
       {RATIOS.map((ratio) => (
         <Composition

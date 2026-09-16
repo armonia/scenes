@@ -14,11 +14,15 @@
 //   node scripts/manifest.mjs chain|fill --ratio R  le tracce della camera in un rapporto
 //   node scripts/manifest.mjs film --ratio R        le finestre del film
 //   node scripts/manifest.mjs bench NOME --ratio R  cosa deve trovare il banco NOME, in JSON
+//     (NOME puo' essere il percorso di un modulo .ts: e' cosi' che un altro
+//     repository fa girare i banchi sui suoi film)
 //   node scripts/manifest.mjs checks --ratio R      i controlli da far girare, per expect.sh
+//     [--solo A,B | --tranne A,B]                   solo quei moduli di scripts/checks, o tutti tranne
+//     [--moduli DIR]                                i moduli di un'altra cartella
 //
 // Senza --ratio vale il 16:9. Un rapporto che il catalogo non dichiara esce 2.
 import { readdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -50,9 +54,15 @@ const catalogJson = async () => {
 // Il nome del file e' il nome del banco, quindi aggiungerne uno non tocca
 // questo file.
 const benchGeometry = async (name, ratio) => {
-  if (!/^[a-z0-9-]+$/.test(name)) throw new Error(`nome di banco non valido: ${name}`);
-  const mod = await load(`video/src/products/topics/benches/${name}.ts`);
-  return mod.geometry(ratio, { catalog: await catalogJson() });
+  const byPath = name.endsWith(".ts");
+  if (!byPath && !/^[a-z0-9-]+$/.test(name)) throw new Error(`nome di banco non valido: ${name}`);
+  const mod = byPath
+    ? await import(pathToFileURL(resolve(process.cwd(), name)).href)
+    : await load(`video/src/products/topics/benches/${name}.ts`);
+  // `--guasto NOME` arriva al modulo: e' cosi' che un banco costruisce la copia
+  // guasta di un film (un'esitazione troppo corta, una camera che torna indietro)
+  // senza scriverla da se'.
+  return mod.geometry(ratio, { catalog: await catalogJson(), guasto: argValue("--guasto") });
 };
 
 const commands = {
@@ -285,9 +295,23 @@ const commands = {
       bench: (name) => benchGeometry(name, ratio),
       tmp: (name) => `$CHECKS_TMP/${variantName(name, ratio)}`,
     };
-    const dir = join(root, "scripts/checks");
+    const dir = argValue("--moduli") ? resolve(process.cwd(), argValue("--moduli")) : join(root, "scripts/checks");
     const lines = [];
-    for (const file of readdirSync(dir).filter((f) => f.endsWith(".mjs")).sort()) {
+    // `--solo` e `--tranne` scelgono i moduli per nome (film-demo, seam...): il
+    // film di esempio ha un job di CI suo, e i suoi controlli non devono girare
+    // anche in quello delle scene. Un nome che non esiste e' un errore, non un
+    // filtro vuoto: un job con zero controlli passerebbe.
+    const modules = readdirSync(dir).filter((f) => f.endsWith(".mjs")).map((f) => f.slice(0, -4)).sort();
+    const pick = (flag) => {
+      const v = argValue(flag);
+      if (v === undefined) return undefined;
+      const names = v.split(",").filter(Boolean);
+      for (const n of names) if (!modules.includes(n)) throw new Error(`${flag}: nessun modulo di controlli ${n}`);
+      return names;
+    };
+    const solo = pick("--solo");
+    const tranne = pick("--tranne") ?? [];
+    for (const file of modules.filter((m) => (solo ? solo.includes(m) : !tranne.includes(m))).map((m) => `${m}.mjs`)) {
       const mod = await import(pathToFileURL(join(dir, file)).href);
       for (const c of await mod.checks(ctx)) {
         const fields =
