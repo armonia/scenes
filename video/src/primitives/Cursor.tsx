@@ -1,5 +1,9 @@
 import React from "react";
 import { Easing, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { pointOnPath, type Waypoint } from "./path";
+
+export { pointOnPath } from "./path";
+export type { Waypoint } from "./path";
 
 /**
  * Il cursore che recita.
@@ -21,44 +25,6 @@ import { Easing, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
  * della freccia, che dura sei frame ed e' quasi subliminale, e c'e' l'anello
  * che si espande e svanisce, che e' la parte che l'occhio prende.
  */
-
-export type Waypoint = { x: number; y: number; at: number };
-
-/**
- * Dove sta il puntatore a un dato frame.
- *
- * ESPORTATA perche' una scena in cui il puntatore TRASCINA qualcosa ha bisogno
- * della sua posizione, non solo del suo disegno: la card che segue la mano sta
- * dove stava la mano tre frame prima, e l'inclinazione esce dalla differenza
- * fra due campioni. Tenuto dentro il componente, quel numero non era
- * raggiungibile e la scena avrebbe dovuto ricalcolarsi il percorso per conto
- * suo - due copie della stessa traiettoria, uguali finche' nessuno tocca una
- * delle due.
- */
-export const pointOnPath = (
-  path: Waypoint[],
-  frame: number,
-): { x: number; y: number } => {
-  const first = path[0] as Waypoint;
-  const last = path[path.length - 1] as Waypoint;
-  if (frame <= first.at) return { x: first.x, y: first.y };
-  for (let i = 0; i < path.length - 1; i++) {
-    const a = path[i] as Waypoint;
-    const b = path[i + 1] as Waypoint;
-    if (frame >= a.at && frame <= b.at) {
-      const ease = {
-        easing: Easing.inOut(Easing.cubic),
-        extrapolateLeft: "clamp" as const,
-        extrapolateRight: "clamp" as const,
-      };
-      return {
-        x: interpolate(frame, [a.at, b.at], [a.x, b.x], ease),
-        y: interpolate(frame, [a.at, b.at], [a.y, b.y], ease),
-      };
-    }
-  }
-  return { x: last.x, y: last.y };
-};
 
 export type CursorProps = {
   /** I punti da toccare, in coordinate della scena, ciascuno col suo frame. */

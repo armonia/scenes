@@ -5,13 +5,21 @@ import {
   COMPOSER_W,
   COMPOSER_X,
   COMPOSER_Y,
+  MSG_AVATAR_W,
+  MSG_GAP,
   SEND_H,
   SEND_W,
   SIDEBAR_W,
   THREAD_PAD_BOTTOM,
+  THREAD_PAD_X,
   THREAD_TOP,
+  TOOL_ROW_INDENT,
 } from "./geometry";
 import { app, monoStack, radius } from "./tokens";
+import { topicsLayout } from "./poses";
+import { THREAD_HISTORY } from "./thread";
+import { stageFor } from "../../kit/stage";
+import { useVideoConfig } from "remotion";
 
 /**
  * Il thread dell'assistente e il composer, nella meta' bassa della lastra.
@@ -93,7 +101,7 @@ export const Assistant: React.FC<AssistantProps> = ({
           display: "flex",
           alignItems: "center",
           gap: 14,
-          padding: "0 26px",
+          padding: `0 ${THREAD_PAD_X}px`,
           borderBottom: `1px solid ${app.border}`,
         }}
       >
@@ -120,7 +128,7 @@ export const Assistant: React.FC<AssistantProps> = ({
       <div
         style={{
           flex: 1,
-          padding: `20px 26px ${THREAD_PAD_BOTTOM}px`,
+          padding: `20px ${THREAD_PAD_X}px ${THREAD_PAD_BOTTOM}px`,
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
@@ -129,18 +137,13 @@ export const Assistant: React.FC<AssistantProps> = ({
         }}
       >
         <div style={{ opacity: attn, display: "flex", flexDirection: "column", gap: 16 }}>
-        <Msg who="user" text="Prendi i quattro commercial e dimmi cosa fanno davvero." />
-        <Msg
-          who="assistant"
-          text="Su quattro, solo i due Linear sono motion graphics. Cursor e Raycast sono girati con una camera: attore, luce calda, mani vere. Quelli non si replicano in codice."
-        />
-        <ToolRow file="ref/sheet_ovxL42LkKNg.jpg" />
-        <Msg who="user" text="Fammi vedere la board con la card attiva." />
-        <Msg
-          who="assistant"
-          text="Fatto. Kanban aperto, la card attiva e' UIMockup: piano 3D piu' parallasse, e il pannello mostra branch e assegnatario."
-        />
-
+          {THREAD_HISTORY.map((item, i) =>
+            item.kind === "tool" ? (
+              <ToolRow key={i} file={item.file} />
+            ) : (
+              <Msg key={i} who={item.who} text={item.text} />
+            ),
+          )}
         </div>
 
         {sent ? (
@@ -242,12 +245,14 @@ const Msg: React.FC<{
   streaming?: boolean;
 }> = ({ who, text, streaming }) => {
   const isUser = who === "user";
+  const { width, height } = useVideoConfig();
+  const { msgMaxW } = topicsLayout(stageFor(width, height).ratio);
   return (
-    <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+    <div style={{ display: "flex", gap: MSG_GAP, alignItems: "flex-start" }}>
       <div
         style={{
-          width: 26,
-          height: 26,
+          width: MSG_AVATAR_W,
+          height: MSG_AVATAR_W,
           marginTop: 4,
           flex: "none",
           borderRadius: radius.xs,
@@ -265,7 +270,7 @@ const Msg: React.FC<{
           fontSize: 21,
           lineHeight: 1.45,
           color: isUser ? app.text : app.textSecondary,
-          maxWidth: 1180,
+          maxWidth: msgMaxW,
         }}
       >
         {text}
@@ -286,25 +291,29 @@ const Msg: React.FC<{
   );
 };
 
-const ToolRow: React.FC<{ file: string }> = ({ file }) => (
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      marginLeft: 40,
-      padding: "10px 16px",
-      background: app.inset,
-      border: `1px solid ${app.border}`,
-      borderRadius: radius.sm,
-      maxWidth: 820,
-    }}
-  >
-    <div style={{ width: 8, height: 8, borderRadius: 4, background: app.ok, flex: "none" }} />
-    <div style={{ fontFamily: monoStack, fontSize: 17, color: app.primary }}>Read</div>
-    <div style={{ fontSize: 17, color: app.textMuted }}>{file}</div>
-  </div>
-);
+const ToolRow: React.FC<{ file: string }> = ({ file }) => {
+  const { width, height } = useVideoConfig();
+  const { toolRowMaxW } = topicsLayout(stageFor(width, height).ratio);
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        marginLeft: TOOL_ROW_INDENT,
+        padding: "10px 16px",
+        background: app.inset,
+        border: `1px solid ${app.border}`,
+        borderRadius: radius.sm,
+        maxWidth: toolRowMaxW,
+      }}
+    >
+      <div style={{ width: 8, height: 8, borderRadius: 4, background: app.ok, flex: "none" }} />
+      <div style={{ fontFamily: monoStack, fontSize: 17, color: app.primary }}>Read</div>
+      <div style={{ fontSize: 17, color: app.textMuted }}>{file}</div>
+    </div>
+  );
+};
 
 const Dots: React.FC<{ frame: number }> = ({ frame }) => (
   <div style={{ display: "flex", gap: 9, marginLeft: 40, height: 26, alignItems: "center" }}>

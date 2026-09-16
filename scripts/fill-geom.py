@@ -20,7 +20,7 @@ uscire -1e-13.
 IL NEGATIVO: --push-offset -1500 arretra la camera su ogni posa. Con --must-fail
 il banco esce 0 solo se tutte le scene risultano scoperte.
 
-Uso:  fill-geom.py [--push-offset N] [--must-fail]
+Uso:  fill-geom.py [--ratio 16x9|9x16|4x5] [--push-offset N] [--must-fail]
 
 Esce 0 se ogni scena che dichiara `fill` copre il quadro (con --must-fail: se
 nessuna lo copre), 1 altrimenti, 3 se il manifest non risponde.
@@ -36,10 +36,11 @@ TOL = 0.5
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--push-offset", type=float, default=0)
+ap.add_argument("--ratio", default="16x9")
 ap.add_argument("--must-fail", action="store_true")
 args = ap.parse_args()
 
-cmd = ["node", os.path.join(ROOT, "scripts/manifest.mjs"), "fill"]
+cmd = ["node", os.path.join(ROOT, "scripts/manifest.mjs"), "fill", "--ratio", args.ratio]
 if args.push_offset:
     cmd += ["--push-offset", str(args.push_offset)]
 r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
@@ -51,7 +52,7 @@ if not scenes:
     print("nessuna scena dichiara fill: non c'e' niente da misurare", file=sys.stderr)
     sys.exit(3)
 
-print("CAM-01 in geometria: i quattro angoli del quadro dentro la lastra proiettata"
+print(f"CAM-01 in geometria, {args.ratio}: i quattro angoli del quadro dentro la lastra proiettata"
       f"{f', camera arretrata di {-args.push_offset:g}' if args.push_offset else ''}.")
 scoperte = []
 for s in scenes:

@@ -91,3 +91,31 @@ export const projectRect = (
   const y = Math.min(...ys);
   return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
 };
+
+/**
+ * Il contrario di `project` per una posa frontale (yaw e pitch a zero): il punto
+ * della lastra che finisce nel punto `s` dello schermo. Serve a chiedere cosa
+ * si vede, per esempio fin dove arriva il bordo destro del quadro sulla lastra.
+ * Con la camera inclinata il contrario non e' una formula chiusa, e piuttosto
+ * che un'approssimazione silenziosa si rifiuta.
+ */
+export const unprojectFrontal = (
+  stage: Stage,
+  rig: Rig,
+  slab: SlabSize,
+  pose: Pose,
+  s: Point,
+): Point => {
+  if (pose.yaw !== 0 || pose.pitch !== 0) {
+    throw new Error("unprojectFrontal vuole una posa frontale (yaw e pitch a zero)");
+  }
+  const ox = stage.w * rig.originX;
+  const oy = stage.h * rig.originY;
+  const k = rig.perspective / (rig.perspective - pose.pushZ);
+  const X = ox + (s.x - ox) / k;
+  const Y = oy + (s.y - oy) / k;
+  return {
+    x: (X - stage.w / 2 - pose.slideX) / rig.slabScale + slab.w / 2,
+    y: (Y - stage.h / 2 - pose.slideY) / rig.slabScale + slab.h / 2,
+  };
+};

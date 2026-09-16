@@ -21,6 +21,11 @@
 # 1, e la CI lo prova sulla sonda FrameLockedProbeRandom, che ha un Math.random
 # dentro e deve essere bocciata.
 #
+# IL PROGETTO SI IMPACCHETTA UNA VOLTA. Ogni `remotion still` rifaceva il bundle
+# da capo, e il bundle era meta' del tempo del banco. Le due passate restano due
+# processi separati, che e' quello che conta: e' il tempo di orologio fra l'uno
+# e l'altro a far emergere una deriva, non il bundle.
+#
 # Uso:
 #   ./scripts/framelocked-verdict.sh                  i due rami della sonda GSAP
 #   ./scripts/framelocked-verdict.sh PromptInput      una o piu' composition
@@ -44,6 +49,11 @@ FRAMES=(${FRAMES:-30 61 92})
 FAIL=0
 NOMEASURE=0
 
+if ! npx remotion bundle --out-dir "$TMP/bundle" --log=error >/dev/null 2>&1 < /dev/null; then
+  echo "VERDETTO: nessuno. Il bundle del progetto non e' uscito."
+  exit 3
+fi
+
 probe() {
   local comp="$1" label="$2"
   echo ""
@@ -53,8 +63,8 @@ probe() {
 
   for f in "${FRAMES[@]}"; do
     for pass in a b; do
-      npx remotion still "$comp" "$TMP/$comp-$f-$pass.png" \
-        --frame="$f" --image-format=png --log=error >/dev/null 2>&1
+      npx remotion still "$TMP/bundle" "$comp" "$TMP/$comp-$f-$pass.png" \
+        --frame="$f" --image-format=png --log=error >/dev/null 2>&1 < /dev/null
     done
 
     local ha hb

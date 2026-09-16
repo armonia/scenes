@@ -49,16 +49,27 @@ VIDEO = os.path.join(ROOT, "video")
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--only")
+ap.add_argument("--ratio", help="solo le varianti di questo rapporto (16x9, 9x16, 4x5)")
 ap.add_argument("--props")
 ap.add_argument("--must-fail", action="store_true")
 args = ap.parse_args()
 
-manifest = json.loads(
-    subprocess.run(
-        ["node", os.path.join(ROOT, "scripts/manifest.mjs"), "cam06"],
-        capture_output=True, text=True, check=True, cwd=ROOT,
-    ).stdout
+# Un manifest che non risponde e' uno strumento guasto, non un verdetto sulla
+# scena: esce 3 come gli altri banchi, invece di un traceback con codice 1 che
+# nel report di expect.sh si confonderebbe con una bocciatura.
+r = subprocess.run(
+    ["node", os.path.join(ROOT, "scripts/manifest.mjs"), "cam06"],
+    capture_output=True, text=True, cwd=ROOT,
 )
+if r.returncode != 0:
+    print("il manifest non risponde:\n" + r.stderr, file=sys.stderr)
+    sys.exit(3)
+manifest = json.loads(r.stdout)
+if args.ratio:
+    manifest = [v for v in manifest if v["ratio"] == args.ratio]
+    if not manifest:
+        print(f"nessuna variante nel rapporto {args.ratio}", file=sys.stderr)
+        sys.exit(3)
 if args.only:
     manifest = [v for v in manifest if v["id"] == args.only]
     if not manifest:
